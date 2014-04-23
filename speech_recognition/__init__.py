@@ -1,3 +1,9 @@
+"""Library for performing speech recognition with the Google Speech Recognition API."""
+
+__author__ = 'Anthony Zhang (Uberi)'
+__version__ = '1.0.0'
+__license__ = 'BSD'
+
 import io, subprocess, wave, platform, shutil
 import math, audioop, collections
 import json, urllib.request

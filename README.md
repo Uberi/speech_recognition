@@ -1,13 +1,21 @@
 Google Speech Recognition
 =========================
-Library for working with the Google Speech Recognition API.
+Library for performing speech recognition with the Google Speech Recognition API.
+
+Links:
+
+* [PyPI](https://pypi.python.org/pypi/SpeechRecognition/)
+* [GitHub](https://github.com/Uberi/speech_recognition)
+
+Quickstart: `pip install SpeechRecognition`
 
 Examples
 --------
 
 Recognize speech input from the microphone:
 
-```
+```python
+                                               # NOTE: this requires PyAudio because it uses the Microphone class
 import speech_recognition as sr
 r = sr.Recognizer()
 with sr.Microphone() as source:                # use the default microphone as the audio source
@@ -20,7 +28,7 @@ except LookupError:                            # speech is unintelligible
 
 Transcribe a WAV audio file:
 
-```
+```python
 import speech_recognition as sr
 r = sr.Recognizer()
 with sr.WavFile("test.wav") as source:              # use "test.wav" as the audio source
@@ -30,6 +38,15 @@ try:
 except LookupError:                                 # speech is unintelligible
     print("Could not understand audio")
 ```
+
+Installing
+----------
+
+The easiest way to install this is using `pip install SpeechRecognition`.
+
+Otherwise, download the source distribution from [PyPI](https://pypi.python.org/pypi/SpeechRecognition/), and extract the archive.
+
+In the folder, run `python setup.py install`.
 
 Reference
 ---------
