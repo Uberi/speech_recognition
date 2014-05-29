@@ -1,7 +1,7 @@
 """Library for performing speech recognition with the Google Speech Recognition API."""
 
 __author__ = 'Anthony Zhang (Uberi)'
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 __license__ = 'BSD'
 
 import io, subprocess, wave, platform, shutil
@@ -109,9 +109,9 @@ class Recognizer(AudioSource):
         # determine which converter executable to use
         system = platform.system()
         if system == "Windows": # Windows NT, use the bundled FLAC conversion utility
-            flac_converter = "flac-win32.exe"
+            flac_converter = "./flac-win32.exe"
         elif system == "Linux": # search for a built in FLAC utility
-            flac_converter = "flac-linux-i386"
+            flac_converter = "./flac-linux-i386"
         else:
             flac_converter = shutil.which("flac")
             if not flac_converter:
@@ -182,7 +182,7 @@ class Recognizer(AudioSource):
             else:
                 pause_count += 1
             if pause_count > pause_buffer_count: # end of the phrase
-                break        
+                break
 
          # obtain frame data
         for i in range(quiet_buffer_count, pause_buffer_count): frames.pop() # remove extra quiet frames at the end
