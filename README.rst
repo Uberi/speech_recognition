@@ -181,6 +181,10 @@ and raw audio samples of the audio data, respectively.
 Requirements
 ------------
 
+Google Speech API v2 now requires a **key**.
+
+Follow the steps: http://www.chromium.org/developers/how-tos/api-keys  
+
 The first requirement is `Python 3.3 or
 better <https://www.python.org/download/releases/>`__. This is required
 to use the library.
