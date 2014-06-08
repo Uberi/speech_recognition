@@ -90,7 +90,7 @@ class AudioData(object):
         self.data = data
 
 class Recognizer(AudioSource):
-    def __init__(self, key, language = "en-US"):
+    def __init__(self, language = "en-US", key = "AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw"):
         self.key = key
         self.language = language
 
@@ -237,4 +237,15 @@ class Recognizer(AudioSource):
         return spoken_text
 
 if __name__ == "__main__":
-    print("This script can't be run without a key.\nSorry about that :(")
+    r = Recognizer()
+    m = Microphone()
+
+    while True:
+        print("Say something!")
+        with m as source:
+            audio = r.listen(source)
+        print("Got it! Now to recognize it...")
+        try:
+            print("You said " + r.recognize(audio))
+        except LookupError:
+            print("Oops! Didn't catch that")
