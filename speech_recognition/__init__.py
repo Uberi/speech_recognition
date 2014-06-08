@@ -196,7 +196,11 @@ class Recognizer(AudioSource):
 
         url = "http://www.google.com/speech-api/v2/recognize?client=chromium&lang=%s&key=%s" % (self.language, self.key)
         self.request = urllib.request.Request(url, data = audio_data.data, headers = {"Content-Type": "audio/x-flac; rate=%s" % audio_data.rate})
-        response = urllib.request.urlopen(self.request)
+        # check for invalid key response from the server
+        try:
+            response = urllib.request.urlopen(self.request)
+        except:
+            raise KeyError("Server wouldn't respond (invalid key or quota has been maxed out)")
         response_text = response.read().decode("utf-8")
 
         # ignore any blank blocks
@@ -207,11 +211,16 @@ class Recognizer(AudioSource):
             if len(result) != 0:
                 actual_result = result[0]
 
+        # make sure we have a list of transcriptions
+        if "alternative" not in actual_result:
+            raise LookupError("Speech is unintelligible")
+
         # return the best guess unless told to do otherwise
         if not show_all:
             for prediction in actual_result["alternative"]:
                 if "confidence" in prediction:
                     return prediction["transcript"]
+            raise LookupError("Speech is unintelligible")
 
         spoken_text = []
 

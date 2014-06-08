@@ -24,7 +24,11 @@ Recognize speech input from the microphone:
     with sr.Microphone() as source:                # use the default microphone as the audio source
         audio = r.listen(source)                   # listen for the first phrase and extract it into audio data
 
-    print("You said " + r.recognize(audio))        # recognize speech using Google Speech Recognition
+    try:
+        print("You said " + r.recognize(audio))    # recognize speech using Google Speech Recognition
+    except LookupError:                            # speech is unintelligible
+        print("Could not understand audio")
+
 
 Transcribe a WAV audio file:
 
@@ -35,7 +39,10 @@ Transcribe a WAV audio file:
     with sr.WavFile("test.wav") as source:              # use "test.wav" as the audio source
         audio = r.record(source)                        # extract audio data from the file
 
-    print("You said " + r.recognize(audio))             # recognize speech using Google Speech Recognition
+    try:
+        print("You said " + r.recognize(audio))         # recognize speech using Google Speech Recognition
+    except LookupError:                                 # speech is unintelligible
+        print("Could not understand audio")
 
 Transcribe a WAV audio file and show the confidence of each:
 
@@ -46,10 +53,13 @@ Transcribe a WAV audio file and show the confidence of each:
     with sr.WavFile("test.wav") as source:              # use "test.wav" as the audio source
         audio = r.record(source,True)                   # extract audio data from the file
 
-    list = r.recognize(audio,True)                      # generate a list of possible transcriptions
-    print("Possible transcriptions:")
-    for prediction in list:
-        print(" " + prediction["text"] + " (" + str(prediction["confidence"]*100) + "%)")
+    try:
+        list = r.recognize(audio,True)                  # generate a list of possible transcriptions
+        print("Possible transcriptions:")
+        for prediction in list:
+            print(" " + prediction["text"] + " (" + str(prediction["confidence"]*100) + "%)")
+    except LookupError:                                 # speech is unintelligible
+        print("Could not understand audio")
 
 Installing
 ----------
@@ -174,7 +184,27 @@ Performs speech recognition, using the Google Speech Recognition API, on
 Returns the most likely transcription if ``show_all`` is ``False``,
 otherwise it returns a ``dict`` of all possible transcriptions and their confidence levels.
 
-Note: confidence is set to 0 if it isn't given
+Note: confidence is set to 0 if it isn't given by Google
+
+Also raises a ``LookupError`` exception if the speech is unintelligible, or a
+``KeyError`` if the key isn't valid or the quota for the key has been maxed out.
+
+Note: ``KeyError`` is a subclass of ``LookupError`` so a ``LookupError`` will catch
+both. To catch a ``KeyError`` you must place it before ``LookupError`` eg:
+
+.. code:: python
+
+    import speech_recognition as sr
+    r = sr.Recognizer("YOUR-API-KEY")
+    with sr.WavFile("test.wav") as source:              # use "test.wav" as the audio source
+        audio = r.record(source)                        # extract audio data from the file
+
+    try:
+        print("You said " + r.recognize(audio))         # recognize speech using Google Speech Recognition
+    except KeyError:                                    # the API key didn't work
+        print("Invalid API key or quota maxed out")
+    except LookupError:                                 # speech is unintelligible
+        print("Could not understand audio")
 
 ``AudioSource``
 ~~~~~~~~~~~~~~~
