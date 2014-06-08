@@ -97,7 +97,7 @@ more details.
 
 This class is to be used with ``with`` statements:
 
-::
+.. code:: python
 
     with Microphone() as source:    # open the microphone and start recording
         pass                        # do things here - `source` is the Microphone instance created above
@@ -255,6 +255,16 @@ A FLAC encoder is required to encode the audio data to send to the API.
 If using Windows or Linux, the encoder is already bundled with this
 library. Otherwise, ensure that you have the ``flac`` command line tool,
 which is often available through one's system package manager.
+
+Authors
+-------
+
+::
+
+    Uberi <azhang9@gmail.com> (Anthony Zhang)
+    bobsayshilol
+
+Please report bugs and suggestions at the `issue tracker <https://github.com/Uberi/speech_recognition/issues>`__!
 
 License
 -------
