@@ -1,7 +1,7 @@
 """Library for performing speech recognition with the Google Speech Recognition API."""
 
 __author__ = 'Anthony Zhang (Uberi)'
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 __license__ = 'BSD'
 
 import io, subprocess, wave, platform, shutil
@@ -90,7 +90,8 @@ class AudioData(object):
         self.data = data
 
 class Recognizer(AudioSource):
-    def __init__(self, language = "en-US"):
+    def __init__(self, language = "en-US", key = "AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw"):
+        self.key = key
         self.language = language
 
         self.energy_threshold = 100 # minimum audio energy to consider for recording
@@ -108,15 +109,15 @@ class Recognizer(AudioSource):
 
         # determine which converter executable to use
         system = platform.system()
-        if system == "Windows": # Windows NT, use the bundled FLAC conversion utility
+        if shutil.which("flac") is not None: # check for installed version first
+            flac_converter = shutil.which("flac")
+        elif system == "Windows": # Windows NT, use the bundled FLAC conversion utility
             flac_converter = "./flac-win32.exe"
-        elif system == "Linux": # search for a built in FLAC utility
+        elif system == "Linux":
             flac_converter = "./flac-linux-i386"
         else:
-            flac_converter = shutil.which("flac")
-            if not flac_converter:
-                raise ChildProcessError("FLAC conversion utility not available")
-        process = subprocess.Popen("\"%s\" --stdout --totally-silent --best -" % flac_converter, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+            raise ChildProcessError("FLAC conversion utility not available")
+        process = subprocess.Popen("\"%s\" --stdout --totally-silent --best -" % flac_converter, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
         flac_data, stderr = process.communicate(wav_data)
         return flac_data
 
@@ -190,17 +191,49 @@ class Recognizer(AudioSource):
 
         return AudioData(source.RATE, self.samples_to_flac(source, frame_data))
 
-    def recognize(self, audio_data):
+    def recognize(self, audio_data, show_all = False):
         assert isinstance(audio_data, AudioData)
 
-        url = "http://www.google.com/speech-api/v1/recognize?client=chromium&lang=%s&maxresults=2" % self.language
+        url = "http://www.google.com/speech-api/v2/recognize?client=chromium&lang=%s&key=%s" % (self.language, self.key)
         self.request = urllib.request.Request(url, data = audio_data.data, headers = {"Content-Type": "audio/x-flac; rate=%s" % audio_data.rate})
-        response = urllib.request.urlopen(self.request)
+        # check for invalid key response from the server
+        try:
+            response = urllib.request.urlopen(self.request)
+        except:
+            raise KeyError("Server wouldn't respond (invalid key or quota has been maxed out)")
         response_text = response.read().decode("utf-8")
-        result = json.loads(response_text)["hypotheses"]
-        if len(result) == 0: # no matches found
-            raise LookupError("speech is unintelligible")
-        spoken_text = result[0]["utterance"]
+
+        # ignore any blank blocks
+        actual_result = []
+        for line in response_text.split("\n"):
+            if not line: continue
+            result = json.loads(line)["result"]
+            if len(result) != 0:
+                actual_result = result[0]
+
+        # make sure we have a list of transcriptions
+        if "alternative" not in actual_result:
+            raise LookupError("Speech is unintelligible")
+
+        # return the best guess unless told to do otherwise
+        if not show_all:
+            for prediction in actual_result["alternative"]:
+                if "confidence" in prediction:
+                    return prediction["transcript"]
+            raise LookupError("Speech is unintelligible")
+
+        spoken_text = []
+
+        # check to see if Google thinks it's 100% correct
+        default_confidence = 0
+        if len(actual_result["alternative"])==1: default_confidence = 1
+
+        # return all the possibilities
+        for prediction in actual_result["alternative"]:
+            if "confidence" in prediction:
+                spoken_text.append({"text":prediction["transcript"],"confidence":prediction["confidence"]})
+            else:
+                spoken_text.append({"text":prediction["transcript"],"confidence":default_confidence})
         return spoken_text
 
 if __name__ == "__main__":
