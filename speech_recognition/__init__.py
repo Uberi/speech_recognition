@@ -1,10 +1,10 @@
 """Library for performing speech recognition with the Google Speech Recognition API."""
 
 __author__ = 'Anthony Zhang (Uberi)'
-__version__ = '1.0.2'
+__version__ = '1.0.3'
 __license__ = 'BSD'
 
-import io, subprocess, wave, platform, shutil
+import io, subprocess, wave, shutil
 import math, audioop, collections
 import json, urllib.request
 
@@ -99,6 +99,7 @@ class Recognizer(AudioSource):
         self.quiet_duration = 0.5 # amount of quiet time to keep on both sides of the recording
 
     def samples_to_flac(self, source, frame_data):
+        import platform, os
         with io.BytesIO() as wav_file:
             with wave.open(wav_file, "wb") as wav_writer:
                 wav_writer.setsampwidth(source.SAMPLE_WIDTH)
@@ -109,12 +110,13 @@ class Recognizer(AudioSource):
 
         # determine which converter executable to use
         system = platform.system()
+        path = os.path.dirname(os.path.abspath(__file__)) # directory of the current module file, where all the FLAC bundled binaries are stored
         if shutil.which("flac") is not None: # check for installed version first
             flac_converter = shutil.which("flac")
         elif system == "Windows": # Windows NT, use the bundled FLAC conversion utility
-            flac_converter = "./flac-win32.exe"
+            flac_converter = os.path.join(path, "flac-win32.exe")
         elif system == "Linux":
-            flac_converter = "./flac-linux-i386"
+            flac_converter = os.path.join(path, "flac-linux-i386")
         else:
             raise ChildProcessError("FLAC conversion utility not available")
         process = subprocess.Popen("\"%s\" --stdout --totally-silent --best -" % flac_converter, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)

@@ -13,7 +13,7 @@ setup(
     author=speech_recognition.__author__,
     author_email="azhang9@gmail.com",
     description=speech_recognition.__doc__,
-	long_description=open("README.rst").read(),
+    long_description=open("README.rst").read(),
     license=speech_recognition.__license__,
     keywords="speech recognition google",
     url="https://github.com/Uberi/speech_recognition#readme",
