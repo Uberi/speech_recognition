@@ -1,2 +1,3 @@
 graft speech_recognition
-include README.md
+recursive-exclude speech_recognition *.pyc
+include README.rst

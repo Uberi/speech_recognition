@@ -1,6 +1,11 @@
 import os
 from setuptools import setup, find_packages
 
+import sys
+if sys.version_info < (3, 3):
+    print("THIS MODULE REQUIRES PYTHON 3.3 OR LATER. YOU ARE CURRENTLY USING PYTHON " + sys.version)
+    sys.exit(1)
+
 import speech_recognition
 
 setup(
