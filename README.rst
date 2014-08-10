@@ -51,7 +51,7 @@ Transcribe a WAV audio file and show the confidence of each:
     import speech_recognition as sr
     r = sr.Recognizer()
     with sr.WavFile("test.wav") as source:              # use "test.wav" as the audio source
-        audio = r.record(source,True)                   # extract audio data from the file
+        audio = r.record(source)                        # extract audio data from the file
 
     try:
         list = r.recognize(audio,True)                  # generate a list of possible transcriptions
