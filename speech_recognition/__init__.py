@@ -111,14 +111,14 @@ class Recognizer(AudioSource):
         # determine which converter executable to use
         system = platform.system()
         path = os.path.dirname(os.path.abspath(__file__)) # directory of the current module file, where all the FLAC bundled binaries are stored
-        if shutil.which("flac") is not None: # check for installed version first
-            flac_converter = shutil.which("flac")
-        elif system == "Windows" and platform.machine() in {"i386", "x86", "x86_64", "AMD64"}: # Windows NT, use the bundled FLAC conversion utility
-            flac_converter = os.path.join(path, "flac-win32.exe")
-        elif system == "Linux" and platform.machine() in {"i386", "x86", "x86_64", "AMD64"}:
-            flac_converter = os.path.join(path, "flac-linux-i386")
-        else:
-            raise ChildProcessError("FLAC conversion utility not available - consider installing the FLAC utility")
+        flac_converter = shutil.which("flac") # check for installed version first
+        if flac_converter is None: # flac utility is not installed
+            if system == "Windows" and platform.machine() in {"i386", "x86", "x86_64", "AMD64"}: # Windows NT, use the bundled FLAC conversion utility
+                flac_converter = os.path.join(path, "flac-win32.exe")
+            elif system == "Linux" and platform.machine() in {"i386", "x86", "x86_64", "AMD64"}:
+                flac_converter = os.path.join(path, "flac-linux-i386")
+            else:
+                raise ChildProcessError("FLAC conversion utility not available - consider installing the FLAC command line application")
         process = subprocess.Popen("\"%s\" --stdout --totally-silent --best -" % flac_converter, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
         flac_data, stderr = process.communicate(wav_data)
         return flac_data
@@ -154,9 +154,8 @@ class Recognizer(AudioSource):
 
         # store audio input until the phrase starts
         while True:
-            # handle timeout if specified
             elapsed_time += seconds_per_buffer
-            if timeout and elapsed_time > timeout:
+            if timeout and elapsed_time > timeout: # handle timeout if specified
                 raise TimeoutError("listening timed out")
 
             buffer = source.stream.read(source.CHUNK)
