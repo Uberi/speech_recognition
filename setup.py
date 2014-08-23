@@ -2,8 +2,8 @@ import os
 from setuptools import setup, find_packages
 
 import sys
-if sys.version_info < (3, 3):
-    print("THIS MODULE REQUIRES PYTHON 3.3 OR LATER. YOU ARE CURRENTLY USING PYTHON " + sys.version)
+if sys.version_info < (2, 7):
+    print("THIS MODULE REQUIRES PYTHON 2.7 OR LATER. YOU ARE CURRENTLY USING PYTHON " + sys.version)
     sys.exit(1)
 
 import speech_recognition
@@ -31,9 +31,8 @@ setup(
         "Operating System :: POSIX :: Linux",
         "Operating System :: Other OS",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.3",
-        "Programming Language :: Python :: 3.4",
+        "Programming Language :: Python :: 2",
+        "Programming Language :: Python :: 2.7",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
 )
