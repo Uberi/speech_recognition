@@ -6,7 +6,12 @@ __license__ = 'BSD'
 
 import io, subprocess, wave, shutil
 import math, audioop, collections
-import json, urllib.request
+import json
+
+try:  # try to use python2 module
+    from urllib2 import Request, urlopen
+except ImportError:  # otherwise, use python3 module
+    from urllib.request import Request, urlopen
 
 #wip: filter out clicks and other too short parts
 
@@ -196,10 +201,10 @@ class Recognizer(AudioSource):
         assert isinstance(audio_data, AudioData)
 
         url = "http://www.google.com/speech-api/v2/recognize?client=chromium&lang=%s&key=%s" % (self.language, self.key)
-        self.request = urllib.request.Request(url, data = audio_data.data, headers = {"Content-Type": "audio/x-flac; rate=%s" % audio_data.rate})
+        self.request = Request(url, data = audio_data.data, headers = {"Content-Type": "audio/x-flac; rate=%s" % audio_data.rate})
         # check for invalid key response from the server
         try:
-            response = urllib.request.urlopen(self.request)
+            response = urlopen(self.request)
         except:
             raise KeyError("Server wouldn't respond (invalid key or quota has been maxed out)")
         response_text = response.read().decode("utf-8")
