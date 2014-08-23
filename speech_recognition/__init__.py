@@ -106,11 +106,12 @@ class Recognizer(AudioSource):
     def samples_to_flac(self, source, frame_data):
         import platform, os
         with io.BytesIO() as wav_file:
-            with wave.open(wav_file, "wb") as wav_writer:
-                wav_writer.setsampwidth(source.SAMPLE_WIDTH)
-                wav_writer.setnchannels(source.CHANNELS)
-                wav_writer.setframerate(source.RATE)
-                wav_writer.writeframes(frame_data)
+            wav_writer = wave.open(wav_file, "wb")
+            wav_writer.setsampwidth(source.SAMPLE_WIDTH)
+            wav_writer.setnchannels(source.CHANNELS)
+            wav_writer.setframerate(source.RATE)
+            wav_writer.writeframes(frame_data)
+            wav_writer.close()
             wav_data = wav_file.getvalue()
 
         # determine which converter executable to use
