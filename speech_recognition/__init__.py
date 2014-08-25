@@ -4,9 +4,14 @@ __author__ = 'Anthony Zhang (Uberi)'
 __version__ = '1.0.4'
 __license__ = 'BSD'
 
-import io, subprocess, wave, shutil
+import io, os, subprocess, wave
 import math, audioop, collections
-import json, urllib.request
+import json
+
+try:  # try to use python2 module
+    from urllib2 import Request, urlopen
+except ImportError:  # otherwise, use python3 module
+    from urllib.request import Request, urlopen
 
 #wip: filter out clicks and other too short parts
 
@@ -101,17 +106,20 @@ class Recognizer(AudioSource):
     def samples_to_flac(self, source, frame_data):
         import platform, os
         with io.BytesIO() as wav_file:
-            with wave.open(wav_file, "wb") as wav_writer:
+            wav_writer = wave.open(wav_file, "wb")
+            try:
                 wav_writer.setsampwidth(source.SAMPLE_WIDTH)
                 wav_writer.setnchannels(source.CHANNELS)
                 wav_writer.setframerate(source.RATE)
                 wav_writer.writeframes(frame_data)
+            finally:  # make sure resources are cleaned up
+                wav_writer.close()
             wav_data = wav_file.getvalue()
 
         # determine which converter executable to use
         system = platform.system()
         path = os.path.dirname(os.path.abspath(__file__)) # directory of the current module file, where all the FLAC bundled binaries are stored
-        flac_converter = shutil.which("flac") # check for installed version first
+        flac_converter = shutil_which("flac") # check for installed version first
         if flac_converter is None: # flac utility is not installed
             if system == "Windows" and platform.machine() in {"i386", "x86", "x86_64", "AMD64"}: # Windows NT, use the bundled FLAC conversion utility
                 flac_converter = os.path.join(path, "flac-win32.exe")
@@ -196,10 +204,10 @@ class Recognizer(AudioSource):
         assert isinstance(audio_data, AudioData)
 
         url = "http://www.google.com/speech-api/v2/recognize?client=chromium&lang=%s&key=%s" % (self.language, self.key)
-        self.request = urllib.request.Request(url, data = audio_data.data, headers = {"Content-Type": "audio/x-flac; rate=%s" % audio_data.rate})
+        self.request = Request(url, data = audio_data.data, headers = {"Content-Type": "audio/x-flac; rate=%s" % audio_data.rate})
         # check for invalid key response from the server
         try:
-            response = urllib.request.urlopen(self.request)
+            response = urlopen(self.request)
         except:
             raise KeyError("Server wouldn't respond (invalid key or quota has been maxed out)")
         response_text = response.read().decode("utf-8")
@@ -236,6 +244,20 @@ class Recognizer(AudioSource):
             else:
                 spoken_text.append({"text":prediction["transcript"],"confidence":default_confidence})
         return spoken_text
+
+
+# helper functions
+
+def shutil_which(pgm):
+    """
+    python2 backport of python3's shutil.which()
+    """
+    path = os.getenv('PATH')
+    for p in path.split(os.path.pathsep):
+        p = os.path.join(p, pgm)
+        if os.path.exists(p) and os.access(p, os.X_OK):
+            return p
+
 
 if __name__ == "__main__":
     r = Recognizer()
