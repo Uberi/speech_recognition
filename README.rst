@@ -223,7 +223,7 @@ Please report bugs and suggestions at the `issue tracker <https://github.com/Ube
 License
 -------
 
-Copyright 2014 Anthony Zhang azhang9@gmail.com (Uberi).
+Copyright 2014 `Anthony Zhang (Uberi) <https://uberi.github.io>`.
 
 The source code is available online at `GitHub <https://github.com/Uberi/speech_recognition>`__.
 
