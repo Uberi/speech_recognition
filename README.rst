@@ -101,7 +101,7 @@ If ``filename_or_fileobject`` is a string, then it is interpreted as a path to a
 
 This class is to be used with ``with`` statements:
 
-::
+.. code:: python
 
     with WavFile("test.wav") as source:    # open the WAV file for reading
         pass                               # do things here - `source` is the WavFile instance created above
@@ -223,7 +223,7 @@ Please report bugs and suggestions at the `issue tracker <https://github.com/Ube
 License
 -------
 
-Copyright 2014 `Anthony Zhang (Uberi) <https://uberi.github.io>`.
+Copyright 2014 `Anthony Zhang (Uberi) <https://uberi.github.io>`__.
 
 The source code is available online at `GitHub <https://github.com/Uberi/speech_recognition>`__.
 
