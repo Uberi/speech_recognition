@@ -1,6 +1,22 @@
 Google Speech Recognition
 =========================
 
+.. image:: https://pypip.in/download/SpeechRecognition/badge.svg
+    :target: https://pypi.python.org/pypi/SpeechRecognition/
+    :alt: Downloads
+
+.. image:: https://pypip.in/version/SpeechRecognition/badge.svg
+    :target: https://pypi.python.org/pypi/SpeechRecognition/
+    :alt: Latest Version
+
+.. image:: https://pypip.in/status/SpeechRecognition/badge.svg
+    :target: https://pypi.python.org/pypi/SpeechRecognition/
+    :alt: Development Status
+
+.. image:: https://pypip.in/license/SpeechRecognition/badge.svg
+    :target: https://pypi.python.org/pypi/SpeechRecognition/
+    :alt: License
+
 Library for performing speech recognition with the Google Speech
 Recognition API.
 
