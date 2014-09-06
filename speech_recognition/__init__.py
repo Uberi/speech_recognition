@@ -8,9 +8,9 @@ import io, os, subprocess, wave
 import math, audioop, collections
 import json
 
-try:  # try to use python2 module
+try: # try to use python2 module
     from urllib2 import Request, urlopen
-except ImportError:  # otherwise, use python3 module
+except ImportError: # otherwise, use python3 module
     from urllib.request import Request, urlopen
 
 #wip: filter out clicks and other too short parts
@@ -135,7 +135,7 @@ class Recognizer(AudioSource):
         assert isinstance(source, AudioSource) and source.stream
 
         frames = io.BytesIO()
-        seconds_per_buffer = source.CHUNK / source.RATE
+        seconds_per_buffer = (source.CHUNK + 0.0) / source.RATE
         elapsed_time = 0
         while True: # loop for the total number of chunks needed
             elapsed_time += seconds_per_buffer
@@ -155,7 +155,7 @@ class Recognizer(AudioSource):
         # record audio data as raw samples
         frames = collections.deque()
         assert self.pause_threshold >= self.quiet_duration >= 0
-        seconds_per_buffer = source.CHUNK / source.RATE
+        seconds_per_buffer = (source.CHUNK + 0.0) / source.RATE
         pause_buffer_count = math.ceil(self.pause_threshold / seconds_per_buffer) # number of buffers of quiet audio before the phrase is complete
         quiet_buffer_count = math.ceil(self.quiet_duration / seconds_per_buffer) # maximum number of buffers of quiet audio to retain before and after
         elapsed_time = 0
