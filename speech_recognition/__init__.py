@@ -156,8 +156,8 @@ class Recognizer(AudioSource):
         frames = collections.deque()
         assert self.pause_threshold >= self.quiet_duration >= 0
         seconds_per_buffer = (source.CHUNK + 0.0) / source.RATE
-        pause_buffer_count = math.ceil(self.pause_threshold / seconds_per_buffer) # number of buffers of quiet audio before the phrase is complete
-        quiet_buffer_count = math.ceil(self.quiet_duration / seconds_per_buffer) # maximum number of buffers of quiet audio to retain before and after
+        pause_buffer_count = int(math.ceil(self.pause_threshold / seconds_per_buffer)) # number of buffers of quiet audio before the phrase is complete
+        quiet_buffer_count = int(math.ceil(self.quiet_duration / seconds_per_buffer)) # maximum number of buffers of quiet audio to retain before and after
         elapsed_time = 0
 
         # store audio input until the phrase starts
