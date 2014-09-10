@@ -163,7 +163,9 @@ Records a single phrase from ``source`` (an ``AudioSource`` instance) into an ``
 
 This is done by waiting until the audio has an energy above ``recognizer_instance.energy_threshold`` (the user has started speaking), and then recording until it encounters ``recognizer_instance.pause_threshold`` seconds of silence or there is no more audio input. The ending silence is not included.
 
-``recognizer_instance.recognize(audio_data, show_all=False)``
+The ``timeout`` parameter is the maximum number of seconds that it will wait for a phrase to start before giving up and throwing a `TimeoutException` exception. If `None`, it will wait indefinitely.
+
+``recognizer_instance.recognize(audio_data, show_all = False)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Performs speech recognition, using the Google Speech Recognition API, on ``audio_data`` (an ``AudioData`` instance).
