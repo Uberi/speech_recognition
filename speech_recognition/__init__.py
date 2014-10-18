@@ -195,9 +195,9 @@ class Recognizer(AudioSource):
                 break
 
          # obtain frame data
-        for i in range(quiet_buffer_count, pause_buffer_count): frames.pop() # remove extra quiet frames at the end
+        for i in range(quiet_buffer_count, pause_count): frames.pop() # remove extra quiet frames at the end
         frame_data = b"".join(list(frames))
-
+        
         return AudioData(source.RATE, self.samples_to_flac(source, frame_data))
 
     def recognize(self, audio_data, show_all = False):
@@ -205,6 +205,7 @@ class Recognizer(AudioSource):
 
         url = "http://www.google.com/speech-api/v2/recognize?client=chromium&lang=%s&key=%s" % (self.language, self.key)
         self.request = Request(url, data = audio_data.data, headers = {"Content-Type": "audio/x-flac; rate=%s" % audio_data.rate})
+        
         # check for invalid key response from the server
         try:
             response = urlopen(self.request)
@@ -245,9 +246,6 @@ class Recognizer(AudioSource):
                 spoken_text.append({"text":prediction["transcript"],"confidence":default_confidence})
         return spoken_text
 
-
-# helper functions
-
 def shutil_which(pgm):
     """
     python2 backport of python3's shutil.which()
@@ -257,7 +255,6 @@ def shutil_which(pgm):
         p = os.path.join(p, pgm)
         if os.path.exists(p) and os.access(p, os.X_OK):
             return p
-
 
 if __name__ == "__main__":
     r = Recognizer()
