@@ -121,9 +121,9 @@ class Recognizer(AudioSource):
         path = os.path.dirname(os.path.abspath(__file__)) # directory of the current module file, where all the FLAC bundled binaries are stored
         flac_converter = shutil_which("flac") # check for installed version first
         if flac_converter is None: # flac utility is not installed
-            if system == "Windows" and platform.machine() in set("i386", "x86", "x86_64", "AMD64"): # Windows NT, use the bundled FLAC conversion utility
+            if system == "Windows" and platform.machine() in ["i386", "x86", "x86_64", "AMD64"]: # Windows NT, use the bundled FLAC conversion utility
                 flac_converter = os.path.join(path, "flac-win32.exe")
-            elif system == "Linux" and platform.machine() in set("i386", "x86", "x86_64", "AMD64"):
+            elif system == "Linux" and platform.machine() in ["i386", "x86", "x86_64", "AMD64"]:
                 flac_converter = os.path.join(path, "flac-linux-i386")
             else:
                 raise ChildProcessError("FLAC conversion utility not available - consider installing the FLAC command line application")
