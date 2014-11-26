@@ -126,7 +126,7 @@ class Recognizer(AudioSource):
             elif system == "Linux" and platform.machine() in set("i386", "x86", "x86_64", "AMD64"):
                 flac_converter = os.path.join(path, "flac-linux-i386")
             else:
-                raise ChildProcessError("FLAC conversion utility not available - consider installing the FLAC command line application")
+                raise ChildProcessError("FLAC conversion utility not available - consider installing the FLAC command line application using brew install flac")
         process = subprocess.Popen("\"%s\" --stdout --totally-silent --best -" % flac_converter, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
         flac_data, stderr = process.communicate(wav_data)
         return flac_data
