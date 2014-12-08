@@ -104,7 +104,7 @@ class Recognizer(AudioSource):
         self.quiet_duration = 0.5 # amount of quiet time to keep on both sides of the recording
 
     def samples_to_flac(self, source, frame_data):
-        import platform, os
+        import platform, os, stat
         with io.BytesIO() as wav_file:
             wav_writer = wave.open(wav_file, "wb")
             try:
@@ -127,6 +127,13 @@ class Recognizer(AudioSource):
                 flac_converter = os.path.join(path, "flac-linux-i386")
             else:
                 raise ChildProcessError("FLAC conversion utility not available - consider installing the FLAC command line application using brew install flac")
+
+        # mark covnerter as executable
+        try:
+            stat_info = os.stat(flac_converter)
+            os.chmod(flac_converter, stat_info.st_mode | stat.S_IEXEC)
+        except OSError: pass
+
         process = subprocess.Popen("\"%s\" --stdout --totally-silent --best -" % flac_converter, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
         flac_data, stderr = process.communicate(wav_data)
         return flac_data
