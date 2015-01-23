@@ -89,7 +89,8 @@ In the folder, run ``python setup.py install``.
 Troubleshooting
 ---------------
 
-### The `sr.Microphone` class is missing/not defined!
+The `sr.Microphone` class is missing/not defined!
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This class is not defined when PyAudio is not available.
 
@@ -97,7 +98,8 @@ Make sure you have PyAudio installed, and make sure you can import it correctly.
 
 See the [Requirements](#Requirements) section for more information about installing PyAudio.
 
-### The recognizer tries to recognize speech even when I'm not speaking/the recognizer doesn't try to recognize when I'm speaking.
+The recognizer tries to recognize speech even when I'm not speaking/the recognizer doesn't try to recognize when I'm speaking.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Try adjusting the `recognizer_instance.energy_threshold` property - a higher value if it tries to recognize when it shouldn't, and a lower value if it doesn't recognize when it should.
 
