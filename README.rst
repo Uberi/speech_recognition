@@ -86,6 +86,25 @@ Otherwise, download the source distribution from `PyPI <https://pypi.python.org/
 
 In the folder, run ``python setup.py install``.
 
+Troubleshooting
+---------------
+
+### The `sr.Microphone` class is missing/not defined!
+
+This class is not defined when PyAudio is not available.
+
+Make sure you have PyAudio installed, and make sure you can import it correctly. Test this out by opening a Python console (make sure to use the same version you're running your program with!) and typing in `import pyaudio`. If you get an error, PyAudio is not installed or not configured correctly.
+
+See the [Requirements](#Requirements) section for more information about installing PyAudio.
+
+### The recognizer tries to recognize speech even when I'm not speaking/the recognizer doesn't try to recognize when I'm speaking.
+
+Try adjusting the `recognizer_instance.energy_threshold` property - a higher value if it tries to recognize when it shouldn't, and a lower value if it doesn't recognize when it should.
+
+This is basically how sensitive the recognizer is to when recognition should start. Higher values mean that it will be less sensitive, which is useful if you are in a loud room.
+
+This value depends entirely on your microphone or audio data. There is no one-size-fits-all value, but good values typically range from 50 to 4000.
+
 Reference
 ---------
 
@@ -141,6 +160,17 @@ If you need to use this module for purposes other than these, please obtain your
 Represents the energy level threshold for sounds. Values below this threshold are considered silence. Can be changed.
 
 This threshold is associated with the perceived loudness of the sound, but it is a nonlinear relationship. Typical values for a silent room are 0 to 1, and typical values for speaking are between 150 and 3500.
+
+If you're having trouble with the recognizer trying to recognize words even when you're not speaking, try tweaking this to a higher value. For example, a sensitive microphone or microphones in louder rooms might have a baseline energy level of up to 4000:
+
+.. code:: python
+
+    import speech_recognition as sr
+    r = sr.Recognizer()
+    r.energy_threshold = 4000
+    # rest of your code goes here
+
+The actual energy threshold you will need depends on your microphone or audio data.
 
 ``recognizer_instance.pause_threshold = 0.8``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
