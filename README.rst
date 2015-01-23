@@ -96,7 +96,7 @@ This class is not defined when PyAudio is not available.
 
 Make sure you have PyAudio installed, and make sure you can import it correctly. Test this out by opening a Python console (make sure to use the same version you're running your program with!) and typing in `import pyaudio`. If you get an error, PyAudio is not installed or not configured correctly.
 
-See the [Requirements](#Requirements) section for more information about installing PyAudio.
+See the `Requirements <#Requirements>`__ section for more information about installing PyAudio.
 
 The recognizer tries to recognize speech even when I'm not speaking/the recognizer doesn't try to recognize when I'm speaking.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
