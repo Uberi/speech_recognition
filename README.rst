@@ -96,12 +96,12 @@ This class is not defined when PyAudio is not available.
 
 Make sure you have PyAudio installed, and make sure you can import it correctly. Test this out by opening a Python console (make sure to use the same version you're running your program with!) and typing in `import pyaudio`. If you get an error, PyAudio is not installed or not configured correctly.
 
-See the `Requirements <#Requirements>`__ section for more information about installing PyAudio.
+See the "Requirements" section for more information about installing PyAudio.
 
 The recognizer tries to recognize speech even when I'm not speaking/the recognizer doesn't try to recognize when I'm speaking.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Try adjusting the `recognizer_instance.energy_threshold` property - a higher value if it tries to recognize when it shouldn't, and a lower value if it doesn't recognize when it should.
+Try adjusting the ``recognizer_instance.energy_threshold`` property - a higher value if it tries to recognize when it shouldn't, and a lower value if it doesn't recognize when it should.
 
 This is basically how sensitive the recognizer is to when recognition should start. Higher values mean that it will be less sensitive, which is useful if you are in a loud room.
 
