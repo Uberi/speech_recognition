@@ -89,7 +89,7 @@ In the folder, run ``python setup.py install``.
 Troubleshooting
 ---------------
 
-The `sr.Microphone` class is missing/not defined!
+The ``Microphone`` class is missing/not defined!
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This class is not defined when PyAudio is not available.
