@@ -25,7 +25,7 @@ Links:
 -  `PyPI <https://pypi.python.org/pypi/SpeechRecognition/>`__
 -  `GitHub <https://github.com/Uberi/speech_recognition>`__
 
-Quickstart: ``pip install SpeechRecognition``.
+Quickstart: ``pip install SpeechRecognition``. See the "Installing" section for more details.
 
 Examples
 --------
@@ -80,11 +80,52 @@ Transcribe a WAV audio file and show the confidence of each:
 Installing
 ----------
 
+First, make sure you have all the requirements, listed in the "Requirements" section.
+
 The easiest way to install this is using ``pip install SpeechRecognition``.
 
 Otherwise, download the source distribution from `PyPI <https://pypi.python.org/pypi/SpeechRecognition/>`__, and extract the archive.
 
 In the folder, run ``python setup.py install``.
+
+Requirements
+------------
+
+API Key
+~~~~~~~
+
+Google Speech Recognition API requires an API key. This library defaults to using one that was reverse engineered out of Chrome, but **it is not recommended that you use this API key for anything other than personal or testing purposes**.
+
+Instead, it is best to obtain your own API key by following the steps on the `API Keys <http://www.chromium.org/developers/how-tos/api-keys>`__ page at the Chromium Developers site.
+
+Python
+~~~~~~
+
+The first software requirement is `Python 2.6, 2.7, or Python 3.3+ <https://www.python.org/download/releases/>`__. This is required to use the library.
+
+PyAudio (for microphone users)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you want to use audio input from microphones, `PyAudio <http://people.csail.mit.edu/hubert/pyaudio/#downloads>`__ is also necessary. If not installed, the library will still work, but ``Microphone`` will be undefined.
+
+The official PyAudio builds seem to be broken on Windows. As a result, in the ``installers`` folder you will find `unofficial PyAudio builds for Windows <http://www.lfd.uci.edu/~gohlke/pythonlibs/#pyaudio>`__ that actually work. Run the installer corresponding to your Python version to install PyAudio.
+
+On Debain-based distributions, you can generally install PyAudio by running ``sudo apt-get install python-pyaudio python3-pyaudio``, which will install PyAudio for both Python 2 and Python 3.
+
+On other POSIX-based systems, simply use the packages provided on the downloads page, or compile and install it from source.
+
+FLAC (for some systems)
+~~~~~~~~~~~~~~~~~~~~~~~
+
+A FLAC encoder is required to encode the audio data to send to the API. If using Windows or Linux on an i385-compatible architecture, the encoder is already bundled with this library.
+
+Otherwise, ensure that you have the ``flac`` command line tool, which is often available through the system package manager.
+
+In summary, this library requires:
+
+* Python 2.6, 2.7, or 3.3+
+* PyAudio (required only if you need to use microphone input)
+* FLAC encoder (required only if the system is not x86-based Windows/Linux)
 
 Troubleshooting
 ---------------
@@ -237,27 +278,6 @@ Instances of subclasses of this class, such as ``Microphone`` and ``WavFile``, c
 Storage class for audio data.
 
 Contains the fields ``rate`` and ``data``, which represent the framerate and raw audio samples of the audio data, respectively.
-
-Requirements
-------------
-
-Google Speech Recognition API requires an API key. This library defaults to using one that was reverse engineered out of Chrome, but **it is not recommended that you use this API key for anything other than personal or testing purposes**.
-
-Instead, it is best to obtain your own API key by following the steps on the `API Keys <http://www.chromium.org/developers/how-tos/api-keys>`__ page at the Chromium Developers site.
-
-The first software requirement is `Python 2.6, 2.7, or Python 3.3+ <https://www.python.org/download/releases/>`__. This is required to use the library.
-
-If you want to use the ``Microphone`` class (necessary for recording from microphone input), `PyAudio <http://people.csail.mit.edu/hubert/pyaudio/#downloads>`__ is also necessary. If not installed, the library will still work, but ``Microphone`` will be undefined.
-
-The official PyAudio builds seem to be broken on Windows. As a result, in the ``installers`` folder you will find `unofficial PyAudio builds for Windows <http://www.lfd.uci.edu/~gohlke/pythonlibs/#pyaudio>`__ that actually work. Run the installer corresponding to your Python version to install PyAudio.
-
-A FLAC encoder is required to encode the audio data to send to the API. If using Windows or Linux on an i385-compatible architecture, the encoder is already bundled with this library. Otherwise, ensure that you have the ``flac`` command line tool, which is often available through one's system package manager.
-
-In summary, this library requires:
-
-* Python 2.6, 2.7, or 3.3+
-* PyAudio if you need to use microphone input.
-* A FLAC encoder if not already supported.
 
 Authors
 -------
