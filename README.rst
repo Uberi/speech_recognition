@@ -110,9 +110,9 @@ If you want to use audio input from microphones, `PyAudio <http://people.csail.m
 
 The official PyAudio builds seem to be broken on Windows. As a result, in the ``installers`` folder you will find `unofficial PyAudio builds for Windows <http://www.lfd.uci.edu/~gohlke/pythonlibs/#pyaudio>`__ that actually work. Run the installer corresponding to your Python version to install PyAudio.
 
-On Debain-based distributions, you can generally install PyAudio by running ``sudo apt-get install python-pyaudio python3-pyaudio``, which will install PyAudio for both Python 2 and Python 3.
+On Debain-based distributions such as Ubuntu, you can generally install PyAudio by running ``sudo apt-get install python-pyaudio python3-pyaudio``, which will install it for both Python 2 and Python 3.
 
-On other POSIX-based systems, simply use the packages provided on the downloads page, or compile and install it from source.
+On other POSIX-based systems, simply use the packages provided on the downloads page linked above, or compile and install it from source.
 
 FLAC (for some systems)
 ~~~~~~~~~~~~~~~~~~~~~~~
