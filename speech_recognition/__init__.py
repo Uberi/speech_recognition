@@ -1,7 +1,7 @@
 """Library for performing speech recognition with the Google Speech Recognition API."""
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "1.1.4"
+__version__ = "1.1.5"
 __license__ = "BSD"
 
 import io, os, subprocess, wave
@@ -9,9 +9,10 @@ import math, audioop, collections
 import json
 
 try: # try to use python2 module
-    from urllib2 import Request, urlopen
+    from urllib2 import Request, urlopen, URLError
 except ImportError: # otherwise, use python3 module
     from urllib.request import Request, urlopen
+    from urllib.error import URLError
 
 #wip: filter out clicks and other too short parts
 
@@ -204,7 +205,7 @@ class Recognizer(AudioSource):
          # obtain frame data
         for i in range(quiet_buffer_count, pause_count): frames.pop() # remove extra quiet frames at the end
         frame_data = b"".join(list(frames))
-        
+
         return AudioData(source.RATE, self.samples_to_flac(source, frame_data))
 
     def recognize(self, audio_data, show_all = False):
@@ -212,10 +213,12 @@ class Recognizer(AudioSource):
 
         url = "http://www.google.com/speech-api/v2/recognize?client=chromium&lang=%s&key=%s" % (self.language, self.key)
         self.request = Request(url, data = audio_data.data, headers = {"Content-Type": "audio/x-flac; rate=%s" % audio_data.rate})
-        
+
         # check for invalid key response from the server
         try:
             response = urlopen(self.request)
+        except URLError:
+            raise EnvironmentError("No route to google")
         except:
             raise KeyError("Server wouldn't respond (invalid key or quota has been maxed out)")
         response_text = response.read().decode("utf-8")
