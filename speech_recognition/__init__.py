@@ -218,7 +218,7 @@ class Recognizer(AudioSource):
         try:
             response = urlopen(self.request)
         except URLError:
-            raise URLError("No route to google")
+            raise EnvironmentError("No route to google")
         except:
             raise KeyError("Server wouldn't respond (invalid key or quota has been maxed out)")
         response_text = response.read().decode("utf-8")

@@ -250,7 +250,7 @@ Note: confidence is set to 0 if it isn't given by Google
 Also raises a ``LookupError`` exception if the speech is unintelligible, or a ``KeyError`` if the key isn't valid or the quota for the key has been maxed out.
 
 Note: ``KeyError`` is a subclass of ``LookupError`` so a ``LookupError`` will catch both. To catch a ``KeyError`` you must place it before ``LookupError``
-It can also raise an ``URLError`` from python's urllib2 (python 2.x) or urllib.error (python 3) in case there is no way to reach the server.
+It can also raise an ``EnvironmentError`` in case there is no way to reach the server.
 
  eg:
 
@@ -258,19 +258,13 @@ It can also raise an ``URLError`` from python's urllib2 (python 2.x) or urllib.e
 
     import speech_recognition as sr
 
-    try: # try to use python2 module
-        from urllib2 import Request, urlopen, URLError
-    except ImportError: # otherwise, use python3 module
-        from urllib.request import Request, urlopen
-        from urllib.error import URLError
-
     r = sr.Recognizer()
     with sr.WavFile("test.wav") as source:              # use "test.wav" as the audio source
         audio = r.record(source)                        # extract audio data from the file
 
     try:
         print("You said " + r.recognize(audio))         # recognize speech using Google Speech Recognition
-    except URLError:                                    # there is no internet connection
+    except EnvironmentError:                            # there is no internet connection
         print("Service unreachable")
     except KeyError:                                    # the API key didn't work
         print("Invalid API key or quota maxed out")
