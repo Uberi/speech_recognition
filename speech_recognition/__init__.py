@@ -298,23 +298,19 @@ class Recognizer(AudioSource):
     
     def listen_in_background(self, source, callback):
         """
-        Spawns a new thread to continuously listen for new phrases in the background.
-        
-        Phrases resulting from listening to ``source`` (an ``AudioSource`` instance) are put into an ``AudioData`` instance, that is then passed to ``callback``.
-        
-        Returns a threading.Thread object
+        Spawns a thread to repeatedly record phrases from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance and call ``callback`` with that ``AudioData`` instance as soon as each phrase are detected.
+
+        Returns the thread (a ``threading.Thread`` instance) immediately, while the background thread continues to run in parallel.
+
+        Phrase recognition uses the exact same mechanism as ``recognizer_instance.listen(source)``.
+
+        The ``callback`` parameter is a function that should accept a single ``AudioData`` instance as its only parameter. Note that this function will be called from a non-main thread.
         """
         import threading
-        terminate_event = threading.Event()
         def threaded_listen():
-            while not terminate_event.is_set():
-                try:
-                    with source as s: audio = r.listen(s, 1) # make sure we're only listening for one second at a time in order to properly terminate the event
-                except TimeoutException:
-                    pass
-                else:
-                    if terminate_event.is_set(): break # make sure we don't call the callback if we terminated the thread while it was listening
-                    callback(audio)
+            while True:
+                with source as s: audio = r.listen(s)
+                callback(audio)
         listener_thread = threading.Thread(target=threaded_listen)
         listener_thread.start()
         return listener_thread
