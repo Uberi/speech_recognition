@@ -1,7 +1,9 @@
+#!/usr/bin/env python3
+
 """Library for performing speech recognition with the Google Speech Recognition API."""
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "1.1.4"
+__version__ = "1.2.0"
 __license__ = "BSD"
 
 import io, os, subprocess, wave
@@ -28,6 +30,13 @@ class AudioSource(object):
 try:
     import pyaudio
     class Microphone(AudioSource):
+        """
+        This is available if PyAudio is available, and is undefined otherwise.
+
+        Creates a new ``Microphone`` instance, which represents a physical microphone on the computer. Subclass of ``AudioSource``.
+
+        If ``device_index`` is unspecified or ``None``, the default microphone is used as the audio source. Otherwise, ``device_index`` should be the index of the device to use for audio input.
+        """
         def __init__(self, device_index = None):
             self.device_index = device_index
             self.format = pyaudio.paInt16 # 16-bit int sampling
@@ -57,6 +66,12 @@ except ImportError:
     pass
 
 class WavFile(AudioSource):
+    """
+    Creates a new ``WavFile`` instance, which represents a WAV audio file. Subclass of ``AudioSource``.
+
+    If ``filename_or_fileobject`` is a string, then it is interpreted as a path to a WAV audio file on the filesystem. Otherwise, ``filename_or_fileobject`` should be a file-like object such as ``io.BytesIO`` or similar. In either case, the specified file is used as the audio source.
+    """
+
     def __init__(self, filename_or_fileobject):
         if isinstance(filename_or_fileobject, str):
             self.filename = filename_or_fileobject
@@ -96,6 +111,13 @@ class AudioData(object):
 
 class Recognizer(AudioSource):
     def __init__(self, language = "en-US", key = "AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw"):
+        """
+        Creates a new ``Recognizer`` instance, which represents a collection of speech recognition functionality.
+
+        The language is determined by ``language``, a standard language code like `"en-US"` or `"en-GB"`, and defaults to US English. A list of supported language codes can be found `here <http://stackoverflow.com/questions/14257598/>`__. Basically, language codes can be just the language (``en``), or a language with a dialect (``en-US``).
+
+        The Google Speech Recognition API key is specified by ``key``. If not specified, it uses a generic key that works out of the box.
+        """
         self.key = key
         self.language = language
 
@@ -139,6 +161,11 @@ class Recognizer(AudioSource):
         return flac_data
 
     def record(self, source, duration = None):
+        """
+        Records up to ``duration`` seconds of audio from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance, which it returns.
+
+        If ``duration`` is not specified, then it will record until there is no more audio input.
+        """
         assert isinstance(source, AudioSource) and source.stream
 
         frames = io.BytesIO()
@@ -157,6 +184,13 @@ class Recognizer(AudioSource):
         return AudioData(source.RATE, self.samples_to_flac(source, frame_data))
 
     def listen(self, source, timeout = None):
+        """
+        Records a single phrase from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance, which it returns.
+
+        This is done by waiting until the audio has an energy above ``recognizer_instance.energy_threshold`` (the user has started speaking), and then recording until it encounters ``recognizer_instance.pause_threshold`` seconds of silence or there is no more audio input. The ending silence is not included.
+
+        The ``timeout`` parameter is the maximum number of seconds that it will wait for a phrase to start before giving up and throwing a ``TimeoutException`` exception. If ``None``, it will wait indefinitely.
+        """
         assert isinstance(source, AudioSource) and source.stream
 
         # record audio data as raw samples
@@ -208,6 +242,15 @@ class Recognizer(AudioSource):
         return AudioData(source.RATE, self.samples_to_flac(source, frame_data))
 
     def recognize(self, audio_data, show_all = False):
+        """
+        Performs speech recognition, using the Google Speech Recognition API, on ``audio_data`` (an ``AudioData`` instance).
+
+        Returns the most likely transcription if ``show_all`` is ``False``, otherwise it returns a ``dict`` of all possible transcriptions and their confidence levels.
+
+        Note: confidence is set to 0 if it isn't given by Google
+
+        Also raises a ``LookupError`` exception if the speech is unintelligible, or a ``KeyError`` if the key isn't valid or the quota for the key has been maxed out.
+        """
         assert isinstance(audio_data, AudioData)
 
         url = "http://www.google.com/speech-api/v2/recognize?client=chromium&lang=%s&key=%s" % (self.language, self.key)
@@ -252,6 +295,29 @@ class Recognizer(AudioSource):
             else:
                 spoken_text.append({"text":prediction["transcript"],"confidence":default_confidence})
         return spoken_text
+    
+    def listen_in_background(self, source, callback):
+        """
+        Spawns a new thread to continuously listen for new phrases in the background.
+        
+        Phrases resulting from listening to ``source`` (an ``AudioSource`` instance) are put into an ``AudioData`` instance, that is then passed to ``callback``.
+        
+        Returns a threading.Thread object
+        """
+        import threading
+        terminate_event = threading.Event()
+        def threaded_listen():
+            while not terminate_event.is_set():
+                try:
+                    with source as s: audio = r.listen(s, 1) # make sure we're only listening for one second at a time in order to properly terminate the event
+                except TimeoutException:
+                    pass
+                else:
+                    if terminate_event.is_set(): break # make sure we don't call the callback if we terminated the thread while it was listening
+                    callback(audio)
+        listener_thread = threading.Thread(target=threaded_listen)
+        listener_thread.start()
+        return listener_thread
 
 def shutil_which(pgm):
     """

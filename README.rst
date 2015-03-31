@@ -245,6 +245,17 @@ This is done by waiting until the audio has an energy above ``recognizer_instanc
 
 The ``timeout`` parameter is the maximum number of seconds that it will wait for a phrase to start before giving up and throwing a ``TimeoutException`` exception. If ``None``, it will wait indefinitely.
 
+``recognizer_instance.listen_in_background(source, callback)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Spawns a thread to repeatedly record phrases from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance and call ``callback`` with that ``AudioData`` instance as soon as each phrase are detected.
+
+Returns the thread (a ``threading.Thread`` instance) immediately, while the background thread continues to run in parallel.
+
+Phrase recognition uses the exact same mechanism as ``recognizer_instance.listen(source)``.
+
+The ``callback`` parameter is a function that should accept a single ``AudioData`` instance as its only parameter. Note that this function will be called from a non-main thread.
+
 ``recognizer_instance.recognize(audio_data, show_all = False)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

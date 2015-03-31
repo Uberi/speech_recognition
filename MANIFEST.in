@@ -1,3 +1,4 @@
 graft speech_recognition
 recursive-exclude speech_recognition *.pyc
 include README.rst
+include LICENSE.txt
