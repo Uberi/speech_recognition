@@ -148,6 +148,13 @@ This is basically how sensitive the recognizer is to when recognition should sta
 
 This value depends entirely on your microphone or audio data. There is no one-size-fits-all value, but good values typically range from 50 to 4000.
 
+The recognizer doesn't understand my particular language/dialect.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Try setting the language code when creating a ``Recognizer`` instance. For example, for British English it is better to use ``Recognizer("en-GB")`` rather than the default US English.
+
+See the "Reference" section for more information about language codes.
+
 Reference
 ---------
 
@@ -189,7 +196,7 @@ This class is to be used with ``with`` statements:
 
 Creates a new ``Recognizer`` instance, which represents a collection of speech recognition functionality.
 
-The language is determined by ``language``, a standard language code, and defaults to US English.
+The language is determined by ``language``, a standard language code like `"en-US"` or `"en-GB"`, and defaults to US English. A list of supported language codes can be found `here <http://stackoverflow.com/questions/14257598/>`__. Basically, language codes can be just the language (``en``), or a language with a dialect (``en-US``).
 
 The Google Speech Recognition API key is specified by ``key``. If not specified, it uses a generic key that works out of the box.
 
