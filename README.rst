@@ -17,8 +17,7 @@ Google Speech Recognition
     :target: https://pypi.python.org/pypi/SpeechRecognition/
     :alt: License
 
-Library for performing speech recognition with the Google Speech
-Recognition API.
+Library for performing speech recognition with the Google Speech Recognition API.
 
 Links:
 
