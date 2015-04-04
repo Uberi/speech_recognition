@@ -76,6 +76,20 @@ Transcribe a WAV audio file and show the confidence of each:
     except LookupError:                                 # speech is unintelligible
         print("Could not understand audio")
 
+Listening in the background:
+
+.. code:: python
+
+    def callback(self, audio):
+        try:
+            print("You said " + self.recognize(audio))
+        except LookupError:
+            print("Oops! Didn't catch that")
+    r.listen_in_background(m, callback)
+    
+    import time
+    while True: time.sleep(0.1)
+
 Installing
 ----------
 
@@ -253,7 +267,7 @@ Returns the thread (a ``threading.Thread`` instance) immediately, while the back
 
 Phrase recognition uses the exact same mechanism as ``recognizer_instance.listen(source)``.
 
-The ``callback`` parameter is a function that should accept a single ``AudioData`` instance as its only parameter. Note that this function will be called from a non-main thread.
+The ``callback`` parameter is a function that should accept two parameters - the ``recognizer_instance``, and an ``AudioData`` instance representing the captured audio. Note that this function will be called from a non-main thread.
 
 ``recognizer_instance.recognize(audio_data, show_all = False)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

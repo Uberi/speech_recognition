@@ -3,7 +3,7 @@
 """Library for performing speech recognition with the Google Speech Recognition API."""
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "1.2.0"
+__version__ = "1.2.1"
 __license__ = "BSD"
 
 import io, os, subprocess, wave
@@ -309,8 +309,8 @@ class Recognizer(AudioSource):
         import threading
         def threaded_listen():
             while True:
-                with source as s: audio = r.listen(s)
-                callback(audio)
+                with source as s: audio = self.listen(s)
+                callback(self, audio)
         listener_thread = threading.Thread(target=threaded_listen)
         listener_thread.start()
         return listener_thread
