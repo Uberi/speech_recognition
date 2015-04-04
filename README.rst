@@ -278,9 +278,9 @@ Returns the most likely transcription if ``show_all`` is ``False``, otherwise it
 
 Note: confidence is set to 0 if it isn't given by Google
 
-Also raises a ``LookupError`` exception if the speech is unintelligible, or a ``KeyError`` if the key isn't valid or the quota for the key has been maxed out.
+Also raises a ``LookupError`` exception if the speech is unintelligible, a ``KeyError`` if the key isn't valid or the quota for the key has been maxed out, and ``IndexError`` if there is no internet connection.
 
-Note: ``KeyError`` is a subclass of ``LookupError`` so a ``LookupError`` will catch both. To catch a ``KeyError`` you must place it before ``LookupError`` eg:
+Note: ``KeyError`` and ``IndexError`` is a subclass of ``LookupError`` so a ``LookupError`` will catch all three types of errors. To catch subclasses you must place their handler clause before ``LookupError``:
 
 .. code:: python
 
@@ -291,6 +291,8 @@ Note: ``KeyError`` is a subclass of ``LookupError`` so a ``LookupError`` will ca
 
     try:
         print("You said " + r.recognize(audio))         # recognize speech using Google Speech Recognition
+    except IndexError:                                  # the API key didn't work
+        print("No internet connection")
     except KeyError:                                    # the API key didn't work
         print("Invalid API key or quota maxed out")
     except LookupError:                                 # speech is unintelligible

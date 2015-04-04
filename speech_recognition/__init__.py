@@ -11,9 +11,10 @@ import math, audioop, collections
 import json
 
 try: # try to use python2 module
-    from urllib2 import Request, urlopen
+    from urllib2 import Request, urlopen, URLError
 except ImportError: # otherwise, use python3 module
     from urllib.request import Request, urlopen
+    from urllib.error import URLError
 
 #wip: filter out clicks and other too short parts
 
@@ -249,7 +250,7 @@ class Recognizer(AudioSource):
 
         Note: confidence is set to 0 if it isn't given by Google
 
-        Also raises a ``LookupError`` exception if the speech is unintelligible, or a ``KeyError`` if the key isn't valid or the quota for the key has been maxed out.
+        Also raises a ``LookupError`` exception if the speech is unintelligible, a ``KeyError`` if the key isn't valid or the quota for the key has been maxed out, and ``IndexError`` if there is no internet connection.
         """
         assert isinstance(audio_data, AudioData)
 
@@ -259,6 +260,8 @@ class Recognizer(AudioSource):
         # check for invalid key response from the server
         try:
             response = urlopen(self.request)
+        except URLError:
+            raise IndexError("No internet connection available to transfer audio data")
         except:
             raise KeyError("Server wouldn't respond (invalid key or quota has been maxed out)")
         response_text = response.read().decode("utf-8")
@@ -304,7 +307,7 @@ class Recognizer(AudioSource):
 
         Phrase recognition uses the exact same mechanism as ``recognizer_instance.listen(source)``.
 
-        The ``callback`` parameter is a function that should accept a single ``AudioData`` instance as its only parameter. Note that this function will be called from a non-main thread.
+        The ``callback`` parameter is a function that should accept two parameters - the ``recognizer_instance``, and an ``AudioData`` instance representing the captured audio. Note that this function will be called from a non-main thread.
         """
         import threading
         def threaded_listen():
