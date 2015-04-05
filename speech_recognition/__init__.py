@@ -3,7 +3,7 @@
 """Library for performing speech recognition with the Google Speech Recognition API."""
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "1.2.2"
+__version__ = "1.2.3"
 __license__ = "BSD"
 
 import io, os, subprocess, wave
@@ -39,6 +39,7 @@ try:
         If ``device_index`` is unspecified or ``None``, the default microphone is used as the audio source. Otherwise, ``device_index`` should be the index of the device to use for audio input.
         """
         def __init__(self, device_index = None):
+            assert device_index is None or isinstance(device_index, int), "Device index must be None or an integer"
             self.device_index = device_index
             self.format = pyaudio.paInt16 # 16-bit int sampling
             self.SAMPLE_WIDTH = pyaudio.get_sample_size(self.format)
@@ -77,6 +78,7 @@ class WavFile(AudioSource):
         if isinstance(filename_or_fileobject, str):
             self.filename = filename_or_fileobject
         else:
+            assert filename_or_fileobject.read, "Given WAV file must be a filename string or a file object"
             self.filename = None
             self.wav_file = filename_or_fileobject
         self.stream = None
@@ -119,6 +121,8 @@ class Recognizer(AudioSource):
 
         The Google Speech Recognition API key is specified by ``key``. If not specified, it uses a generic key that works out of the box.
         """
+        assert isinstance(language, str), "Language code must be a string"
+        assert isinstance(key, str), "Key must be a string"
         self.key = key
         self.language = language
 
@@ -127,16 +131,14 @@ class Recognizer(AudioSource):
         self.quiet_duration = 0.5 # amount of quiet time to keep on both sides of the recording
 
     def samples_to_flac(self, source, frame_data):
+        assert isinstance(source, AudioSource), "Source must be an audio source"
         import platform, os, stat
         with io.BytesIO() as wav_file:
-            wav_writer = wave.open(wav_file, "wb")
-            try:
+            with wave.open(wav_file, "wb") as wav_writer:
                 wav_writer.setsampwidth(source.SAMPLE_WIDTH)
                 wav_writer.setnchannels(source.CHANNELS)
                 wav_writer.setframerate(source.RATE)
                 wav_writer.writeframes(frame_data)
-            finally:  # make sure resources are cleaned up
-                wav_writer.close()
             wav_data = wav_file.getvalue()
 
         # determine which converter executable to use
@@ -167,7 +169,7 @@ class Recognizer(AudioSource):
 
         If ``duration`` is not specified, then it will record until there is no more audio input.
         """
-        assert isinstance(source, AudioSource) and source.stream
+        assert isinstance(source, AudioSource), "Source must be an audio source"
 
         frames = io.BytesIO()
         seconds_per_buffer = (source.CHUNK + 0.0) / source.RATE
@@ -192,7 +194,7 @@ class Recognizer(AudioSource):
 
         The ``timeout`` parameter is the maximum number of seconds that it will wait for a phrase to start before giving up and throwing a ``TimeoutException`` exception. If ``None``, it will wait indefinitely.
         """
-        assert isinstance(source, AudioSource) and source.stream
+        assert isinstance(source, AudioSource), "Source must be an audio source"
 
         # record audio data as raw samples
         frames = collections.deque()
@@ -252,7 +254,7 @@ class Recognizer(AudioSource):
 
         Also raises a ``LookupError`` exception if the speech is unintelligible, a ``KeyError`` if the key isn't valid or the quota for the key has been maxed out, and ``IndexError`` if there is no internet connection.
         """
-        assert isinstance(audio_data, AudioData)
+        assert isinstance(audio_data, AudioData), "Data must be audio data"
 
         url = "http://www.google.com/speech-api/v2/recognize?client=chromium&lang=%s&key=%s" % (self.language, self.key)
         self.request = Request(url, data = audio_data.data, headers = {"Content-Type": "audio/x-flac; rate=%s" % audio_data.rate})
@@ -309,6 +311,7 @@ class Recognizer(AudioSource):
 
         The ``callback`` parameter is a function that should accept two parameters - the ``recognizer_instance``, and an ``AudioData`` instance representing the captured audio. Note that this function will be called from a non-main thread.
         """
+        assert isinstance(source, AudioSource), "Source must be an audio source"
         import threading
         def threaded_listen():
             while True:

@@ -81,9 +81,9 @@ Listening to a microphone in the background:
 .. code:: python
 
     import speech_recognition as sr
-    def callback(self, audio):                          # this is called from the background thread
+    def callback(recognizer, audio):                          # this is called from the background thread
         try:
-            print("You said " + self.recognize(audio))  # received audio data, now need to recognize it
+            print("You said " + recognizer.recognize(audio))  # received audio data, now need to recognize it
         except LookupError:
             print("Oops! Didn't catch that")
     r = sr.Recognizer()
