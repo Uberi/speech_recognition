@@ -76,19 +76,21 @@ Transcribe a WAV audio file and show the confidence of each:
     except LookupError:                                 # speech is unintelligible
         print("Could not understand audio")
 
-Listening in the background:
+Listening to a microphone in the background:
 
 .. code:: python
 
-    def callback(self, audio):
+    import speech_recognition as sr
+    def callback(self, audio):                          # this is called from the background thread
         try:
-            print("You said " + self.recognize(audio))
+            print("You said " + self.recognize(audio))  # received audio data, now need to recognize it
         except LookupError:
             print("Oops! Didn't catch that")
-    r.listen_in_background(m, callback)
+    r = sr.Recognizer()
+    r.listen_in_background(sr.Microphone(), callback)
     
     import time
-    while True: time.sleep(0.1)
+    while True: time.sleep(0.1)                         # we're still listening even though the main thread is blocked
 
 Installing
 ----------
