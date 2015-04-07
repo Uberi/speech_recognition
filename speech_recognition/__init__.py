@@ -3,7 +3,7 @@
 """Library for performing speech recognition with the Google Speech Recognition API."""
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "1.2.3"
+__version__ = "1.2.4"
 __license__ = "BSD"
 
 import io, os, subprocess, wave
@@ -134,11 +134,14 @@ class Recognizer(AudioSource):
         assert isinstance(source, AudioSource), "Source must be an audio source"
         import platform, os, stat
         with io.BytesIO() as wav_file:
-            with wave.open(wav_file, "wb") as wav_writer:
+            wav_writer = wave.open(wav_file, "wb")
+            try: # note that we can't use context manager due to Python 2 not supporting it
                 wav_writer.setsampwidth(source.SAMPLE_WIDTH)
                 wav_writer.setnchannels(source.CHANNELS)
                 wav_writer.setframerate(source.RATE)
                 wav_writer.writeframes(frame_data)
+            finally:  # make sure resources are cleaned up
+                wav_writer.close()
             wav_data = wav_file.getvalue()
 
         # determine which converter executable to use
