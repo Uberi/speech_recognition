@@ -127,6 +127,9 @@ class Recognizer(AudioSource):
         self.language = language
 
         self.energy_threshold = 100 # minimum audio energy to consider for recording
+        self.dynamic_energy_threshold = True
+        self.dynamic_energy_threshold_decay = .9
+        self.dynamic_energy_threshold_ratio_above_ambient = 1.10
         self.pause_threshold = 0.8 # seconds of quiet time before a phrase is considered complete
         self.quiet_duration = 0.5 # amount of quiet time to keep on both sides of the recording
 
@@ -221,6 +224,11 @@ class Recognizer(AudioSource):
             energy = audioop.rms(buffer, source.SAMPLE_WIDTH) # energy of the audio signal
             if energy > self.energy_threshold:
                 break
+
+            if self.dynamic_energy_threshold:
+                ambient_energy_with_ratio = (energy * self.dynamic_energy_threshold_ratio_above_ambient)
+                self.energy_threshold = (self.energy_threshold * self.dynamic_energy_threshold_decay) + \
+                                        (ambient_energy_with_ratio * (1 - self.dynamic_energy_threshold_decay))
 
             if len(frames) > quiet_buffer_count: # ensure we only keep the needed amount of quiet buffers
                 frames.popleft()
