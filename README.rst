@@ -373,6 +373,8 @@ Authors
     Uberi <azhang9@gmail.com> (Anthony Zhang)
     bobsayshilol
     arvindch <achembarpu@gmail.com> (Arvind Chembarpu)
+    kevinismith <kevin_i_smith@yahoo.com> (Kevin Smith)
+    haas85
 
 Please report bugs and suggestions at the `issue tracker <https://github.com/Uberi/speech_recognition/issues>`__!
 
@@ -383,4 +385,4 @@ Copyright 2014-2015 `Anthony Zhang (Uberi) <https://uberi.github.io>`__.
 
 The source code is available online at `GitHub <https://github.com/Uberi/speech_recognition>`__.
 
-This program is made available under the 3-clause BSD license. See ``LICENSE.txt`` for more information.
+This program is made available under the 3-clause BSD license. See ``LICENSE.txt`` in the project's root directory for more information.
