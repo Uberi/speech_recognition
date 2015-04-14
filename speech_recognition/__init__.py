@@ -3,7 +3,7 @@
 """Library for performing speech recognition with the Google Speech Recognition API."""
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "1.2.4"
+__version__ = "1.3.0"
 __license__ = "BSD"
 
 import io, os, subprocess, wave
@@ -40,6 +40,7 @@ try:
         """
         def __init__(self, device_index = None):
             assert device_index is None or isinstance(device_index, int), "Device index must be None or an integer"
+            if device_index is not None: assert 0 <= device_index < pyaudio.get_device_count(), "Device index out of range"
             self.device_index = device_index
             self.format = pyaudio.paInt16 # 16-bit int sampling
             self.SAMPLE_WIDTH = pyaudio.get_sample_size(self.format)
@@ -126,10 +127,10 @@ class Recognizer(AudioSource):
         self.key = key
         self.language = language
 
-        self.energy_threshold = 100 # minimum audio energy to consider for recording
+        self.energy_threshold = 300 # minimum audio energy to consider for recording
         self.dynamic_energy_threshold = True
-        self.dynamic_energy_threshold_decay = .9
-        self.dynamic_energy_threshold_ratio_above_ambient = 1.10
+        self.dynamic_energy_adjustment_damping = 0.15
+        self.dynamic_energy_ratio = 1.5
         self.pause_threshold = 0.8 # seconds of quiet time before a phrase is considered complete
         self.quiet_duration = 0.5 # amount of quiet time to keep on both sides of the recording
 
@@ -192,6 +193,34 @@ class Recognizer(AudioSource):
         frames.close()
         return AudioData(source.RATE, self.samples_to_flac(source, frame_data))
 
+    def adjust_for_ambient_noise(self, source, duration = 1):
+        """
+        Adjusts the energy threshold dynamically using audio from ``source`` (an ``AudioSource`` instance) to account for ambient noise.
+
+        Intended to calibrate the energy threshold with the ambient energy level. Should be used on periods of audio without speech - will stop early if any speech is detected.
+
+        The ``duration`` parameter is the maximum number of seconds that it will dynamically adjust the threshold for before returning. This value should be at least 0.5 in order to get a representative sample of the ambient noise.
+        """
+        assert isinstance(source, AudioSource), "Source must be an audio source"
+
+        seconds_per_buffer = (source.CHUNK + 0.0) / source.RATE
+        elapsed_time = 0
+
+        # adjust energy threshold until a phrase starts
+        while True:
+            elapsed_time += seconds_per_buffer
+            if elapsed_time > duration: break
+            buffer = source.stream.read(source.CHUNK)
+
+            # check if the audio input has stopped being quiet
+            energy = audioop.rms(buffer, source.SAMPLE_WIDTH) # energy of the audio signal
+            if energy > self.energy_threshold: break
+
+            # dynamically adjust the energy threshold using assymmetric weighted average
+            damping = self.dynamic_energy_adjustment_damping ** seconds_per_buffer # account for different chunk sizes and rates
+            target_energy = energy * self.dynamic_energy_ratio
+            self.energy_threshold = self.energy_threshold * damping + target_energy * (1 - damping)
+
     def listen(self, source, timeout = None):
         """
         Records a single phrase from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance, which it returns.
@@ -222,13 +251,13 @@ class Recognizer(AudioSource):
 
             # check if the audio input has stopped being quiet
             energy = audioop.rms(buffer, source.SAMPLE_WIDTH) # energy of the audio signal
-            if energy > self.energy_threshold:
-                break
+            if energy > self.energy_threshold: break
 
+            # dynamically adjust the energy threshold using assymmetric weighted average
             if self.dynamic_energy_threshold:
-                ambient_energy_with_ratio = (energy * self.dynamic_energy_threshold_ratio_above_ambient)
-                self.energy_threshold = (self.energy_threshold * self.dynamic_energy_threshold_decay) + \
-                                        (ambient_energy_with_ratio * (1 - self.dynamic_energy_threshold_decay))
+                damping = self.dynamic_energy_adjustment_damping ** seconds_per_buffer # account for different chunk sizes and rates
+                target_energy = energy * self.dynamic_energy_ratio
+                self.energy_threshold = self.energy_threshold * damping + target_energy * (1 - damping)
 
             if len(frames) > quiet_buffer_count: # ensure we only keep the needed amount of quiet buffers
                 frames.popleft()

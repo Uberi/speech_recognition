@@ -44,7 +44,6 @@ Recognize speech input from the microphone:
     except LookupError:                            # speech is unintelligible
         print("Could not understand audio")
 
-
 Transcribe a WAV audio file:
 
 .. code:: python
@@ -59,7 +58,7 @@ Transcribe a WAV audio file:
     except LookupError:                                 # speech is unintelligible
         print("Could not understand audio")
 
-Transcribe a WAV audio file and show the confidence of each:
+Transcribe a WAV audio file and show the confidence of each possibility:
 
 .. code:: python
 
@@ -91,6 +90,21 @@ Listening to a microphone in the background:
     
     import time
     while True: time.sleep(0.1)                         # we're still listening even though the main thread is blocked
+
+Calibrate the recognizer energy threshold (see ``recognizer_instance.energy_threshold``) for ambient noise levels:
+
+.. code:: python
+
+    import speech_recognition as sr
+    r = sr.Recognizer()
+    with sr.Microphone() as source:                # use the default microphone as the audio source
+        audio = r.adjust_for_ambient_noise(source) # listen for 1 second to calibrate the energy threshold for ambient noise levels
+        audio = r.listen(source)                   # now when we listen, the energy threshold is already set to a good value, and we can reliably catch speech right away
+
+    try:
+        print("You said " + r.recognize(audio))    # recognize speech using Google Speech Recognition
+    except LookupError:                            # speech is unintelligible
+        print("Could not understand audio")
 
 Installing
 ----------
@@ -154,14 +168,19 @@ Make sure you have PyAudio installed, and make sure you can import it correctly.
 
 See the "Requirements" section for more information about installing PyAudio.
 
-The recognizer tries to recognize speech even when I'm not speaking/the recognizer doesn't try to recognize when I'm speaking.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The recognizer tries to recognize speech even when I'm not speaking.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Try adjusting the ``recognizer_instance.energy_threshold`` property - a higher value if it tries to recognize when it shouldn't, and a lower value if it doesn't recognize when it should.
-
-This is basically how sensitive the recognizer is to when recognition should start. Higher values mean that it will be less sensitive, which is useful if you are in a loud room.
+Try increasing the ``recognizer_instance.energy_threshold`` property. This is basically how sensitive the recognizer is to when recognition should start. Higher values mean that it will be less sensitive, which is useful if you are in a loud room.
 
 This value depends entirely on your microphone or audio data. There is no one-size-fits-all value, but good values typically range from 50 to 4000.
+
+The recognizer can't recognize speech right after it starts listening for the first time.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``recognizer_instance.energy_threshold`` property is probably set to a value that is too high to start off with, and then being adjusted lower automatically by dynamic energy threshold adjustment. Before it is at a good level, the energy threshold is so high that speech is just considered ambient noise.
+
+The solution is to decrease this threshold, or call ``recognizer_instance.adjust_for_ambient_noise(source, duration = 1)`` beforehand, which will set the threshold to a good value automatically.
 
 The recognizer doesn't understand my particular language/dialect.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -215,18 +234,20 @@ The language is determined by ``language``, a standard language code like `"en-U
 
 The Google Speech Recognition API key is specified by ``key``. If not specified, it uses a generic key that works out of the box.
 
-**WARNING: THE GENERIC KEY IS INTENDED FOR TESTING AND PERSONAL PURPOSES ONLY AND MAY BE REVOKED BY GOOGLE IN THE FUTURE.**
+**WARNING: THE GENERIC KEY IS INTENDED FOR TESTING AND PERSONAL PURPOSES ONLY AND MAY BE REVOKED BY GOOGLE AT ANY TIME.**
 
 If you need to use this module for purposes other than these, please obtain your own API key from Google. See the "Requirements" section for more information.
 
-``recognizer_instance.energy_threshold = 100``
+``recognizer_instance.energy_threshold = 300``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Represents the energy level threshold for sounds. Values below this threshold are considered silence. Can be changed.
+Represents the energy level threshold for sounds. Values below this threshold are considered silence, and values above this threshold are considered speech. Can be changed.
 
-This threshold is associated with the perceived loudness of the sound, but it is a nonlinear relationship. Typical values for a silent room are 0 to 1, and typical values for speaking are between 150 and 3500.
+This is tweaked automatically if dynamic thresholds are enabled (see ``recognizer_instance.dynamic_energy_threshold``). A good starting value will generally allow automatic adjustment reach a good value faster.
 
-If you're having trouble with the recognizer trying to recognize words even when you're not speaking, try tweaking this to a higher value. For example, a sensitive microphone or microphones in louder rooms might have a baseline energy level of up to 4000:
+This threshold is associated with the perceived loudness of the sound, but it is a nonlinear relationship. The actual energy threshold you will need depends on your microphone sensitivity or audio data. Typical values for a silent room are 0 to 100, and typical values for speaking are between 150 and 3500. Ambient noise has a significant impact on what values will work best.
+
+If you're having trouble with the recognizer trying to recognize words even when you're not speaking, try tweaking this to a higher value. If you're having trouble with the recognizer not recognizing your words when you are speaking, try tweaking this to a lower value. For example, a sensitive microphone or microphones in louder rooms might have a ambient (non-speaking) energy level of up to 4000:
 
 .. code:: python
 
@@ -235,7 +256,28 @@ If you're having trouble with the recognizer trying to recognize words even when
     r.energy_threshold = 4000
     # rest of your code goes here
 
-The actual energy threshold you will need depends on your microphone or audio data.
+The dynamic energy threshold setting can mitigate this by increasing or decreasing this automatically to account for ambient noise. However, this takes time to adjust, so it is still possible to get the false positive detections before the threshold settles into a good value. To avoid this, set this property to a high value initially (4000 works well), so the threshold is always above ambient noise levels.
+
+``recognizer_instance.dynamic_energy_threshold = True``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Represents whether the energy level threshold (see ``recognizer_instance.energy_threshold``) for sounds should be automatically adjusted based on the currently ambient noise level while listening. Can be changed.
+
+Recommended for situations where the ambient noise level is unpredictable, which seems to be the majority of use cases. If the ambient noise level is strictly controlled, better results might be achieved by setting this to ``False`` to turn it off.
+
+``recognizer_instance.dynamic_energy_adjustment_damping = 0.15``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If the dynamic energy threshold setting is enabled (see ``recognizer_instance.dynamic_energy_threshold``), represents approximately the fraction of the current energy threshold that is retained after one second of dynamic threshold adjustment. Can be changed (not recommended).
+
+Lower values allow for faster adjustment, but also make it more likely to miss certain phrases. This value should be between 0 and 1. As this value approaches 1, dynamic adjustment has less of an effect over time. When this value is 1, dynamic adjustment does nothing.
+
+``recognizer_instance.dynamic_energy_adjustment_ratio = 1.5``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If the dynamic energy threshold setting is enabled (see ``recognizer_instance.dynamic_energy_threshold``), represents the minimum factor by which speech is louder than ambient noise. Can be changed (not recommended).
+
+For example, the default value of 1.5 means that speech is at least 1.5 times louder than ambient noise. Smaller values result in more false positives but fewer false negatives when ambient noise is loud compared to speech.
 
 ``recognizer_instance.pause_threshold = 0.8``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -250,6 +292,15 @@ Smaller values result in the recognition completing more quickly, but might resu
 Records up to ``duration`` seconds of audio from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance, which it returns.
 
 If ``duration`` is not specified, then it will record until there is no more audio input.
+
+``recognizer_instance.adjust_for_ambient_noise(source, duration = 1)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Adjusts the energy threshold dynamically using audio from ``source`` (an ``AudioSource`` instance) to account for ambient noise.
+
+Intended to calibrate the energy threshold with the ambient energy level. Should be used on periods of audio without speech - will stop early if any speech is detected.
+
+The ``duration`` parameter is the maximum number of seconds that it will dynamically adjust the threshold for before returning. This value should be at least 0.5 in order to get a representative sample of the ambient noise.
 
 ``recognizer_instance.listen(source, timeout = None)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
