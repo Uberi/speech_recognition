@@ -26,6 +26,14 @@ Links:
 
 Quickstart: ``pip install SpeechRecognition``. See the "Installing" section for more details.
 
+How to cite this library (APA style):
+
+    Zhang, A. (2015). Speech Recognition (Version 1.3) [Software]. Available from https://github.com/Uberi/speech_recognition#readme.
+
+How to cite this library (Chicago style):
+
+    Zhang, Anthony. 2015. *Speech Recognition* (version 1.3).
+
 Examples
 --------
 
