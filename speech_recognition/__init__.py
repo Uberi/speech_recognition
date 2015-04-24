@@ -3,7 +3,7 @@
 """Library for performing speech recognition with the Google Speech Recognition API."""
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "1.3.0"
+__version__ = "1.3.1"
 __license__ = "BSD"
 
 import io, os, subprocess, wave
@@ -40,7 +40,9 @@ try:
         """
         def __init__(self, device_index = None):
             assert device_index is None or isinstance(device_index, int), "Device index must be None or an integer"
-            if device_index is not None: assert 0 <= device_index < pyaudio.get_device_count(), "Device index out of range"
+            if device_index is not None: # ensure device index is in range
+                audio = pyaudio.PyAudio(); count = audio.get_device_count(); audio.terminate() # obtain device count
+                assert 0 <= device_index < count, "Device index out of range"
             self.device_index = device_index
             self.format = pyaudio.paInt16 # 16-bit int sampling
             self.SAMPLE_WIDTH = pyaudio.get_sample_size(self.format)
