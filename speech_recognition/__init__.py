@@ -160,7 +160,7 @@ class Recognizer(AudioSource):
             elif system == "Linux" and platform.machine() in ["i386", "x86", "x86_64", "AMD64"]:
                 flac_converter = os.path.join(path, "flac-linux-i386")
             else:
-                raise ChildProcessError("FLAC conversion utility not available - consider installing the FLAC command line application using brew install flac")
+                raise OSError("FLAC conversion utility not available - consider installing the FLAC command line application using `brew install flac` or your operating system's equivalent")
 
         # mark covnerter as executable
         try:
