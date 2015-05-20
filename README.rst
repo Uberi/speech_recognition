@@ -28,11 +28,11 @@ Quickstart: ``pip install SpeechRecognition``. See the "Installing" section for 
 
 How to cite this library (APA style):
 
-    Zhang, A. (2015). Speech Recognition (Version 1.3) [Software]. Available from https://github.com/Uberi/speech_recognition#readme.
+    Zhang, A. (2015). Speech Recognition (Version 1.4) [Software]. Available from https://github.com/Uberi/speech_recognition#readme.
 
 How to cite this library (Chicago style):
 
-    Zhang, Anthony. 2015. *Speech Recognition* (version 1.3).
+    Zhang, Anthony. 2015. *Speech Recognition* (version 1.4).
 
 Examples
 --------
@@ -172,7 +172,7 @@ The ``Microphone`` class is missing/not defined!
 
 This class is not defined when PyAudio is not available.
 
-Make sure you have PyAudio installed, and make sure you can import it correctly. Test this out by opening a Python console (make sure to use the same version you're running your program with!) and typing in `import pyaudio`. If you get an error, PyAudio is not installed or not configured correctly.
+Make sure you have PyAudio installed, and make sure you can import it correctly. Test this out by opening a Python console (make sure to use the same version you're running your program with!) and typing in ``import pyaudio``. If you get an error, PyAudio is not installed or not configured correctly.
 
 See the "Requirements" section for more information about installing PyAudio.
 

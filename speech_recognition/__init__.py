@@ -3,7 +3,7 @@
 """Library for performing speech recognition with the Google Speech Recognition API."""
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "1.3.1"
+__version__ = "1.4.0"
 __license__ = "BSD"
 
 import io, os, subprocess, wave
@@ -149,7 +149,7 @@ class Recognizer(AudioSource):
             finally:  # make sure resources are cleaned up
                 wav_writer.close()
             wav_data = wav_file.getvalue()
-
+        
         # determine which converter executable to use
         system = platform.system()
         path = os.path.dirname(os.path.abspath(__file__)) # directory of the current module file, where all the FLAC bundled binaries are stored
@@ -317,6 +317,7 @@ class Recognizer(AudioSource):
             result = json.loads(line)["result"]
             if len(result) != 0:
                 actual_result = result[0]
+                break
 
         # make sure we have a list of transcriptions
         if "alternative" not in actual_result:
@@ -325,22 +326,16 @@ class Recognizer(AudioSource):
         # return the best guess unless told to do otherwise
         if not show_all:
             for prediction in actual_result["alternative"]:
-                if "confidence" in prediction:
+                if "transcript" in prediction:
                     return prediction["transcript"]
             raise LookupError("Speech is unintelligible")
 
-        spoken_text = []
-
-        # check to see if Google thinks it's 100% correct
-        default_confidence = 0
-        if len(actual_result["alternative"])==1: default_confidence = 1
 
         # return all the possibilities
-        for prediction in actual_result["alternative"]:
-            if "confidence" in prediction:
-                spoken_text.append({"text":prediction["transcript"],"confidence":prediction["confidence"]})
-            else:
-                spoken_text.append({"text":prediction["transcript"],"confidence":default_confidence})
+        spoken_text = []
+        for i, prediction in enumerate(actual_result["alternative"]):
+            if "transcript" in prediction:
+                spoken_text.append({"text": prediction["transcript"], "confidence": 1 if i == 0 else 0})
         return spoken_text
     
     def listen_in_background(self, source, callback):
