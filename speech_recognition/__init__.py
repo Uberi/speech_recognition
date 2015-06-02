@@ -329,9 +329,8 @@ class Recognizer(AudioSource):
                 break
 
         # make sure we have a list of transcriptions
-        #if "alternative" not in actual_result:
-        #    raise LookupError("Speech is unintelligible")
-        print(actual_result)
+        if "alternative" not in actual_result:
+            raise LookupError("Speech is unintelligible")
 
         # return the best guess unless told to do otherwise
         if not show_all:
