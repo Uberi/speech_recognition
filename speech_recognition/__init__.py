@@ -94,6 +94,8 @@ class WavFile(AudioSource):
         self.CHANNELS = self.wav_reader.getnchannels()
         assert self.CHANNELS == 1 # audio must be mono
         self.CHUNK = 4096
+        self.FRAME_COUNT = self.wav_reader.getnframes()
+        self.DURATION = self.FRAME_COUNT / float(self.RATE)
         self.stream = WavFile.WavStream(self.wav_reader)
         return self
 
@@ -174,7 +176,7 @@ class Recognizer(AudioSource):
 
     def record(self, source, duration = None, offset = None):
         """
-        Records up to ``duration`` seconds of audio from ``source`` (an ``AudioSource`` instance) starting at ``offset`` (if specified) into an ``AudioData`` instance, which it returns.
+        Records up to ``duration`` seconds of audio from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance, which it returns.
 
         If ``duration`` is not specified, then it will record until there is no more audio input.
         """
@@ -329,8 +331,9 @@ class Recognizer(AudioSource):
                 break
 
         # make sure we have a list of transcriptions
-        if "alternative" not in actual_result:
-            raise LookupError("Speech is unintelligible")
+        #if "alternative" not in actual_result:
+        #    raise LookupError("Speech is unintelligible")
+        print(actual_result)
 
         # return the best guess unless told to do otherwise
         if not show_all:
