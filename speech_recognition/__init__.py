@@ -176,7 +176,7 @@ class Recognizer(AudioSource):
 
     def record(self, source, duration = None, offset = None):
         """
-        Records up to ``duration`` seconds of audio from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance, which it returns.
+        Records up to ``duration`` seconds of audio from ``source`` (an ``AudioSource`` instance) starting at ``offset`` (if specified) into an ``AudioData`` instance, which it returns.
 
         If ``duration`` is not specified, then it will record until there is no more audio input.
         """
@@ -331,9 +331,8 @@ class Recognizer(AudioSource):
                 break
 
         # make sure we have a list of transcriptions
-        #if "alternative" not in actual_result:
-        #    raise LookupError("Speech is unintelligible")
-        print(actual_result)
+        if "alternative" not in actual_result:
+            raise LookupError("Speech is unintelligible")
 
         # return the best guess unless told to do otherwise
         if not show_all:
