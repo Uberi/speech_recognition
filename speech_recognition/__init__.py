@@ -149,7 +149,7 @@ class Recognizer(AudioSource):
             finally:  # make sure resources are cleaned up
                 wav_writer.close()
             wav_data = wav_file.getvalue()
-        
+
         # determine which converter executable to use
         system = platform.system()
         path = os.path.dirname(os.path.abspath(__file__)) # directory of the current module file, where all the FLAC bundled binaries are stored
@@ -172,9 +172,9 @@ class Recognizer(AudioSource):
         flac_data, stderr = process.communicate(wav_data)
         return flac_data
 
-    def record(self, source, duration = None):
+    def record(self, source, duration = None, offset = None):
         """
-        Records up to ``duration`` seconds of audio from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance, which it returns.
+        Records up to ``duration`` seconds of audio from ``source`` (an ``AudioSource`` instance) starting at ``offset`` (if specified) into an ``AudioData`` instance, which it returns.
 
         If ``duration`` is not specified, then it will record until there is no more audio input.
         """
@@ -183,13 +183,22 @@ class Recognizer(AudioSource):
         frames = io.BytesIO()
         seconds_per_buffer = (source.CHUNK + 0.0) / source.RATE
         elapsed_time = 0
+        offset_time = 0
+        offset_reached = False
         while True: # loop for the total number of chunks needed
-            elapsed_time += seconds_per_buffer
-            if duration and elapsed_time > duration: break
+            if offset and not offset_reached:
+                offset_time += seconds_per_buffer
+                if offset_time > offset:
+                    offset_reached = True
 
             buffer = source.stream.read(source.CHUNK)
             if len(buffer) == 0: break
-            frames.write(buffer)
+
+            if offset_reached or not offset:
+                elapsed_time += seconds_per_buffer
+                if duration and elapsed_time > duration: break
+
+                frames.write(buffer)
 
         frame_data = frames.getvalue()
         frames.close()
@@ -283,7 +292,7 @@ class Recognizer(AudioSource):
          # obtain frame data
         for i in range(quiet_buffer_count, pause_count): frames.pop() # remove extra quiet frames at the end
         frame_data = b"".join(list(frames))
-        
+
         return AudioData(source.RATE, self.samples_to_flac(source, frame_data))
 
     def recognize(self, audio_data, show_all = False):
@@ -300,7 +309,7 @@ class Recognizer(AudioSource):
 
         url = "http://www.google.com/speech-api/v2/recognize?client=chromium&lang=%s&key=%s" % (self.language, self.key)
         self.request = Request(url, data = audio_data.data, headers = {"Content-Type": "audio/x-flac; rate=%s" % audio_data.rate})
-        
+
         # check for invalid key response from the server
         try:
             response = urlopen(self.request)
@@ -320,8 +329,9 @@ class Recognizer(AudioSource):
                 break
 
         # make sure we have a list of transcriptions
-        if "alternative" not in actual_result:
-            raise LookupError("Speech is unintelligible")
+        #if "alternative" not in actual_result:
+        #    raise LookupError("Speech is unintelligible")
+        print(actual_result)
 
         # return the best guess unless told to do otherwise
         if not show_all:
@@ -337,7 +347,7 @@ class Recognizer(AudioSource):
             if "transcript" in prediction:
                 spoken_text.append({"text": prediction["transcript"], "confidence": 1 if i == 0 else 0})
         return spoken_text
-    
+
     def listen_in_background(self, source, callback):
         """
         Spawns a thread to repeatedly record phrases from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance and call ``callback`` with that ``AudioData`` instance as soon as each phrase are detected.
