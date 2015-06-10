@@ -355,6 +355,7 @@ class Recognizer(AudioSource):
                 with source as s: audio = self.listen(s)
                 callback(self, audio)
         listener_thread = threading.Thread(target=threaded_listen)
+        listener_thread.daemon = True
         listener_thread.start()
         return listener_thread
 
