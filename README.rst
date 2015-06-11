@@ -97,7 +97,8 @@ Listening to a microphone in the background:
     r.listen_in_background(sr.Microphone(), callback)
     
     import time
-    while True: time.sleep(0.1)                         # we're still listening even though the main thread is blocked
+    for _ in range(10000): time.sleep(0.1)                    # we're still listening even though the main thread is blocked
+                                                              # when the loop stops, the program will exit and stop listening
 
 Calibrate the recognizer energy threshold (see ``recognizer_instance.energy_threshold``) for ambient noise levels:
 
@@ -324,7 +325,7 @@ The ``timeout`` parameter is the maximum number of seconds that it will wait for
 
 Spawns a thread to repeatedly record phrases from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance and call ``callback`` with that ``AudioData`` instance as soon as each phrase are detected.
 
-Returns the thread (a ``threading.Thread`` instance) immediately, while the background thread continues to run in parallel.
+Returns the thread (a ``threading.Thread`` instance) immediately, while the background thread continues to run in parallel. This thread is a daemon and will not stop the program from exiting if there are no other non-daemon threads.
 
 Phrase recognition uses the exact same mechanism as ``recognizer_instance.listen(source)``.
 
