@@ -198,6 +198,21 @@ Try setting the language code when creating a ``Recognizer`` instance. For examp
 
 See the "Reference" section for more information about language codes.
 
+The program doesn't run when compiled with `PyInstaller <https://github.com/pyinstaller/pyinstaller/wiki>`__.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+PyInstaller doesn't know that the FLAC converters need to be bundled with the application. To resolve this, we need to make a PyInstaller hook to include those files and tell PyInstaller where that hook is:
+
+1. Create a folder in your project directory to store PyInstaller hooks, if the project doesn't already have one. For example, a folder ``pyinstaller-hooks`` in the project root directory.
+2. Create a file called ``hook-speech_recognition.py`` in that folder, with the following contents:
+
+    .. code:: python
+
+        from PyInstaller.hooks.hookutils import collect_data_files
+        datas = collect_data_files("speech_recognition")
+
+3. When building the project using something like ``pyinstaller SOME_SCRIPT.py``, simply supply the ``--additional-hooks-dir`` option set to the PyInstaller hooks folder. For example, ``pyinstaller --additional-hooks-dir pyinstaller-hooks/ SOME_SCRIPT.py``.
+
 Reference
 ---------
 
