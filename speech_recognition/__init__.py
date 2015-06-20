@@ -159,6 +159,8 @@ class Recognizer(AudioSource):
                 flac_converter = os.path.join(path, "flac-win32.exe")
             elif system == "Linux" and platform.machine() in ["i386", "x86", "x86_64", "AMD64"]:
                 flac_converter = os.path.join(path, "flac-linux-i386")
+            elif system == 'Darwin' and platform.machine() in ["i386", "x86", "x86_64", "AMD64"]:
+                flac_converter = os.path.join(path, "flac-mac")
             else:
                 raise OSError("FLAC conversion utility not available - consider installing the FLAC command line application using `brew install flac` or your operating system's equivalent")
 
