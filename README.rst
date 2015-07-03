@@ -28,11 +28,11 @@ Quickstart: ``pip install SpeechRecognition``. See the "Installing" section for 
 
 How to cite this library (APA style):
 
-    Zhang, A. (2015). Speech Recognition (Version 1.4) [Software]. Available from https://github.com/Uberi/speech_recognition#readme.
+    Zhang, A. (2015). Speech Recognition (Version 1.5) [Software]. Available from https://github.com/Uberi/speech_recognition#readme.
 
 How to cite this library (Chicago style):
 
-    Zhang, Anthony. 2015. *Speech Recognition* (version 1.4).
+    Zhang, Anthony. 2015. *Speech Recognition* (version 1.5).
 
 Examples
 --------
