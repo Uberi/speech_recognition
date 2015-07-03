@@ -161,7 +161,7 @@ On other POSIX-based systems, simply use the packages provided on the downloads 
 FLAC (for some systems)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-A FLAC encoder is required to encode the audio data to send to the API. If using Windows or Linux on an i385-compatible architecture, the encoder is already bundled with this library.
+A FLAC encoder is required to encode the audio data to send to the API. If using Windows, OS X, or Linux on an i385-compatible architecture, the encoder is already bundled with this library.
 
 Otherwise, ensure that you have the ``flac`` command line tool, which is often available through the system package manager.
 
@@ -169,7 +169,7 @@ In summary, this library requires:
 
 * Python 2.6, 2.7, or 3.3+
 * PyAudio (required only if you need to use microphone input)
-* FLAC encoder (required only if the system is not x86-based Windows/Linux)
+* FLAC encoder (required only if the system is not x86-based Windows/Linux/OS X)
 
 Troubleshooting
 ---------------
