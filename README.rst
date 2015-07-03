@@ -1,19 +1,23 @@
 Google Speech Recognition
 =========================
 
-.. image:: https://pypip.in/download/SpeechRecognition/badge.svg
+.. image:: https://img.shields.io/pypi/dm/SpeechRecognition.svg
     :target: https://pypi.python.org/pypi/SpeechRecognition/
     :alt: Downloads
 
-.. image:: https://pypip.in/version/SpeechRecognition/badge.svg
+.. image:: https://img.shields.io/pypi/v/SpeechRecognition.svg
     :target: https://pypi.python.org/pypi/SpeechRecognition/
     :alt: Latest Version
 
-.. image:: https://pypip.in/status/SpeechRecognition/badge.svg
+.. image:: https://img.shields.io/pypi/status/SpeechRecognition.svg
     :target: https://pypi.python.org/pypi/SpeechRecognition/
     :alt: Development Status
 
-.. image:: https://pypip.in/license/SpeechRecognition/badge.svg
+.. image:: https://img.shields.io/pypi/pyversions/SpeechRecognition.svg
+    :target: https://pypi.python.org/pypi/SpeechRecognition/
+    :alt: Supported Python Versions
+
+.. image:: https://img.shields.io/pypi/l/SpeechRecognition.svg
     :target: https://pypi.python.org/pypi/SpeechRecognition/
     :alt: License
 
@@ -33,6 +37,8 @@ How to cite this library (APA style):
 How to cite this library (Chicago style):
 
     Zhang, Anthony. 2015. *Speech Recognition* (version 1.5).
+
+Also check out the [Python Baidu Yuyin API](https://github.com/DelightRun/PyBaiduYuyin), which is based on this project.
 
 Examples
 --------
@@ -408,6 +414,7 @@ Authors
     arvindch <achembarpu@gmail.com> (Arvind Chembarpu)
     kevinismith <kevin_i_smith@yahoo.com> (Kevin Smith)
     haas85
+    DelightRun <changxu.mail@gmail.com>
 
 Please report bugs and suggestions at the `issue tracker <https://github.com/Uberi/speech_recognition/issues>`__!
 
