@@ -85,6 +85,7 @@ class WavFile(AudioSource):
             self.filename = None
             self.wav_file = filename_or_fileobject
         self.stream = None
+        self.DURATION = None
 
     def __enter__(self):
         if self.filename: self.wav_file = open(self.filename, "rb")
@@ -102,6 +103,7 @@ class WavFile(AudioSource):
     def __exit__(self, exc_type, exc_value, traceback):
         if self.filename: self.wav_file.close()
         self.stream = None
+        self.DURATION = None
 
     class WavStream(object):
         def __init__(self, wav_reader):

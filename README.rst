@@ -249,6 +249,15 @@ This class is to be used with ``with`` statements:
     with WavFile("test.wav") as source:    # open the WAV file for reading
         pass                               # do things here - `source` is the WavFile instance created above
 
+``wavfile_instance.DURATION``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Represents the length of the audio stored in the WAV file in seconds. This property is only available when inside a context - essentially, that means it should only be accessed inside a ``with wavfile_instance ...`` statement. Outside of contexts, this property is ``None``.
+
+This is useful when combined with the ``offset`` parameter of ``recognizer_instance.record``, since when together it is possible to perform speech recognition in chunks.
+
+However, note that recognizing speech in multiple chunks is not the same as recognizing the whole thing at once. If spoken words appear on the boundaries that we split the audio into chunks on, each chunk only gets part of the word, which may result in inaccurate results.
+
 ``Recognizer(language = "en-US", key = "AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw")``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
