@@ -178,7 +178,7 @@ class Recognizer(AudioSource):
 
     def record(self, source, duration = None, offset = None):
         """
-        Records up to ``duration`` seconds of audio from ``source`` (an ``AudioSource`` instance) starting at ``offset`` (if specified) into an ``AudioData`` instance, which it returns.
+        Records up to ``duration`` seconds of audio from ``source`` (an ``AudioSource`` instance) starting at ``offset`` (or at the beginning if not specified) into an ``AudioData`` instance, which it returns.
 
         If ``duration`` is not specified, then it will record until there is no more audio input.
         """

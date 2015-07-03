@@ -297,7 +297,7 @@ If the dynamic energy threshold setting is enabled (see ``recognizer_instance.dy
 Lower values allow for faster adjustment, but also make it more likely to miss certain phrases. This value should be between 0 and 1. As this value approaches 1, dynamic adjustment has less of an effect over time. When this value is 1, dynamic adjustment does nothing.
 
 ``recognizer_instance.dynamic_energy_adjustment_ratio = 1.5``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If the dynamic energy threshold setting is enabled (see ``recognizer_instance.dynamic_energy_threshold``), represents the minimum factor by which speech is louder than ambient noise. Can be changed (not recommended).
 
@@ -310,10 +310,10 @@ Represents the minimum length of silence (in seconds) that will register as the 
 
 Smaller values result in the recognition completing more quickly, but might result in slower speakers being cut off.
 
-``recognizer_instance.record(source, duration = None)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``recognizer_instance.record(source, duration = None, offset = None)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Records up to ``duration`` seconds of audio from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance, which it returns.
+Records up to ``duration`` seconds of audio from ``source`` (an ``AudioSource`` instance) starting at ``offset`` (or at the beginning if not specified) into an ``AudioData`` instance, which it returns.
 
 If ``duration`` is not specified, then it will record until there is no more audio input.
 
