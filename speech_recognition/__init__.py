@@ -3,7 +3,7 @@
 """Library for performing speech recognition with the Google Speech Recognition API."""
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "1.5.0"
+__version__ = "2.0.0"
 __license__ = "BSD"
 
 import io, os, subprocess, wave
@@ -231,7 +231,6 @@ class Recognizer(AudioSource):
 
             # check if the audio input has stopped being quiet
             energy = audioop.rms(buffer, source.SAMPLE_WIDTH) # energy of the audio signal
-            if energy > self.energy_threshold: break
 
             # dynamically adjust the energy threshold using assymmetric weighted average
             damping = self.dynamic_energy_adjustment_damping ** seconds_per_buffer # account for different chunk sizes and rates
@@ -244,7 +243,7 @@ class Recognizer(AudioSource):
 
         This is done by waiting until the audio has an energy above ``recognizer_instance.energy_threshold`` (the user has started speaking), and then recording until it encounters ``recognizer_instance.pause_threshold`` seconds of silence or there is no more audio input. The ending silence is not included.
 
-        The ``timeout`` parameter is the maximum number of seconds that it will wait for a phrase to start before giving up and throwing a ``TimeoutException`` exception. If ``None``, it will wait indefinitely.
+        The ``timeout`` parameter is the maximum number of seconds that it will wait for a phrase to start before giving up and throwing a ``TimeoutError`` exception. If ``None``, it will wait indefinitely.
         """
         assert isinstance(source, AudioSource), "Source must be an audio source"
 
@@ -357,7 +356,7 @@ class Recognizer(AudioSource):
         """
         Spawns a thread to repeatedly record phrases from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance and call ``callback`` with that ``AudioData`` instance as soon as each phrase are detected.
 
-        Returns the thread (a ``threading.Thread`` instance) immediately, while the background thread continues to run in parallel.
+        Returns a function object that, when called, stops the background listener thread. The background thread is a daemon and will not stop the program from exiting if there are no other non-daemon threads.
 
         Phrase recognition uses the exact same mechanism as ``recognizer_instance.listen(source)``.
 
@@ -365,14 +364,22 @@ class Recognizer(AudioSource):
         """
         assert isinstance(source, AudioSource), "Source must be an audio source"
         import threading
+        running = [True]
         def threaded_listen():
-            while True:
-                with source as s: audio = self.listen(s)
-                callback(self, audio)
+            with source as s:
+                while running[0]:
+                    try: # try to detect speech for only one second to do another check if running is enabled
+                        audio = self.listen(s, 1)
+                    except TimeoutError:
+                        pass
+                    else:
+                        if running[0]: callback(self, audio)
+        def stopper():
+            running[0] = False
         listener_thread = threading.Thread(target=threaded_listen)
         listener_thread.daemon = True
         listener_thread.start()
-        return listener_thread
+        return stopper
 
 def shutil_which(pgm):
     """
@@ -383,17 +390,3 @@ def shutil_which(pgm):
         p = os.path.join(p, pgm)
         if os.path.exists(p) and os.access(p, os.X_OK):
             return p
-
-if __name__ == "__main__":
-    r = Recognizer()
-    m = Microphone()
-
-    while True:
-        print("Say something!")
-        with m as source:
-            audio = r.listen(source)
-        print("Got it! Now to recognize it...")
-        try:
-            print("You said " + r.recognize(audio))
-        except LookupError:
-            print("Oops! Didn't catch that")

@@ -30,13 +30,15 @@ Links:
 
 Quickstart: ``pip install SpeechRecognition``. See the "Installing" section for more details.
 
+To quickly try it out, run ``python -m speech_recognition`` after installing.
+
 How to cite this library (APA style):
 
-    Zhang, A. (2015). Speech Recognition (Version 1.5) [Software]. Available from https://github.com/Uberi/speech_recognition#readme.
+    Zhang, A. (2015). Speech Recognition (Version 2.0) [Software]. Available from https://github.com/Uberi/speech_recognition#readme.
 
 How to cite this library (Chicago style):
 
-    Zhang, Anthony. 2015. *Speech Recognition* (version 1.5).
+    Zhang, Anthony. 2015. *Speech Recognition* (version 2.0).
 
 Also check out the [Python Baidu Yuyin API](https://github.com/DelightRun/PyBaiduYuyin), which is based on this project.
 
@@ -89,6 +91,21 @@ Transcribe a WAV audio file and show the confidence of each possibility:
     except LookupError:                                 # speech is unintelligible
         print("Could not understand audio")
 
+Calibrate the recognizer energy threshold (see ``recognizer_instance.energy_threshold``) for ambient noise levels:
+
+.. code:: python
+
+    import speech_recognition as sr
+    r = sr.Recognizer()
+    with sr.Microphone() as source:                # use the default microphone as the audio source
+        r.adjust_for_ambient_noise(source)         # listen for 1 second to calibrate the energy threshold for ambient noise levels
+        audio = r.listen(source)                   # now when we listen, the energy threshold is already set to a good value, and we can reliably catch speech right away
+
+    try:
+        print("You said " + r.recognize(audio))    # recognize speech using Google Speech Recognition
+    except LookupError:                            # speech is unintelligible
+        print("Could not understand audio")
+
 Listening to a microphone in the background:
 
 .. code:: python
@@ -100,26 +117,14 @@ Listening to a microphone in the background:
         except LookupError:
             print("Oops! Didn't catch that")
     r = sr.Recognizer()
-    r.listen_in_background(sr.Microphone(), callback)
+    m = sr.Microphone()
+    with m as source: r.adjust_for_ambient_noise(source)      # we only need to calibrate once, before we start listening
+    stop_listening = r.listen_in_background(m, callback)
     
     import time
-    for _ in range(10000): time.sleep(0.1)                    # we're still listening even though the main thread is blocked
-                                                              # when the loop stops, the program will exit and stop listening
-
-Calibrate the recognizer energy threshold (see ``recognizer_instance.energy_threshold``) for ambient noise levels:
-
-.. code:: python
-
-    import speech_recognition as sr
-    r = sr.Recognizer()
-    with sr.Microphone() as source:                # use the default microphone as the audio source
-        audio = r.adjust_for_ambient_noise(source) # listen for 1 second to calibrate the energy threshold for ambient noise levels
-        audio = r.listen(source)                   # now when we listen, the energy threshold is already set to a good value, and we can reliably catch speech right away
-
-    try:
-        print("You said " + r.recognize(audio))    # recognize speech using Google Speech Recognition
-    except LookupError:                            # speech is unintelligible
-        print("Could not understand audio")
+    for _ in range(50): time.sleep(0.1)                       # we're still listening even though the main thread is blocked - loop runs for about 5 seconds
+    stop_listening()                                          # call the stop function to stop the background thread
+    while True: time.sleep(0.1)                               # the background thread stops soon after we call the stop function
 
 Installing
 ----------
@@ -218,6 +223,28 @@ PyInstaller doesn't know that the FLAC converters need to be bundled with the ap
         datas = collect_data_files("speech_recognition")
 
 3. When building the project using something like ``pyinstaller SOME_SCRIPT.py``, simply supply the ``--additional-hooks-dir`` option set to the PyInstaller hooks folder. For example, ``pyinstaller --additional-hooks-dir pyinstaller-hooks/ SOME_SCRIPT.py``.
+
+On Ubuntu/Debian, I get errors like "jack server is not running or cannot be started" or "Cannot lock down [...] byte memory area (Cannot allocate memory)".
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The Linux audio stack is pretty fickle. There are a few things that can cause these issues.
+
+First, make sure JACK is installed - to install it, run `sudo apt-get install multimedia-jack`
+
+You will then want to configure the JACK daemon correctly to avoid that "Cannot allocate memory" error. Run ``sudo dpkg-reconfigure -p high jackd2`` and select "Yes" to do so.
+
+Now, you will want to make sure your current user is in the ``audio`` group. You can add your current user to this group by running ``sudo adduser $(whoami) audio``.
+
+Unfortunately, these changes will require you to reboot before they take effect.
+
+After rebooting, run ``pulseaudio --kill``, followed by ``jack_control start``, to fix the "jack server is not running or cannot be started" error.
+
+On Ubuntu/Debian, I get annoying output in the terminal saying things like "bt_audio_service_open: [...] Connection refused" and various others.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The "bt_audio_service_open" error means that you have a Bluetooth audio device, but as a physical device is not currently connected, we can't actually use it - if you're not using a Bluetooth microphone, then this can be safely ignored. If you are, and audio isn't working, then double check to make sure your microphone is actually connected. There does not seem to be a simple way to disable these messages.
+
+For errors of the form "ALSA lib [...] Unknown PCM", see `this StackOverflow answer <http://stackoverflow.com/questions/7088672/pyaudio-working-but-spits-out-error-messages-each-time>`__. Basically, to get rid of an error of the form "Unknown PCM cards.pcm.rear", simply comment out ``pcm.rear cards.pcm.rear`` in ``/usr/share/alsa/alsa.conf``, ``~/.asoundrc``, and ``/etc/asound.conf``.
 
 Reference
 ---------
@@ -348,14 +375,14 @@ Records a single phrase from ``source`` (an ``AudioSource`` instance) into an ``
 
 This is done by waiting until the audio has an energy above ``recognizer_instance.energy_threshold`` (the user has started speaking), and then recording until it encounters ``recognizer_instance.pause_threshold`` seconds of silence or there is no more audio input. The ending silence is not included.
 
-The ``timeout`` parameter is the maximum number of seconds that it will wait for a phrase to start before giving up and throwing a ``TimeoutException`` exception. If ``None``, it will wait indefinitely.
+The ``timeout`` parameter is the maximum number of seconds that it will wait for a phrase to start before giving up and throwing a ``TimeoutError`` exception. If ``None``, it will wait indefinitely.
 
 ``recognizer_instance.listen_in_background(source, callback)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Spawns a thread to repeatedly record phrases from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance and call ``callback`` with that ``AudioData`` instance as soon as each phrase are detected.
 
-Returns the thread (a ``threading.Thread`` instance) immediately, while the background thread continues to run in parallel. This thread is a daemon and will not stop the program from exiting if there are no other non-daemon threads.
+Returns a function object that, when called, stops the background listener thread. The background thread is a daemon and will not stop the program from exiting if there are no other non-daemon threads.
 
 Phrase recognition uses the exact same mechanism as ``recognizer_instance.listen(source)``.
 
