@@ -273,7 +273,7 @@ This class is to be used with ``with`` statements:
 
 Creates a new ``WavFile`` instance, which represents a WAV audio file. Subclass of ``AudioSource``.
 
-If ``filename_or_fileobject`` is a string, then it is interpreted as a path to a WAV audio file on the filesystem. Otherwise, ``filename_or_fileobject`` should be a file-like object such as ``io.BytesIO`` or similar. In either case, the specified file is used as the audio source.
+If ``filename_or_fileobject`` is a string, then it is interpreted as a path to a WAV audio file (mono or stereo) on the filesystem. Otherwise, ``filename_or_fileobject`` should be a file-like object such as ``io.BytesIO`` or similar. In either case, the specified file is used as the audio source.
 
 This class is to be used with ``with`` statements:
 
@@ -375,7 +375,7 @@ Records a single phrase from ``source`` (an ``AudioSource`` instance) into an ``
 
 This is done by waiting until the audio has an energy above ``recognizer_instance.energy_threshold`` (the user has started speaking), and then recording until it encounters ``recognizer_instance.pause_threshold`` seconds of silence or there is no more audio input. The ending silence is not included.
 
-The ``timeout`` parameter is the maximum number of seconds that it will wait for a phrase to start before giving up and throwing a ``TimeoutError`` exception. If ``None``, it will wait indefinitely.
+The ``timeout`` parameter is the maximum number of seconds that it will wait for a phrase to start before giving up and throwing an ``OSError`` exception. If ``None``, it will wait indefinitely.
 
 ``recognizer_instance.listen_in_background(source, callback)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

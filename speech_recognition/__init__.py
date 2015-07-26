@@ -3,7 +3,7 @@
 """Library for performing speech recognition with the Google Speech Recognition API."""
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "2.0.0"
+__version__ = "2.1.1"
 __license__ = "BSD"
 
 import io, os, subprocess, wave
@@ -74,7 +74,7 @@ class WavFile(AudioSource):
     """
     Creates a new ``WavFile`` instance, which represents a WAV audio file. Subclass of ``AudioSource``.
 
-    If ``filename_or_fileobject`` is a string, then it is interpreted as a path to a WAV audio file on the filesystem. Otherwise, ``filename_or_fileobject`` should be a file-like object such as ``io.BytesIO`` or similar. In either case, the specified file is used as the audio source.
+    If ``filename_or_fileobject`` is a string, then it is interpreted as a path to a WAV audio file (mono or stereo) on the filesystem. Otherwise, ``filename_or_fileobject`` should be a file-like object such as ``io.BytesIO`` or similar. In either case, the specified file is used as the audio source.
     """
 
     def __init__(self, filename_or_fileobject):
@@ -93,7 +93,7 @@ class WavFile(AudioSource):
         self.SAMPLE_WIDTH = self.wav_reader.getsampwidth()
         self.RATE = self.wav_reader.getframerate()
         self.CHANNELS = self.wav_reader.getnchannels()
-        assert self.CHANNELS == 1 # audio must be mono
+        assert self.CHANNELS == 1 or self.CHANNELS == 2, "Audio must be mono or stereo"
         self.CHUNK = 4096
         self.FRAME_COUNT = self.wav_reader.getnframes()
         self.DURATION = self.FRAME_COUNT / float(self.RATE)
@@ -110,9 +110,10 @@ class WavFile(AudioSource):
             self.wav_reader = wav_reader
 
         def read(self, size = -1):
-            if size == -1:
-                return self.wav_reader.readframes(self.wav_reader.getnframes())
-            return self.wav_reader.readframes(size)
+            buffer = self.wav_reader.readframes(self.wav_reader.getnframes() if size == -1 else size)
+            if self.wav_reader.getnchannels() != 1: # stereo audio
+                buffer = audioop.tomono(buffer, self.wav_reader.getsampwidth(), 1, 1) # convert stereo audio data to mono
+            return buffer
 
 class AudioData(object):
     def __init__(self, rate, data):
@@ -243,7 +244,7 @@ class Recognizer(AudioSource):
 
         This is done by waiting until the audio has an energy above ``recognizer_instance.energy_threshold`` (the user has started speaking), and then recording until it encounters ``recognizer_instance.pause_threshold`` seconds of silence or there is no more audio input. The ending silence is not included.
 
-        The ``timeout`` parameter is the maximum number of seconds that it will wait for a phrase to start before giving up and throwing a ``TimeoutError`` exception. If ``None``, it will wait indefinitely.
+        The ``timeout`` parameter is the maximum number of seconds that it will wait for a phrase to start before giving up and throwing an ``OSError`` exception. If ``None``, it will wait indefinitely.
         """
         assert isinstance(source, AudioSource), "Source must be an audio source"
 
@@ -259,7 +260,7 @@ class Recognizer(AudioSource):
         while True:
             elapsed_time += seconds_per_buffer
             if timeout and elapsed_time > timeout: # handle timeout if specified
-                raise TimeoutError("listening timed out")
+                raise OSError("listening timed out")
 
             buffer = source.stream.read(source.CHUNK)
             if len(buffer) == 0: break # reached end of the stream
@@ -370,7 +371,7 @@ class Recognizer(AudioSource):
                 while running[0]:
                     try: # try to detect speech for only one second to do another check if running is enabled
                         audio = self.listen(s, 1)
-                    except TimeoutError:
+                    except OSError:
                         pass
                     else:
                         if running[0]: callback(self, audio)
