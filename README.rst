@@ -34,11 +34,11 @@ To quickly try it out, run ``python -m speech_recognition`` after installing.
 
 How to cite this library (APA style):
 
-    Zhang, A. (2015). Speech Recognition (Version 2.0) [Software]. Available from https://github.com/Uberi/speech_recognition#readme.
+    Zhang, A. (2015). Speech Recognition (Version 2.1) [Software]. Available from https://github.com/Uberi/speech_recognition#readme.
 
 How to cite this library (Chicago style):
 
-    Zhang, Anthony. 2015. *Speech Recognition* (version 2.0).
+    Zhang, Anthony. 2015. *Speech Recognition* (version 2.1).
 
 Also check out the [Python Baidu Yuyin API](https://github.com/DelightRun/PyBaiduYuyin), which is based on this project.
 
@@ -208,6 +208,27 @@ The recognizer doesn't understand my particular language/dialect.
 Try setting the language code when creating a ``Recognizer`` instance. For example, for British English it is better to use ``Recognizer("en-GB")`` rather than the default US English.
 
 See the "Reference" section for more information about language codes.
+
+The code examples throw ``UnicodeEncodeError: 'ascii' codec can't encode character`` when run.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When you're using Python 2, and your language uses non-ASCII characters, and the terminal or file-like object you're printing to only supports ASCII, an error is thrown when trying to write non-ASCII characters. In Python 3, the language will transparently handle all Unicode output properly.
+
+This is because in Python 2, ``recognizer_instance.recognize(audio_data, show_all = False)`` returns a unicode string (``u"something"``) rather than a byte string (``"something"``). In Python 3, all strings are unicode strings.
+
+To make printing of unicode strings work in Python 2 as well, replace all print statements in your code of the following form:
+
+    .. code:: python
+
+        print(SOME_UNICODE_STRING)
+
+With the following:
+
+    .. code:: python
+
+        print(SOME_UNICODE_STRING.encode("utf8"))
+
+This change, however, will break the code in Python 3.
 
 The program doesn't run when compiled with `PyInstaller <https://github.com/pyinstaller/pyinstaller/wiki>`__.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
