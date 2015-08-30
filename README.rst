@@ -34,11 +34,11 @@ To quickly try it out, run ``python -m speech_recognition`` after installing.
 
 How to cite this library (APA style):
 
-    Zhang, A. (2015). Speech Recognition (Version 2.1) [Software]. Available from https://github.com/Uberi/speech_recognition#readme.
+    Zhang, A. (2015). Speech Recognition (Version 2.2) [Software]. Available from https://github.com/Uberi/speech_recognition#readme.
 
 How to cite this library (Chicago style):
 
-    Zhang, Anthony. 2015. *Speech Recognition* (version 2.1).
+    Zhang, Anthony. 2015. *Speech Recognition* (version 2.2).
 
 Also check out the [Python Baidu Yuyin API](https://github.com/DelightRun/PyBaiduYuyin), which is based on this project.
 
@@ -270,8 +270,8 @@ For errors of the form "ALSA lib [...] Unknown PCM", see `this StackOverflow ans
 Reference
 ---------
 
-``Microphone(device_index = None)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``Microphone(device_index = None, sample_rate = 16000, chunk_size = 1024)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This is available if PyAudio is available, and is undefined otherwise.
 
@@ -281,7 +281,13 @@ If ``device_index`` is unspecified or ``None``, the default microphone is used a
 
 A device index is an integer between 0 and ``pyaudio.get_device_count() - 1`` (assume we have used ``import pyaudio`` beforehand) inclusive. It represents an audio device such as a microphone or speaker. See the `PyAudio documentation <http://people.csail.mit.edu/hubert/pyaudio/docs/>`__ for more details.
 
-This class is to be used with ``with`` statements:
+The microphone audio is recorded in chunks of ``chunk_size`` samples, at a rate of ``sample_rate`` samples per second (Hertz).
+
+Higher ``sample_rate`` values result in better audio quality, but also more bandwidth (and therefore, slower recognition). Additionally, some machines, such as some Raspberry Pi models, can't keep up if this value is too high.
+
+Higher ``chunk_size`` values help avoid triggering on rapidly changing ambient noise, but also makes detection less sensitive. This value, generally, should be left at its default.
+
+This class is a context manager, and is designed to be used with ``with`` statements:
 
 .. code:: python
 
@@ -296,7 +302,7 @@ Creates a new ``WavFile`` instance, which represents a WAV audio file. Subclass 
 
 If ``filename_or_fileobject`` is a string, then it is interpreted as a path to a WAV audio file (mono or stereo) on the filesystem. Otherwise, ``filename_or_fileobject`` should be a file-like object such as ``io.BytesIO`` or similar. In either case, the specified file is used as the audio source.
 
-This class is to be used with ``with`` statements:
+This class is a context manager, and is designed to be used with ``with`` statements:
 
 .. code:: python
 
@@ -450,7 +456,7 @@ Instances of subclasses of this class, such as ``Microphone`` and ``WavFile``, c
 
 Storage class for audio data.
 
-Contains the fields ``rate`` and ``data``, which represent the framerate and raw audio samples of the audio data, respectively.
+Contains the fields ``sample_rate`` and ``data``, which represent the number of raw audio samples per second, and actual raw audio samples of the audio data, respectively.
 
 Authors
 -------

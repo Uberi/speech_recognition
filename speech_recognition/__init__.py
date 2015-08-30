@@ -3,7 +3,7 @@
 """Library for performing speech recognition with the Google Speech Recognition API."""
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "2.1.3"
+__version__ = "2.2.0"
 __license__ = "BSD"
 
 import io, os, subprocess, wave
@@ -37,16 +37,26 @@ try:
         Creates a new ``Microphone`` instance, which represents a physical microphone on the computer. Subclass of ``AudioSource``.
 
         If ``device_index`` is unspecified or ``None``, the default microphone is used as the audio source. Otherwise, ``device_index`` should be the index of the device to use for audio input.
+
+        A device index is an integer between 0 and ``pyaudio.get_device_count() - 1`` (assume we have used ``import pyaudio`` beforehand) inclusive. It represents an audio device such as a microphone or speaker. See the `PyAudio documentation <http://people.csail.mit.edu/hubert/pyaudio/docs/>`__ for more details.
+
+        The microphone audio is recorded in chunks of ``chunk_size`` samples, at a rate of ``sample_rate`` samples per second (Hertz).
+
+        Higher ``sample_rate`` values result in better audio quality, but also more bandwidth (and therefore, slower recognition). Additionally, some machines, such as some Raspberry Pi models, can't keep up if this value is too high.
+
+        Higher ``chunk_size`` values help avoid triggering on rapidly changing ambient noise, but also makes detection less sensitive. This value, generally, should be left at its default.
         """
-        def __init__(self, device_index = None, rate=16000, chunk_size=1024):
+        def __init__(self, device_index = None, sample_rate = 16000, chunk_size = 1024):
             assert device_index is None or isinstance(device_index, int), "Device index must be None or an integer"
             if device_index is not None: # ensure device index is in range
                 audio = pyaudio.PyAudio(); count = audio.get_device_count(); audio.terminate() # obtain device count
                 assert 0 <= device_index < count, "Device index out of range"
+            assert isinstance(sample_rate, int) and sample_rate > 0, "Sample rate must be a positive integer"
+            assert isinstance(chunk_size, int) and chunk_size > 0, "Chunk size must be a positive integer"
             self.device_index = device_index
             self.format = pyaudio.paInt16 # 16-bit int sampling
-            self.SAMPLE_WIDTH = pyaudio.get_sample_size(self.format)
-            self.RATE = rate # sampling rate in Hertz
+            self.SAMPLE_WIDTH = pyaudio.get_sample_size(self.format) # size of each sample
+            self.SAMPLE_RATE = sample_rate # sampling rate in Hertz
             self.CHANNELS = 1 # mono audio
             self.CHUNK = chunk_size # number of frames stored in each buffer
 
@@ -57,7 +67,7 @@ try:
             self.audio = pyaudio.PyAudio()
             self.stream = self.audio.open(
                 input_device_index = self.device_index,
-                format = self.format, rate = self.RATE, channels = self.CHANNELS, frames_per_buffer = self.CHUNK,
+                format = self.format, rate = self.SAMPLE_RATE, channels = self.CHANNELS, frames_per_buffer = self.CHUNK,
                 input = True, # stream is an input stream
             )
             return self
@@ -91,12 +101,12 @@ class WavFile(AudioSource):
         if self.filename: self.wav_file = open(self.filename, "rb")
         self.wav_reader = wave.open(self.wav_file, "rb")
         self.SAMPLE_WIDTH = self.wav_reader.getsampwidth()
-        self.RATE = self.wav_reader.getframerate()
+        self.SAMPLE_RATE = self.wav_reader.getframerate()
         self.CHANNELS = self.wav_reader.getnchannels()
         assert self.CHANNELS == 1 or self.CHANNELS == 2, "Audio must be mono or stereo"
         self.CHUNK = 4096
         self.FRAME_COUNT = self.wav_reader.getnframes()
-        self.DURATION = self.FRAME_COUNT / float(self.RATE)
+        self.DURATION = self.FRAME_COUNT / float(self.SAMPLE_RATE)
         self.stream = WavFile.WavStream(self.wav_reader)
         return self
 
@@ -116,8 +126,8 @@ class WavFile(AudioSource):
             return buffer
 
 class AudioData(object):
-    def __init__(self, rate, data):
-        self.rate = rate
+    def __init__(self, sample_rate, data):
+        self.sample_rate = sample_rate
         self.data = data
 
 class Recognizer(AudioSource):
@@ -149,7 +159,7 @@ class Recognizer(AudioSource):
             try: # note that we can't use context manager due to Python 2 not supporting it
                 wav_writer.setsampwidth(source.SAMPLE_WIDTH)
                 wav_writer.setnchannels(source.CHANNELS)
-                wav_writer.setframerate(source.RATE)
+                wav_writer.setframerate(source.SAMPLE_RATE)
                 wav_writer.writeframes(frame_data)
             finally:  # make sure resources are cleaned up
                 wav_writer.close()
@@ -164,7 +174,7 @@ class Recognizer(AudioSource):
                 flac_converter = os.path.join(path, "flac-win32.exe")
             elif system == "Linux" and platform.machine() in ["i386", "x86", "x86_64", "AMD64"]:
                 flac_converter = os.path.join(path, "flac-linux-i386")
-            elif system == 'Darwin' and platform.machine() in ["i386", "x86", "x86_64", "AMD64"]:
+            elif system == "Darwin" and platform.machine() in ["i386", "x86", "x86_64", "AMD64"]:
                 flac_converter = os.path.join(path, "flac-mac")
             else:
                 raise OSError("FLAC conversion utility not available - consider installing the FLAC command line application using `brew install flac` or your operating system's equivalent")
@@ -188,7 +198,7 @@ class Recognizer(AudioSource):
         assert isinstance(source, AudioSource), "Source must be an audio source"
 
         frames = io.BytesIO()
-        seconds_per_buffer = (source.CHUNK + 0.0) / source.RATE
+        seconds_per_buffer = (source.CHUNK + 0.0) / source.SAMPLE_RATE
         elapsed_time = 0
         offset_time = 0
         offset_reached = False
@@ -209,7 +219,7 @@ class Recognizer(AudioSource):
 
         frame_data = frames.getvalue()
         frames.close()
-        return AudioData(source.RATE, self.samples_to_flac(source, frame_data))
+        return AudioData(source.SAMPLE_RATE, self.samples_to_flac(source, frame_data))
 
     def adjust_for_ambient_noise(self, source, duration = 1):
         """
@@ -221,7 +231,7 @@ class Recognizer(AudioSource):
         """
         assert isinstance(source, AudioSource), "Source must be an audio source"
 
-        seconds_per_buffer = (source.CHUNK + 0.0) / source.RATE
+        seconds_per_buffer = (source.CHUNK + 0.0) / source.SAMPLE_RATE
         elapsed_time = 0
 
         # adjust energy threshold until a phrase starts
@@ -251,7 +261,7 @@ class Recognizer(AudioSource):
         # record audio data as raw samples
         frames = collections.deque()
         assert self.pause_threshold >= self.quiet_duration >= 0
-        seconds_per_buffer = (source.CHUNK + 0.0) / source.RATE
+        seconds_per_buffer = (source.CHUNK + 0.0) / source.SAMPLE_RATE
         pause_buffer_count = int(math.ceil(self.pause_threshold / seconds_per_buffer)) # number of buffers of quiet audio before the phrase is complete
         quiet_buffer_count = int(math.ceil(self.quiet_duration / seconds_per_buffer)) # maximum number of buffers of quiet audio to retain before and after
         elapsed_time = 0
@@ -299,7 +309,7 @@ class Recognizer(AudioSource):
         for i in range(quiet_buffer_count, pause_count): frames.pop() # remove extra quiet frames at the end
         frame_data = b"".join(list(frames))
 
-        return AudioData(source.RATE, self.samples_to_flac(source, frame_data))
+        return AudioData(source.SAMPLE_RATE, self.samples_to_flac(source, frame_data))
 
     def recognize(self, audio_data, show_all = False):
         """
@@ -314,7 +324,7 @@ class Recognizer(AudioSource):
         assert isinstance(audio_data, AudioData), "Data must be audio data"
 
         url = "http://www.google.com/speech-api/v2/recognize?client=chromium&lang=%s&key=%s" % (self.language, self.key)
-        self.request = Request(url, data = audio_data.data, headers = {"Content-Type": "audio/x-flac; rate=%s" % audio_data.rate})
+        self.request = Request(url, data = audio_data.data, headers = {"Content-Type": "audio/x-flac; rate=%s" % audio_data.sample_rate})
 
         # check for invalid key response from the server
         try:
