@@ -38,7 +38,7 @@ try:
 
         If ``device_index`` is unspecified or ``None``, the default microphone is used as the audio source. Otherwise, ``device_index`` should be the index of the device to use for audio input.
         """
-        def __init__(self, device_index = None):
+        def __init__(self, device_index = None, rate=16000, chunk_size=1024):
             assert device_index is None or isinstance(device_index, int), "Device index must be None or an integer"
             if device_index is not None: # ensure device index is in range
                 audio = pyaudio.PyAudio(); count = audio.get_device_count(); audio.terminate() # obtain device count
@@ -46,9 +46,9 @@ try:
             self.device_index = device_index
             self.format = pyaudio.paInt16 # 16-bit int sampling
             self.SAMPLE_WIDTH = pyaudio.get_sample_size(self.format)
-            self.RATE = 16000 # sampling rate in Hertz
+            self.RATE = rate # sampling rate in Hertz
             self.CHANNELS = 1 # mono audio
-            self.CHUNK = 1024 # number of frames stored in each buffer
+            self.CHUNK = chunk_size # number of frames stored in each buffer
 
             self.audio = None
             self.stream = None
