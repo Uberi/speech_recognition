@@ -8,15 +8,18 @@ __license__ = "BSD"
 
 import io, os, subprocess, wave
 import math, audioop, collections
+import platform, stat
 import json
 
 try: # try to use python2 module
-    from urllib2 import Request, urlopen, URLError
+    from urllib2 import Request, urlopen, URLError, HTTPError
 except ImportError: # otherwise, use python3 module
     from urllib.request import Request, urlopen
-    from urllib.error import URLError
+    from urllib.error import URLError, HTTPError
 
 #wip: filter out clicks and other too short parts
+#wip: test and document Wit.ai integration
+#wip: integrate and test PyBaiduYuyin
 
 class AudioSource(object):
     def __init__(self):
@@ -126,44 +129,30 @@ class WavFile(AudioSource):
             return buffer
 
 class AudioData(object):
-    def __init__(self, sample_rate, data):
+    def __init__(self, frame_data, sample_rate, sample_width, channels):
+        assert isinstance(sample_rate, int) and sample_rate > 0, "Sample rate must be a positive integer"
+        assert isinstance(sample_width, int) and sample_width > 0, "Sample width must be a positive integer"
+        assert channels == 1 or channels == 2, "Audio must be mono or stereo"
+        self.frame_data = frame_data
         self.sample_rate = sample_rate
-        self.data = data
+        self.sample_width = sample_width
+        self.channels = channels
 
-class Recognizer(AudioSource):
-    def __init__(self, language = "en-US", key = "AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw"):
-        """
-        Creates a new ``Recognizer`` instance, which represents a collection of speech recognition functionality.
-
-        The language is determined by ``language``, a standard language code like `"en-US"` or `"en-GB"`, and defaults to US English. A list of supported language codes can be found `here <http://stackoverflow.com/questions/14257598/>`__. Basically, language codes can be just the language (``en``), or a language with a dialect (``en-US``).
-
-        The Google Speech Recognition API key is specified by ``key``. If not specified, it uses a generic key that works out of the box.
-        """
-        assert isinstance(language, str), "Language code must be a string"
-        assert isinstance(key, str), "Key must be a string"
-        self.key = key
-        self.language = language
-
-        self.energy_threshold = 300 # minimum audio energy to consider for recording
-        self.dynamic_energy_threshold = True
-        self.dynamic_energy_adjustment_damping = 0.15
-        self.dynamic_energy_ratio = 1.5
-        self.pause_threshold = 0.8 # seconds of quiet time before a phrase is considered complete
-        self.quiet_duration = 0.5 # amount of quiet time to keep on both sides of the recording
-
-    def samples_to_flac(self, source, frame_data):
-        assert isinstance(source, AudioSource), "Source must be an audio source"
-        import platform, os, stat
+    def get_wav_data(self):
         with io.BytesIO() as wav_file:
             wav_writer = wave.open(wav_file, "wb")
             try: # note that we can't use context manager due to Python 2 not supporting it
-                wav_writer.setsampwidth(source.SAMPLE_WIDTH)
-                wav_writer.setnchannels(source.CHANNELS)
-                wav_writer.setframerate(source.SAMPLE_RATE)
-                wav_writer.writeframes(frame_data)
+                wav_writer.setframerate(self.sample_rate)
+                wav_writer.setsampwidth(self.sample_width)
+                wav_writer.setnchannels(self.channels)
+                wav_writer.writeframes(self.frame_data)
             finally:  # make sure resources are cleaned up
                 wav_writer.close()
             wav_data = wav_file.getvalue()
+        return wav_data
+
+    def get_flac_data(self):
+        wav_data = self.get_wav_data()
 
         # determine which converter executable to use
         system = platform.system()
@@ -179,15 +168,28 @@ class Recognizer(AudioSource):
             else:
                 raise OSError("FLAC conversion utility not available - consider installing the FLAC command line application using `brew install flac` or your operating system's equivalent")
 
-        # mark covnerter as executable
+        # mark FLAC converter as executable
         try:
             stat_info = os.stat(flac_converter)
             os.chmod(flac_converter, stat_info.st_mode | stat.S_IEXEC)
         except OSError: pass
 
+        # run the FLAC converter with the WAV data to get the FLAC data
         process = subprocess.Popen("\"%s\" --stdout --totally-silent --best -" % flac_converter, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
         flac_data, stderr = process.communicate(wav_data)
         return flac_data
+
+class Recognizer(AudioSource):
+    def __init__(self):
+        """
+        Creates a new ``Recognizer`` instance, which represents a collection of speech recognition functionality.
+        """
+        self.energy_threshold = 300 # minimum audio energy to consider for recording
+        self.dynamic_energy_threshold = True
+        self.dynamic_energy_adjustment_damping = 0.15
+        self.dynamic_energy_ratio = 1.5
+        self.pause_threshold = 0.8 # seconds of quiet time before a phrase is considered complete
+        self.quiet_duration = 0.5 # amount of quiet time to keep on both sides of the recording
 
     def record(self, source, duration = None, offset = None):
         """
@@ -219,7 +221,7 @@ class Recognizer(AudioSource):
 
         frame_data = frames.getvalue()
         frames.close()
-        return AudioData(source.SAMPLE_RATE, self.samples_to_flac(source, frame_data))
+        return AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH, source.CHANNELS)
 
     def adjust_for_ambient_noise(self, source, duration = 1):
         """
@@ -309,26 +311,31 @@ class Recognizer(AudioSource):
         for i in range(quiet_buffer_count, pause_count): frames.pop() # remove extra quiet frames at the end
         frame_data = b"".join(list(frames))
 
-        return AudioData(source.SAMPLE_RATE, self.samples_to_flac(source, frame_data))
+        return AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH, source.CHANNELS)
 
-    def recognize(self, audio_data, show_all = False):
+    def recognize_google(self, audio_data, key = "AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw", language = "en-US", show_all = False):
         """
-        Performs speech recognition, using the Google Speech Recognition API, on ``audio_data`` (an ``AudioData`` instance).
+        Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Google Speech Recognition API.
 
-        Returns the most likely transcription if ``show_all`` is ``False``, otherwise it returns a ``dict`` of all possible transcriptions and their confidence levels.
+        The Google Speech Recognition API key is specified by ``key``. If not specified, it uses a generic key that works out of the box.
 
-        Note: confidence is set to 0 if it isn't given by Google
+        The recognition language is determined by ``language``, an IETF language tag like `"en-US"` or `"en-GB"`, defaulting to US English. A list of supported language codes can be found `here <http://stackoverflow.com/questions/14257598/>`__. Basically, language codes can be just the language (``en``), or a language with a dialect (``en-US``).
 
-        Also raises a ``LookupError`` exception if the speech is unintelligible, a ``KeyError`` if the key isn't valid or the quota for the key has been maxed out, and ``IndexError`` if there is no internet connection.
+        Returns the most likely transcription if ``show_all`` is ``False``, otherwise it returns a ``dict`` of all possible transcriptions and their confidence levels. Confidence levels are 0 if not specified in the server response.
+
+        Raises a ``LookupError`` exception if the speech is unintelligible, a ``KeyError`` if the key isn't valid/the quota for the key is maxed out, or an ``IndexError`` if there is no internet connection.
         """
         assert isinstance(audio_data, AudioData), "Data must be audio data"
+        assert isinstance(key, str), "Key must be a string"
+        assert isinstance(language, str), "Language code must be a string"
 
-        url = "http://www.google.com/speech-api/v2/recognize?client=chromium&lang=%s&key=%s" % (self.language, self.key)
-        self.request = Request(url, data = audio_data.data, headers = {"Content-Type": "audio/x-flac; rate=%s" % audio_data.sample_rate})
+        flac_data, sample_rate = audio_data.get_flac_data(), audio_data.sample_rate
+        url = "http://www.google.com/speech-api/v2/recognize?client=chromium&lang={0}&key={1}".format(language, key)
+        request = Request(url, data = flac_data, headers = {"Content-Type": "audio/x-flac; rate={0}".format(sample_rate)})
 
         # check for invalid key response from the server
         try:
-            response = urlopen(self.request)
+            response = urlopen(request)
         except URLError:
             raise IndexError("No internet connection available to transfer audio data")
         except:
@@ -355,13 +362,41 @@ class Recognizer(AudioSource):
                     return prediction["transcript"]
             raise LookupError("Speech is unintelligible")
 
-
         # return all the possibilities
         spoken_text = []
         for i, prediction in enumerate(actual_result["alternative"]):
             if "transcript" in prediction:
                 spoken_text.append({"text": prediction["transcript"], "confidence": 1 if i == 0 else 0})
         return spoken_text
+
+    def recognize_wit(self, audio_data, key, show_all = False):
+        """
+        Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Wit.ai API.
+
+        Returns the most likely transcription if ``show_all`` is ``False``, otherwise it returns WIP.
+
+        The Wit.ai API key is specified by ``key``. Unfortunately, these are not available without `signing up for an account <https://wit.ai/getting-started>`__ and creating an app.
+
+        wip: write about how to create an app with Wit.ai and all the steps and stuff
+
+        Raises WIP.
+        """
+        assert isinstance(audio_data, AudioData), "Data must be audio data"
+
+        wav_data = audio_data.get_wav_data()
+        url = "https://api.wit.ai/speech?v=20141022"
+        request = Request(url, data = wav_data, headers = {"Authorization": "Bearer {0}".format(key), "Content-Type": "audio/wav"})
+        try:
+            response = urlopen(request)
+        except URLError:
+            raise IndexError("No internet connection available to transfer audio data")
+        except:
+            raise KeyError("Server wouldn't respond (invalid key or quota has been maxed out)")
+        response_text = response.read().decode("utf-8")
+        result = json.loads(response_text)
+ 
+        if show_all: return result
+        return result["_text"]
 
     def listen_in_background(self, source, callback):
         """

@@ -1,5 +1,5 @@
-Google Speech Recognition
-=========================
+Speech Recognition
+==================
 
 .. image:: https://img.shields.io/pypi/dm/SpeechRecognition.svg
     :target: https://pypi.python.org/pypi/SpeechRecognition/
@@ -21,7 +21,7 @@ Google Speech Recognition
     :target: https://pypi.python.org/pypi/SpeechRecognition/
     :alt: License
 
-Library for performing speech recognition with the Google Speech Recognition API.
+Library for performing speech recognition with APIs such as Google Speech Recognition API, .
 
 Links:
 
@@ -40,7 +40,7 @@ How to cite this library (Chicago style):
 
     Zhang, Anthony. 2015. *Speech Recognition* (version 2.2).
 
-Also check out the [Python Baidu Yuyin API](https://github.com/DelightRun/PyBaiduYuyin), which is based on this project.
+Also check out the `Python Baidu Yuyin API <https://github.com/DelightRun/PyBaiduYuyin>`__, which is based on this project.
 
 Examples
 --------
