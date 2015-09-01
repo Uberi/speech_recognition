@@ -3,7 +3,7 @@
 """Library for performing speech recognition with the Google Speech Recognition API."""
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "2.2.0"
+__version__ = "3.0.0"
 __license__ = "BSD"
 
 import io, os, subprocess, wave, base64
