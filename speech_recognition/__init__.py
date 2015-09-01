@@ -17,9 +17,6 @@ except ImportError: # otherwise, use python3 module
     from urllib.request import Request, urlopen
     from urllib.error import URLError, HTTPError
 
-#wip: filter out clicks and other too short parts
-#wip: test and document Wit.ai integration
-
 # define exceptions
 class WaitTimeoutError(Exception): pass
 class RequestError(Exception): pass
@@ -194,8 +191,9 @@ class Recognizer(AudioSource):
         self.dynamic_energy_threshold = True
         self.dynamic_energy_adjustment_damping = 0.15
         self.dynamic_energy_ratio = 1.5
-        self.pause_threshold = 0.8 # seconds of quiet time before a phrase is considered complete
-        self.quiet_duration = 0.5 # amount of quiet time to keep on both sides of the recording
+        self.pause_threshold = 0.8 # seconds of non-speaking audio before a phrase is considered complete
+        self.phrase_threshold = 0.3 # minimum seconds of speaking audio before we consider the speaking audio a phrase - values below this are ignored (for filtering out clicks and pops)
+        self.non_speaking_duration = 0.5 # seconds of non-speaking audio to keep on both sides of the recording
 
     def record(self, source, duration = None, offset = None):
         """
@@ -238,6 +236,7 @@ class Recognizer(AudioSource):
         The ``duration`` parameter is the maximum number of seconds that it will dynamically adjust the threshold for before returning. This value should be at least 0.5 in order to get a representative sample of the ambient noise.
         """
         assert isinstance(source, AudioSource), "Source must be an audio source"
+        assert self.pause_threshold >= self.non_speaking_duration >= 0
 
         seconds_per_buffer = (source.CHUNK + 0.0) / source.SAMPLE_RATE
         elapsed_time = 0
@@ -247,8 +246,6 @@ class Recognizer(AudioSource):
             elapsed_time += seconds_per_buffer
             if elapsed_time > duration: break
             buffer = source.stream.read(source.CHUNK)
-
-            # check if the audio input has stopped being quiet
             energy = audioop.rms(buffer, source.SAMPLE_WIDTH) # energy of the audio signal
 
             # dynamically adjust the energy threshold using assymmetric weighted average
@@ -265,56 +262,65 @@ class Recognizer(AudioSource):
         The ``timeout`` parameter is the maximum number of seconds that it will wait for a phrase to start before giving up and throwing an ``speech_recognition.WaitTimeoutError`` exception. If ``timeout`` is ``None``, it will wait indefinitely.
         """
         assert isinstance(source, AudioSource), "Source must be an audio source"
+        assert self.pause_threshold >= self.non_speaking_duration >= 0
 
-        # record audio data as raw samples
-        frames = collections.deque()
-        assert self.pause_threshold >= self.quiet_duration >= 0
         seconds_per_buffer = (source.CHUNK + 0.0) / source.SAMPLE_RATE
-        pause_buffer_count = int(math.ceil(self.pause_threshold / seconds_per_buffer)) # number of buffers of quiet audio before the phrase is complete
-        quiet_buffer_count = int(math.ceil(self.quiet_duration / seconds_per_buffer)) # maximum number of buffers of quiet audio to retain before and after
-        elapsed_time = 0
+        pause_buffer_count = int(math.ceil(self.pause_threshold / seconds_per_buffer)) # number of buffers of non-speaking audio before the phrase is complete
+        phrase_buffer_count = int(math.ceil(self.phrase_threshold / seconds_per_buffer)) # minimum number of buffers of speaking audio before we consider the speaking audio a phrase
+        non_speaking_buffer_count = int(math.ceil(self.non_speaking_duration / seconds_per_buffer)) # maximum number of buffers of non-speaking audio to retain before and after
 
-        # store audio input until the phrase starts
+        # read audio input for phrases until there is a phrase that is long enough
+        elapsed_time = 0 # number of seconds of audio read
         while True:
-            elapsed_time += seconds_per_buffer
-            if timeout and elapsed_time > timeout: # handle timeout if specified
-                raise WaitTimeoutError("listening timed out")
+            frames = collections.deque()
 
-            buffer = source.stream.read(source.CHUNK)
-            if len(buffer) == 0: break # reached end of the stream
-            frames.append(buffer)
+            # store audio input until the phrase starts
+            while True:
+                elapsed_time += seconds_per_buffer
+                if timeout and elapsed_time > timeout: # handle timeout if specified
+                    raise WaitTimeoutError("listening timed out")
 
-            # check if the audio input has stopped being quiet
-            energy = audioop.rms(buffer, source.SAMPLE_WIDTH) # energy of the audio signal
-            if energy > self.energy_threshold: break
+                buffer = source.stream.read(source.CHUNK)
+                if len(buffer) == 0: break # reached end of the stream
+                frames.append(buffer)
+                if len(frames) > non_speaking_buffer_count: # ensure we only keep the needed amount of non-speaking buffers
+                    frames.popleft()
 
-            # dynamically adjust the energy threshold using assymmetric weighted average
-            if self.dynamic_energy_threshold:
-                damping = self.dynamic_energy_adjustment_damping ** seconds_per_buffer # account for different chunk sizes and rates
-                target_energy = energy * self.dynamic_energy_ratio
-                self.energy_threshold = self.energy_threshold * damping + target_energy * (1 - damping)
+                # detect whether speaking has started on audio input
+                energy = audioop.rms(buffer, source.SAMPLE_WIDTH) # energy of the audio signal
+                if energy > self.energy_threshold: break
 
-            if len(frames) > quiet_buffer_count: # ensure we only keep the needed amount of quiet buffers
-                frames.popleft()
+                # dynamically adjust the energy threshold using assymmetric weighted average
+                if self.dynamic_energy_threshold:
+                    damping = self.dynamic_energy_adjustment_damping ** seconds_per_buffer # account for different chunk sizes and rates
+                    target_energy = energy * self.dynamic_energy_ratio
+                    self.energy_threshold = self.energy_threshold * damping + target_energy * (1 - damping)
 
-        # read audio input until the phrase ends
-        pause_count = 0
-        while True:
-            buffer = source.stream.read(source.CHUNK)
-            if len(buffer) == 0: break # reached end of the stream
-            frames.append(buffer)
+            # read audio input until the phrase ends
+            pause_count, phrase_count = 0, 0
+            while True:
+                elapsed_time += seconds_per_buffer
 
-            # check if the audio input has gone quiet for longer than the pause threshold
-            energy = audioop.rms(buffer, source.SAMPLE_WIDTH) # energy of the audio signal
-            if energy > self.energy_threshold:
-                pause_count = 0
-            else:
-                pause_count += 1
-            if pause_count > pause_buffer_count: # end of the phrase
-                break
+                buffer = source.stream.read(source.CHUNK)
+                if len(buffer) == 0: break # reached end of the stream
+                frames.append(buffer)
+                phrase_count += 1
 
-         # obtain frame data
-        for i in range(quiet_buffer_count, pause_count): frames.pop() # remove extra quiet frames at the end
+                # check if speaking has stopped for longer than the pause threshold on the audio input
+                energy = audioop.rms(buffer, source.SAMPLE_WIDTH) # energy of the audio signal
+                if energy > self.energy_threshold:
+                    pause_count = 0
+                else:
+                    pause_count += 1
+                if pause_count > pause_buffer_count: # end of the phrase
+                    break
+
+            # check how long the detected phrase is, and retry listening if the phrase is too short
+            phrase_count -= pause_count
+            if phrase_count >= phrase_buffer_count: break # phrase is long enough, stop listening
+
+        # obtain frame data
+        for i in range(pause_count - non_speaking_buffer_count): frames.pop() # remove extra non-speaking frames at the end
         frame_data = b"".join(list(frames))
 
         return AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH, source.CHANNELS)
