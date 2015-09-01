@@ -260,9 +260,9 @@ class Recognizer(AudioSource):
         """
         Records a single phrase from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance, which it returns.
 
-        This is done by waiting until the audio has an energy above ``recognizer_instance.energy_threshold`` (the user has started speaking), and then recording until it encounters ``recognizer_instance.pause_threshold`` seconds of silence or there is no more audio input. The ending silence is not included.
+        This is done by waiting until the audio has an energy above ``recognizer_instance.energy_threshold`` (the user has started speaking), and then recording until it encounters ``recognizer_instance.pause_threshold`` seconds of non-speaking or there is no more audio input. The ending silence is not included.
 
-        The ``timeout`` parameter is the maximum number of seconds that it will wait for a phrase to start before giving up and throwing an ``OSError`` exception. If ``None``, it will wait indefinitely.
+        The ``timeout`` parameter is the maximum number of seconds that it will wait for a phrase to start before giving up and throwing an ``speech_recognition.WaitTimeoutError`` exception. If ``timeout`` is ``None``, it will wait indefinitely.
         """
         assert isinstance(source, AudioSource), "Source must be an audio source"
 
@@ -319,13 +319,44 @@ class Recognizer(AudioSource):
 
         return AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH, source.CHANNELS)
 
+    def listen_in_background(self, source, callback):
+        """
+        Spawns a thread to repeatedly record phrases from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance and call ``callback`` with that ``AudioData`` instance as soon as each phrase are detected.
+
+        Returns a function object that, when called, requests that the background listener thread stop, and waits until it does before returning. The background thread is a daemon and will not stop the program from exiting if there are no other non-daemon threads.
+
+        Phrase recognition uses the exact same mechanism as ``recognizer_instance.listen(source)``.
+
+        The ``callback`` parameter is a function that should accept two parameters - the ``recognizer_instance``, and an ``AudioData`` instance representing the captured audio. Note that ``callback`` function will be called from a non-main thread.
+        """
+        assert isinstance(source, AudioSource), "Source must be an audio source"
+        running = [True]
+        def threaded_listen():
+            with source as s:
+                while running[0]:
+                    try: # listen for 1 second, then check again if the stop function has been called
+                        audio = self.listen(s, 1)
+                    except WaitTimeoutError: # listening timed out, just try again
+                        pass
+                    else:
+                        if running[0]: callback(self, audio)
+        def stopper():
+            running[0] = False
+            listener_thread.join() # block until the background thread is done
+        listener_thread = threading.Thread(target=threaded_listen)
+        listener_thread.daemon = True
+        listener_thread.start()
+        return stopper
+
     def recognize_google(self, audio_data, key = None, language = "en-US", show_all = False):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Google Speech Recognition API.
 
-        The Google Speech Recognition API key is specified by ``key``. If not specified, it uses a generic key that works out of the box.
+        The Google Speech Recognition API key is specified by ``key``. If not specified, it uses a generic key that works out of the box. This should generally be used for personal or testing purposes only, as it **may be revoked by Google at any time**.
 
-        The recognition language is determined by ``language``, an IETF language tag like `"en-US"` or `"en-GB"`, defaulting to US English. A list of supported language codes can be found `here <http://stackoverflow.com/questions/14257598/>`__. Basically, language codes can be just the language (``en``), or a language with a dialect (``en-US``).
+        To obtain your own API key, simply following the steps on the `API Keys <http://www.chromium.org/developers/how-tos/api-keys>`__ page at the Chromium Developers site. In the Google Developers Console, Google Speech Recognition is listed as "Speech API".
+
+        The recognition language is determined by ``language``, an IETF language tag like `"en-US"` or ``"en-GB"``, defaulting to US English. A list of supported language codes can be found `here <http://stackoverflow.com/questions/14257598/>`__. Basically, language codes can be just the language (``en``), or a language with a dialect (``en-US``).
 
         Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the raw API response as a JSON dictionary.
 
@@ -409,7 +440,7 @@ class Recognizer(AudioSource):
 
         The IBM Speech to Text username and password are specified by ``username`` and ``password``, respectively. Unfortunately, these are not available without an account. IBM has published instructions for obtaining these credentials in the `IBM Watson Developer Cloud documentation <https://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/doc/getting_started/gs-credentials.shtml>`__.
 
-        The recognition language is determined by ``language``, an IETF language tag with a dialect like `"en-US"` or `"es-ES"`, defaulting to US English. At the moment, this supports the tags `"en-US"`, `"es-ES"`, and `"ja-JP"`.
+        The recognition language is determined by ``language``, an IETF language tag with a dialect like ``"en-US"`` or ``"es-ES"``, defaulting to US English. At the moment, this supports the tags ``"en-US"``, ``"es-ES"``, and ``"ja-JP"``.
 
         Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the raw API response as a JSON dictionary.
 
@@ -447,35 +478,6 @@ class Recognizer(AudioSource):
 
         # no transcriptions available
         raise UnknownValueError()
-
-    def listen_in_background(self, source, callback):
-        """
-        Spawns a thread to repeatedly record phrases from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance and call ``callback`` with that ``AudioData`` instance as soon as each phrase are detected.
-
-        Returns a function object that, when called, requests that the background listener thread stop, and waits until it does before returning. The background thread is a daemon and will not stop the program from exiting if there are no other non-daemon threads.
-
-        Phrase recognition uses the exact same mechanism as ``recognizer_instance.listen(source)``.
-
-        The ``callback`` parameter is a function that should accept two parameters - the ``recognizer_instance``, and an ``AudioData`` instance representing the captured audio. Note that ``callback`` function will be called from a non-main thread.
-        """
-        assert isinstance(source, AudioSource), "Source must be an audio source"
-        running = [True]
-        def threaded_listen():
-            with source as s:
-                while running[0]:
-                    try: # listen for 1 second, then check again if the stop function has been called
-                        audio = self.listen(s, 1)
-                    except WaitTimeoutError: # listening timed out, just try again
-                        pass
-                    else:
-                        if running[0]: callback(self, audio)
-        def stopper():
-            running[0] = False
-            listener_thread.join() # block until the background thread is done
-        listener_thread = threading.Thread(target=threaded_listen)
-        listener_thread.daemon = True
-        listener_thread.start()
-        return stopper
 
 def shutil_which(pgm):
     """

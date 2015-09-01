@@ -21,7 +21,7 @@ Speech Recognition
     :target: https://pypi.python.org/pypi/SpeechRecognition/
     :alt: License
 
-Library for performing speech recognition with APIs such as Google Speech Recognition API, .
+Library for performing speech recognition with support for Google Speech Recognition, `Wit.ai <https://wit.ai/>`__, and `IBM Speech to Text <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text.html>`__.
 
 Links:
 
@@ -34,102 +34,27 @@ To quickly try it out, run ``python -m speech_recognition`` after installing.
 
 How to cite this library (APA style):
 
-    Zhang, A. (2015). Speech Recognition (Version 2.2) [Software]. Available from https://github.com/Uberi/speech_recognition#readme.
+    Zhang, A. (2015). Speech Recognition (Version 3.0) [Software]. Available from https://github.com/Uberi/speech_recognition#readme.
 
 How to cite this library (Chicago style):
 
-    Zhang, Anthony. 2015. *Speech Recognition* (version 2.2).
+    Zhang, Anthony. 2015. *Speech Recognition* (version 3.0).
 
-Also check out the `Python Baidu Yuyin API <https://github.com/DelightRun/PyBaiduYuyin>`__, which is based on this project.
+Also check out the `Python Baidu Yuyin API <https://github.com/DelightRun/PyBaiduYuyin>`__, which is based on an older version of this project, and adds support for `Baidu Yuyin <http://yuyin.baidu.com/>`__.
 
 Examples
 --------
 
-Recognize speech input from the microphone:
-
-.. code:: python
-
-                                                   # NOTE: this requires PyAudio because it uses the Microphone class
-    import speech_recognition as sr
-    r = sr.Recognizer()
-    with sr.Microphone() as source:                # use the default microphone as the audio source
-        audio = r.listen(source)                   # listen for the first phrase and extract it into audio data
-
-    try:
-        print("You said " + r.recognize(audio))    # recognize speech using Google Speech Recognition
-    except LookupError:                            # speech is unintelligible
-        print("Could not understand audio")
-
-Transcribe a WAV audio file:
-
-.. code:: python
-
-    import speech_recognition as sr
-    r = sr.Recognizer()
-    with sr.WavFile("test.wav") as source:              # use "test.wav" as the audio source
-        audio = r.record(source)                        # extract audio data from the file
-
-    try:
-        print("Transcription: " + r.recognize(audio))   # recognize speech using Google Speech Recognition
-    except LookupError:                                 # speech is unintelligible
-        print("Could not understand audio")
-
-Transcribe a WAV audio file and show the confidence of each possibility:
-
-.. code:: python
-
-    import speech_recognition as sr
-    r = sr.Recognizer()
-    with sr.WavFile("test.wav") as source:              # use "test.wav" as the audio source
-        audio = r.record(source)                        # extract audio data from the file
-
-    try:
-        list = r.recognize(audio,True)                  # generate a list of possible transcriptions
-        print("Possible transcriptions:")
-        for prediction in list:
-            print(" " + prediction["text"] + " (" + str(prediction["confidence"]*100) + "%)")
-    except LookupError:                                 # speech is unintelligible
-        print("Could not understand audio")
-
-Calibrate the recognizer energy threshold (see ``recognizer_instance.energy_threshold``) for ambient noise levels:
-
-.. code:: python
-
-    import speech_recognition as sr
-    r = sr.Recognizer()
-    with sr.Microphone() as source:                # use the default microphone as the audio source
-        r.adjust_for_ambient_noise(source)         # listen for 1 second to calibrate the energy threshold for ambient noise levels
-        audio = r.listen(source)                   # now when we listen, the energy threshold is already set to a good value, and we can reliably catch speech right away
-
-    try:
-        print("You said " + r.recognize(audio))    # recognize speech using Google Speech Recognition
-    except LookupError:                            # speech is unintelligible
-        print("Could not understand audio")
-
-Listening to a microphone in the background:
-
-.. code:: python
-
-    import speech_recognition as sr
-    def callback(recognizer, audio):                          # this is called from the background thread
-        try:
-            print("You said " + recognizer.recognize(audio))  # received audio data, now need to recognize it
-        except LookupError:
-            print("Oops! Didn't catch that")
-    r = sr.Recognizer()
-    m = sr.Microphone()
-    with m as source: r.adjust_for_ambient_noise(source)      # we only need to calibrate once, before we start listening
-    stop_listening = r.listen_in_background(m, callback)
-    
-    import time
-    for _ in range(50): time.sleep(0.1)                       # we're still listening even though the main thread is blocked - loop runs for about 5 seconds
-    stop_listening()                                          # call the stop function to stop the background thread
-    while True: time.sleep(0.1)                               # the background thread stops soon after we call the stop function
+-  [Recognize speech input from the microphone.](examples/microphone_recognition.py)
+-  [Transcribe a WAV audio file](examples/wav_transcribe.py)
+-  [Show extended recognition results](examples/extended_results.py)
+-  [Calibrate the recognizer energy threshold for ambient noise levels](examples/calibrate_energy_threshold.py) (see ``recognizer_instance.energy_threshold`` for details)
+-  [Listening to a microphone in the background](examples/background_listening.py)
 
 Installing
 ----------
 
-First, make sure you have all the requirements, listed in the "Requirements" section.
+First, make sure you have all the requirements listed in the "Requirements" section.
 
 The easiest way to install this is using ``pip install SpeechRecognition``.
 
@@ -140,13 +65,6 @@ In the folder, run ``python setup.py install``.
 Requirements
 ------------
 
-API Key
-~~~~~~~
-
-Google Speech Recognition API requires an API key. This library defaults to using one that was reverse engineered out of Chrome, but **it is not recommended that you use this API key for anything other than personal or testing purposes**.
-
-Instead, it is best to obtain your own API key by following the steps on the `API Keys <http://www.chromium.org/developers/how-tos/api-keys>`__ page at the Chromium Developers site.
-
 Python
 ~~~~~~
 
@@ -155,7 +73,7 @@ The first software requirement is `Python 2.6, 2.7, or Python 3.3+ <https://www.
 PyAudio (for microphone users)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you want to use audio input from microphones, `PyAudio <http://people.csail.mit.edu/hubert/pyaudio/#downloads>`__ is also necessary. If not installed, the library will still work, but ``Microphone`` will be undefined.
+If you want to use audio input from microphones, `PyAudio <http://people.csail.mit.edu/hubert/pyaudio/#downloads>`__ is also necessary. If not installed, the library will still work, but ``Microphone`` will not be defined.
 
 The official PyAudio builds seem to be broken on Windows. As a result, in the ``installers`` folder you will find `unofficial PyAudio builds for Windows <http://www.lfd.uci.edu/~gohlke/pythonlibs/#pyaudio>`__ that actually work. Run the installer corresponding to your Python version to install PyAudio.
 
@@ -166,7 +84,7 @@ On other POSIX-based systems, simply use the packages provided on the downloads 
 FLAC (for some systems)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-A FLAC encoder is required to encode the audio data to send to the API. If using Windows, OS X, or Linux on an i385-compatible architecture, the encoder is already bundled with this library.
+A FLAC encoder is required to encode the audio data to send to the API. If using Windows, OS X, or Linux on an i385-compatible architecture, the encoder is already bundled with this library - you do not need to install anything else.
 
 Otherwise, ensure that you have the ``flac`` command line tool, which is often available through the system package manager.
 
@@ -200,35 +118,35 @@ The recognizer can't recognize speech right after it starts listening for the fi
 
 The ``recognizer_instance.energy_threshold`` property is probably set to a value that is too high to start off with, and then being adjusted lower automatically by dynamic energy threshold adjustment. Before it is at a good level, the energy threshold is so high that speech is just considered ambient noise.
 
-The solution is to decrease this threshold, or call ``recognizer_instance.adjust_for_ambient_noise(source, duration = 1)`` beforehand, which will set the threshold to a good value automatically.
+The solution is to decrease this threshold, or call ``recognizer_instance.adjust_for_ambient_noise`` beforehand, which will set the threshold to a good value automatically.
 
 The recognizer doesn't understand my particular language/dialect.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Try setting the language code when creating a ``Recognizer`` instance. For example, for British English it is better to use ``Recognizer("en-GB")`` rather than the default US English.
+Try setting the recognition language to your language/dialect. To do this, see the documentation for ``recognizer_instance.recognize_google``, ``recognizer_instance.recognize_wit``, and ``recognizer_instance.recognize_ibm``.
 
-See the "Reference" section for more information about language codes.
+For example, if your language/dialect is British English, it is better to use ``"en-GB"`` as the language rather than ``"en-US"``.
 
 The code examples throw ``UnicodeEncodeError: 'ascii' codec can't encode character`` when run.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When you're using Python 2, and your language uses non-ASCII characters, and the terminal or file-like object you're printing to only supports ASCII, an error is thrown when trying to write non-ASCII characters. In Python 3, the language will transparently handle all Unicode output properly.
+When you're using Python 2, and your language uses non-ASCII characters, and the terminal or file-like object you're printing to only supports ASCII, an error is thrown when trying to write non-ASCII characters.
 
-This is because in Python 2, ``recognizer_instance.recognize(audio_data, show_all = False)`` returns a unicode string (``u"something"``) rather than a byte string (``"something"``). In Python 3, all strings are unicode strings.
+This is because in Python 2, ``recognizer_instance.recognize_google``, ``recognizer_instance.recognize_wit``, and ``recognizer_instance.recognize_ibm`` return unicode strings (``u"something"``) rather than byte strings (``"something"``). In Python 3, all strings are unicode strings.
 
 To make printing of unicode strings work in Python 2 as well, replace all print statements in your code of the following form:
 
     .. code:: python
 
-        print(SOME_UNICODE_STRING)
+        print SOME_UNICODE_STRING
 
 With the following:
 
     .. code:: python
 
-        print(SOME_UNICODE_STRING.encode("utf8"))
+        print SOME_UNICODE_STRING.encode("utf8")
 
-This change, however, will break the code in Python 3.
+This change, however, will prevent the code from working in Python 3.
 
 The program doesn't run when compiled with `PyInstaller <https://github.com/pyinstaller/pyinstaller/wiki>`__.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -245,12 +163,14 @@ PyInstaller doesn't know that the FLAC converters need to be bundled with the ap
 
 3. When building the project using something like ``pyinstaller SOME_SCRIPT.py``, simply supply the ``--additional-hooks-dir`` option set to the PyInstaller hooks folder. For example, ``pyinstaller --additional-hooks-dir pyinstaller-hooks/ SOME_SCRIPT.py``.
 
+Note that the development versions of PyInstaller already include this hook, and will therefore work out of the box.
+
 On Ubuntu/Debian, I get errors like "jack server is not running or cannot be started" or "Cannot lock down [...] byte memory area (Cannot allocate memory)".
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The Linux audio stack is pretty fickle. There are a few things that can cause these issues.
 
-First, make sure JACK is installed - to install it, run `sudo apt-get install multimedia-jack`
+First, make sure JACK is installed - to install it, run ``sudo apt-get install multimedia-jack``
 
 You will then want to configure the JACK daemon correctly to avoid that "Cannot allocate memory" error. Run ``sudo dpkg-reconfigure -p high jackd2`` and select "Yes" to do so.
 
@@ -292,7 +212,7 @@ This class is a context manager, and is designed to be used with ``with`` statem
 .. code:: python
 
     with Microphone() as source:    # open the microphone and start recording
-        pass                        # do things here - `source` is the Microphone instance created above
+        pass                        # do things here - ``source`` is the Microphone instance created above
                                     # the microphone is automatically released at this point
 
 ``WavFile(filename_or_fileobject)``
@@ -307,7 +227,7 @@ This class is a context manager, and is designed to be used with ``with`` statem
 .. code:: python
 
     with WavFile("test.wav") as source:    # open the WAV file for reading
-        pass                               # do things here - `source` is the WavFile instance created above
+        pass                               # do things here - ``source`` is the WavFile instance created above
 
 ``wavfile_instance.DURATION``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -318,29 +238,21 @@ This is useful when combined with the ``offset`` parameter of ``recognizer_insta
 
 However, note that recognizing speech in multiple chunks is not the same as recognizing the whole thing at once. If spoken words appear on the boundaries that we split the audio into chunks on, each chunk only gets part of the word, which may result in inaccurate results.
 
-``Recognizer(language = "en-US", key = "AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw")``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``Recognizer()``
+~~~~~~~~~~~~~~~~
 
-Creates a new ``Recognizer`` instance, which represents a collection of speech recognition functionality.
-
-The language is determined by ``language``, a standard language code like `"en-US"` or `"en-GB"`, and defaults to US English. A list of supported language codes can be found `here <http://stackoverflow.com/questions/14257598/>`__. Basically, language codes can be just the language (``en``), or a language with a dialect (``en-US``).
-
-The Google Speech Recognition API key is specified by ``key``. If not specified, it uses a generic key that works out of the box.
-
-**WARNING: THE GENERIC KEY IS INTENDED FOR TESTING AND PERSONAL PURPOSES ONLY AND MAY BE REVOKED BY GOOGLE AT ANY TIME.**
-
-If you need to use this module for purposes other than these, please obtain your own API key from Google. See the "Requirements" section for more information.
+Creates a new ``Recognizer`` instance, which represents a collection of speech recognition settings and functionality.
 
 ``recognizer_instance.energy_threshold = 300``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Represents the energy level threshold for sounds. Values below this threshold are considered silence, and values above this threshold are considered speech. Can be changed.
 
-This is tweaked automatically if dynamic thresholds are enabled (see ``recognizer_instance.dynamic_energy_threshold``). A good starting value will generally allow automatic adjustment reach a good value faster.
+This is adjusted automatically if dynamic thresholds are enabled (see ``recognizer_instance.dynamic_energy_threshold``). A good starting value will generally allow the automatic adjustment to reach a good value faster.
 
-This threshold is associated with the perceived loudness of the sound, but it is a nonlinear relationship. The actual energy threshold you will need depends on your microphone sensitivity or audio data. Typical values for a silent room are 0 to 100, and typical values for speaking are between 150 and 3500. Ambient noise has a significant impact on what values will work best.
+This threshold is associated with the perceived loudness of the sound, but it is a nonlinear relationship. The actual energy threshold you will need depends on your microphone sensitivity or audio data. Typical values for a silent room are 0 to 100, and typical values for speaking are between 150 and 3500. Ambient (non-speaking) noise has a significant impact on what values will work best.
 
-If you're having trouble with the recognizer trying to recognize words even when you're not speaking, try tweaking this to a higher value. If you're having trouble with the recognizer not recognizing your words when you are speaking, try tweaking this to a lower value. For example, a sensitive microphone or microphones in louder rooms might have a ambient (non-speaking) energy level of up to 4000:
+If you're having trouble with the recognizer trying to recognize words even when you're not speaking, try tweaking this to a higher value. If you're having trouble with the recognizer not recognizing your words when you are speaking, try tweaking this to a lower value. For example, a sensitive microphone or microphones in louder rooms might have a ambient energy level of up to 4000:
 
 .. code:: python
 
@@ -349,7 +261,9 @@ If you're having trouble with the recognizer trying to recognize words even when
     r.energy_threshold = 4000
     # rest of your code goes here
 
-The dynamic energy threshold setting can mitigate this by increasing or decreasing this automatically to account for ambient noise. However, this takes time to adjust, so it is still possible to get the false positive detections before the threshold settles into a good value. To avoid this, set this property to a high value initially (4000 works well), so the threshold is always above ambient noise levels.
+The dynamic energy threshold setting can mitigate this by increasing or decreasing this automatically to account for ambient noise. However, this takes time to adjust, so it is still possible to get the false positive detections before the threshold settles into a good value.
+
+To avoid this, use ``recognizer_instance.adjust_for_ambient_noise(source, duration = 1)`` to calibrate the level to a good value. Alternatively, simply set this property to a high value initially (4000 works well), so the threshold is always above ambient noise levels: over time, it will be automatically decreased to account for ambient noise levels.
 
 ``recognizer_instance.dynamic_energy_threshold = True``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -363,14 +277,14 @@ Recommended for situations where the ambient noise level is unpredictable, which
 
 If the dynamic energy threshold setting is enabled (see ``recognizer_instance.dynamic_energy_threshold``), represents approximately the fraction of the current energy threshold that is retained after one second of dynamic threshold adjustment. Can be changed (not recommended).
 
-Lower values allow for faster adjustment, but also make it more likely to miss certain phrases. This value should be between 0 and 1. As this value approaches 1, dynamic adjustment has less of an effect over time. When this value is 1, dynamic adjustment does nothing.
+Lower values allow for faster adjustment, but also make it more likely to miss certain phrases (especially those with slowly changing volume). This value should be between 0 and 1. As this value approaches 1, dynamic adjustment has less of an effect over time. When this value is 1, dynamic adjustment has no effect.
 
 ``recognizer_instance.dynamic_energy_adjustment_ratio = 1.5``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If the dynamic energy threshold setting is enabled (see ``recognizer_instance.dynamic_energy_threshold``), represents the minimum factor by which speech is louder than ambient noise. Can be changed (not recommended).
 
-For example, the default value of 1.5 means that speech is at least 1.5 times louder than ambient noise. Smaller values result in more false positives but fewer false negatives when ambient noise is loud compared to speech.
+For example, the default value of 1.5 means that speech is at least 1.5 times louder than ambient noise. Smaller values result in more false positives (but fewer false negatives) when ambient noise is loud compared to speech.
 
 ``recognizer_instance.pause_threshold = 0.8``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -400,49 +314,63 @@ The ``duration`` parameter is the maximum number of seconds that it will dynamic
 
 Records a single phrase from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance, which it returns.
 
-This is done by waiting until the audio has an energy above ``recognizer_instance.energy_threshold`` (the user has started speaking), and then recording until it encounters ``recognizer_instance.pause_threshold`` seconds of silence or there is no more audio input. The ending silence is not included.
+This is done by waiting until the audio has an energy above ``recognizer_instance.energy_threshold`` (the user has started speaking), and then recording until it encounters ``recognizer_instance.pause_threshold`` seconds of non-speaking or there is no more audio input. The ending silence is not included.
 
-The ``timeout`` parameter is the maximum number of seconds that it will wait for a phrase to start before giving up and throwing an ``OSError`` exception. If ``None``, it will wait indefinitely.
+The ``timeout`` parameter is the maximum number of seconds that it will wait for a phrase to start before giving up and throwing an ``speech_recognition.WaitTimeoutError`` exception. If ``timeout`` is ``None``, it will wait indefinitely.
 
 ``recognizer_instance.listen_in_background(source, callback)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Spawns a thread to repeatedly record phrases from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance and call ``callback`` with that ``AudioData`` instance as soon as each phrase are detected.
 
-Returns a function object that, when called, stops the background listener thread. The background thread is a daemon and will not stop the program from exiting if there are no other non-daemon threads.
+Returns a function object that, when called, requests that the background listener thread stop, and waits until it does before returning. The background thread is a daemon and will not stop the program from exiting if there are no other non-daemon threads.
 
 Phrase recognition uses the exact same mechanism as ``recognizer_instance.listen(source)``.
 
-The ``callback`` parameter is a function that should accept two parameters - the ``recognizer_instance``, and an ``AudioData`` instance representing the captured audio. Note that this function will be called from a non-main thread.
+The ``callback`` parameter is a function that should accept two parameters - the ``recognizer_instance``, and an ``AudioData`` instance representing the captured audio. Note that ``callback`` function will be called from a non-main thread.
 
-``recognizer_instance.recognize(audio_data, show_all = False)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``recognizer_instance.recognize_google(audio_data, key = None, language = "en-US", show_all = False)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Performs speech recognition, using the Google Speech Recognition API, on ``audio_data`` (an ``AudioData`` instance).
+Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Google Speech Recognition API.
 
-Returns the most likely transcription if ``show_all`` is ``False``, otherwise it returns a ``dict`` of all possible transcriptions and their confidence levels.
+The Google Speech Recognition API key is specified by ``key``. If not specified, it uses a generic key that works out of the box. This should generally be used for personal or testing purposes only, as it **may be revoked by Google at any time**.
 
-Note: confidence is set to 0 if it isn't given by Google
+To obtain your own API key, simply following the steps on the `API Keys <http://www.chromium.org/developers/how-tos/api-keys>`__ page at the Chromium Developers site. In the Google Developers Console, Google Speech Recognition is listed as "Speech API".
 
-Also raises a ``LookupError`` exception if the speech is unintelligible, a ``KeyError`` if the key isn't valid or the quota for the key has been maxed out, and ``IndexError`` if there is no internet connection.
+The recognition language is determined by ``language``, an IETF language tag like ``"en-US"`` or ``"en-GB"``, defaulting to US English. A list of supported language codes can be found `here <http://stackoverflow.com/questions/14257598/>`__. Basically, language codes can be just the language (``en``), or a language with a dialect (``en-US``).
 
-Note: ``KeyError`` and ``IndexError`` is a subclass of ``LookupError`` so a ``LookupError`` will catch all three types of errors. To catch subclasses you must place their handler clause before ``LookupError``:
+Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the raw API response as a JSON dictionary.
 
-.. code:: python
+Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the key isn't valid, the quota for the key is maxed out, or there is no internet connection.
 
-    import speech_recognition as sr
-    r = sr.Recognizer()
-    with sr.WavFile("test.wav") as source:              # use "test.wav" as the audio source
-        audio = r.record(source)                        # extract audio data from the file
+``recognizer_instance.recognize_wit(audio_data, key, show_all = False)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    try:
-        print("You said " + r.recognize(audio))         # recognize speech using Google Speech Recognition
-    except IndexError:                                  # the API key didn't work
-        print("No internet connection")
-    except KeyError:                                    # the API key didn't work
-        print("Invalid API key or quota maxed out")
-    except LookupError:                                 # speech is unintelligible
-        print("Could not understand audio")
+Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Wit.ai API.
+
+The Wit.ai API key is specified by ``key``. Unfortunately, these are not available without `signing up for an account <https://wit.ai/getting-started>`__ and creating an app.
+
+To get the API key for a Wit.ai app, go to the app settings, go to the section titled "API Details", and look for "Server Access Token" or "Client Access Token". If the desired field is blank, click on the "Reset token" button on the right of the field. Wit.ai API keys are 32-character uppercase alphanumeric strings.
+
+The recognition language is configured in the Wit.ai app settings.
+
+Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the raw API response as a JSON dictionary.
+
+Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the key isn't valid, the quota for the key is maxed out, or there is no internet connection.
+
+``recognizer_instance.recognize_ibm(audio_data, username, password, language="en-US", show_all = False)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the IBM Speech to Text API.
+
+The IBM Speech to Text username and password are specified by ``username`` and ``password``, respectively. Unfortunately, these are not available without an account. IBM has published instructions for obtaining these credentials in the `IBM Watson Developer Cloud documentation <https://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/doc/getting_started/gs-credentials.shtml>`__.
+
+The recognition language is determined by ``language``, an IETF language tag with a dialect like ``"en-US"`` or ``"es-ES"``, defaulting to US English. At the moment, this supports the tags ``"en-US"``, ``"es-ES"``, and ``"ja-JP"``.
+
+Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the raw API response as a JSON dictionary.
+
+Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the key isn't valid, or there is no internet connection.
 
 ``AudioSource``
 ~~~~~~~~~~~~~~~
@@ -454,9 +382,24 @@ Instances of subclasses of this class, such as ``Microphone`` and ``WavFile``, c
 ``AudioData``
 ~~~~~~~~~~~~~
 
-Storage class for audio data.
+Storage class for audio data. Do not instantiate.
 
-Contains the fields ``sample_rate`` and ``data``, which represent the number of raw audio samples per second, and actual raw audio samples of the audio data, respectively.
+Instances of this class are returned from ``recognizer_instance.record`` and ``recognizer_instance.listen``, and are passed to callbacks of ``recognizer_instance.listen_in_background``.
+
+Developing
+----------
+
+To hack on this library, first make sure you have all the requirements listed in the "Requirements" section.
+
+-  Most of the library code lives in ``speech_recognition/__init__.py``.
+-  Examples live under the ``examples/`` directory, and the demo script lives in ``speech_recognition/__main__.py``.
+-  The FLAC encoder binaries are in the ``speech_recognition/`` directory.
+
+To install/reinstall the library locally, run ``python setup.py install`` in the project root directory.
+
+Releases are done by running either ``build.sh`` or ``build.bat``. These are bash and batch scripts, respectively, that build Python source packages and `Python Wheels <http://pythonwheels.com/>`__, then upload them to PyPI.
+
+Features and bugfixes should be tested, at minimum, on Python 2.7 and a recent version of Python 3. It is highly recommended to test features on Python 2.6, 2.7, 3.3, and the latest version of Python 3.
 
 Authors
 -------
@@ -469,6 +412,7 @@ Authors
     kevinismith <kevin_i_smith@yahoo.com> (Kevin Smith)
     haas85
     DelightRun <changxu.mail@gmail.com>
+    maverickagm
 
 Please report bugs and suggestions at the `issue tracker <https://github.com/Uberi/speech_recognition/issues>`__!
 
