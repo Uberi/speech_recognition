@@ -6,8 +6,8 @@ __author__ = "Anthony Zhang (Uberi)"
 __version__ = "2.2.0"
 __license__ = "BSD"
 
-import io, os, subprocess, wave
-import math, audioop, collections
+import io, os, subprocess, wave, base64
+import math, audioop, collections, threading
 import platform, stat
 import json
 
@@ -19,7 +19,11 @@ except ImportError: # otherwise, use python3 module
 
 #wip: filter out clicks and other too short parts
 #wip: test and document Wit.ai integration
-#wip: integrate and test PyBaiduYuyin
+
+# define exceptions
+class WaitTimeoutError(Exception): pass
+class RequestError(Exception): pass
+class UnknownValueError(Exception): pass
 
 class AudioSource(object):
     def __init__(self):
@@ -67,6 +71,7 @@ try:
             self.stream = None
 
         def __enter__(self):
+            assert self.stream is None, "This audio source is already inside a context manager"
             self.audio = pyaudio.PyAudio()
             self.stream = self.audio.open(
                 input_device_index = self.device_index,
@@ -101,6 +106,7 @@ class WavFile(AudioSource):
         self.DURATION = None
 
     def __enter__(self):
+        assert self.stream is None, "This audio source is already inside a context manager"
         if self.filename: self.wav_file = open(self.filename, "rb")
         self.wav_reader = wave.open(self.wav_file, "rb")
         self.SAMPLE_WIDTH = self.wav_reader.getsampwidth()
@@ -130,12 +136,12 @@ class WavFile(AudioSource):
 
 class AudioData(object):
     def __init__(self, frame_data, sample_rate, sample_width, channels):
-        assert isinstance(sample_rate, int) and sample_rate > 0, "Sample rate must be a positive integer"
-        assert isinstance(sample_width, int) and sample_width > 0, "Sample width must be a positive integer"
+        assert sample_rate > 0, "Sample rate must be a positive integer"
+        assert sample_width % 1 == 0 and sample_width > 0, "Sample width must be a positive integer"
         assert channels == 1 or channels == 2, "Audio must be mono or stereo"
         self.frame_data = frame_data
         self.sample_rate = sample_rate
-        self.sample_width = sample_width
+        self.sample_width = int(sample_width)
         self.channels = channels
 
     def get_wav_data(self):
@@ -272,7 +278,7 @@ class Recognizer(AudioSource):
         while True:
             elapsed_time += seconds_per_buffer
             if timeout and elapsed_time > timeout: # handle timeout if specified
-                raise OSError("listening timed out")
+                raise WaitTimeoutError("listening timed out")
 
             buffer = source.stream.read(source.CHUNK)
             if len(buffer) == 0: break # reached end of the stream
@@ -313,7 +319,7 @@ class Recognizer(AudioSource):
 
         return AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH, source.CHANNELS)
 
-    def recognize_google(self, audio_data, key = "AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw", language = "en-US", show_all = False):
+    def recognize_google(self, audio_data, key = None, language = "en-US", show_all = False):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Google Speech Recognition API.
 
@@ -321,25 +327,26 @@ class Recognizer(AudioSource):
 
         The recognition language is determined by ``language``, an IETF language tag like `"en-US"` or `"en-GB"`, defaulting to US English. A list of supported language codes can be found `here <http://stackoverflow.com/questions/14257598/>`__. Basically, language codes can be just the language (``en``), or a language with a dialect (``en-US``).
 
-        Returns the most likely transcription if ``show_all`` is ``False``, otherwise it returns a ``dict`` of all possible transcriptions and their confidence levels. Confidence levels are 0 if not specified in the server response.
+        Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the raw API response as a JSON dictionary.
 
-        Raises a ``LookupError`` exception if the speech is unintelligible, a ``KeyError`` if the key isn't valid/the quota for the key is maxed out, or an ``IndexError`` if there is no internet connection.
+        Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the key isn't valid, the quota for the key is maxed out, or there is no internet connection.
         """
-        assert isinstance(audio_data, AudioData), "Data must be audio data"
-        assert isinstance(key, str), "Key must be a string"
-        assert isinstance(language, str), "Language code must be a string"
+        assert isinstance(audio_data, AudioData), "`audio_data` must be audio data"
+        assert key is None or isinstance(key, str), "`key` must be `None` or a string"
+        assert isinstance(language, str), "`language` must be a string"
 
         flac_data, sample_rate = audio_data.get_flac_data(), audio_data.sample_rate
+        if key is None: key = "AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw"
         url = "http://www.google.com/speech-api/v2/recognize?client=chromium&lang={0}&key={1}".format(language, key)
         request = Request(url, data = flac_data, headers = {"Content-Type": "audio/x-flac; rate={0}".format(sample_rate)})
 
         # check for invalid key response from the server
         try:
             response = urlopen(request)
+        except HTTPError as e:
+            raise RequestError("request failed, ensure that key is correct and quota is not maxed out")
         except URLError:
-            raise IndexError("No internet connection available to transfer audio data")
-        except:
-            raise KeyError("Server wouldn't respond (invalid key or quota has been maxed out)")
+            raise RequestError("no internet connection available to transfer audio data")
         response_text = response.read().decode("utf-8")
 
         # ignore any blank blocks
@@ -351,77 +358,120 @@ class Recognizer(AudioSource):
                 actual_result = result[0]
                 break
 
-        # make sure we have a list of transcriptions
-        if "alternative" not in actual_result:
-            raise LookupError("Speech is unintelligible")
+        if show_all: return actual_result
 
-        # return the best guess unless told to do otherwise
-        if not show_all:
-            for prediction in actual_result["alternative"]:
-                if "transcript" in prediction:
-                    return prediction["transcript"]
-            raise LookupError("Speech is unintelligible")
+        # return the best guess
+        if "alternative" not in actual_result: raise UnknownValueError()
+        for entry in actual_result["alternative"]:
+            if "transcript" in entry:
+                return entry["transcript"]
 
-        # return all the possibilities
-        spoken_text = []
-        for i, prediction in enumerate(actual_result["alternative"]):
-            if "transcript" in prediction:
-                spoken_text.append({"text": prediction["transcript"], "confidence": 1 if i == 0 else 0})
-        return spoken_text
+        # no transcriptions available
+        raise UnknownValueError()
 
     def recognize_wit(self, audio_data, key, show_all = False):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Wit.ai API.
 
-        Returns the most likely transcription if ``show_all`` is ``False``, otherwise it returns WIP.
-
         The Wit.ai API key is specified by ``key``. Unfortunately, these are not available without `signing up for an account <https://wit.ai/getting-started>`__ and creating an app.
 
-        wip: write about how to create an app with Wit.ai and all the steps and stuff
+        To get the API key for a Wit.ai app, go to the app settings, go to the section titled "API Details", and look for "Server Access Token" or "Client Access Token". If the desired field is blank, click on the "Reset token" button on the right of the field. Wit.ai API keys are 32-character uppercase alphanumeric strings.
 
-        Raises WIP.
+        The recognition language is configured in the Wit.ai app settings.
+
+        Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the raw API response as a JSON dictionary.
+
+        Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the key isn't valid, the quota for the key is maxed out, or there is no internet connection.
         """
         assert isinstance(audio_data, AudioData), "Data must be audio data"
+        assert isinstance(key, str), "`key` must be a string"
 
         wav_data = audio_data.get_wav_data()
         url = "https://api.wit.ai/speech?v=20141022"
         request = Request(url, data = wav_data, headers = {"Authorization": "Bearer {0}".format(key), "Content-Type": "audio/wav"})
         try:
             response = urlopen(request)
+        except HTTPError:
+            raise RequestError("request failed, ensure that key is correct and quota is not maxed out")
         except URLError:
-            raise IndexError("No internet connection available to transfer audio data")
-        except:
-            raise KeyError("Server wouldn't respond (invalid key or quota has been maxed out)")
+            raise RequestError("no internet connection available to transfer audio data")
         response_text = response.read().decode("utf-8")
         result = json.loads(response_text)
  
         if show_all: return result
+
+        if "_text" not in result or result["_text"] is None: raise UnknownValueError()
         return result["_text"]
+
+    def recognize_ibm(self, audio_data, username, password, language="en-US", show_all = False):
+        """
+        Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the IBM Speech to Text API.
+
+        The IBM Speech to Text username and password are specified by ``username`` and ``password``, respectively. Unfortunately, these are not available without an account. IBM has published instructions for obtaining these credentials in the `IBM Watson Developer Cloud documentation <https://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/doc/getting_started/gs-credentials.shtml>`__.
+
+        The recognition language is determined by ``language``, an IETF language tag with a dialect like `"en-US"` or `"es-ES"`, defaulting to US English. At the moment, this supports the tags `"en-US"`, `"es-ES"`, and `"ja-JP"`.
+
+        Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the raw API response as a JSON dictionary.
+
+        Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the key isn't valid, or there is no internet connection.
+        """
+        assert isinstance(audio_data, AudioData), "Data must be audio data"
+        assert isinstance(username, str), "`username` must be a string"
+        assert isinstance(password, str), "`password` must be a string"
+        assert language in {"en-US", "es-ES", "ja-JP"}, "`language` must be a valid language."
+
+        flac_data = audio_data.get_flac_data()
+        model = "{0}_BroadbandModel".format(language)
+        url = "https://stream.watsonplatform.net/speech-to-text/api/v1/recognize?continuous=true&model={0}".format(model)
+        request = Request(url, data = flac_data, headers = {"Content-Type": "audio/x-flac"})
+        if hasattr("", "encode"):
+            authorization_value = base64.standard_b64encode("{0}:{1}".format(username, password).encode("utf-8")).decode("utf-8")
+        else:
+            authorization_value = base64.standard_b64encode("{0}:{1}".format(username, password))
+        request.add_header("Authorization", "Basic {0}".format(authorization_value))
+        try:
+            response = urlopen(request)
+        except HTTPError as e:
+            raise RequestError("request failed, ensure that username and password are correct")
+        except URLError:
+            raise RequestError("no internet connection available to transfer audio data")
+        response_text = response.read().decode("utf-8")
+        result = json.loads(response_text)
+ 
+        if show_all: return result
+
+        if "results" not in result or len(result["results"]) < 1 or "alternatives" not in result["results"][0]:
+            raise UnknownValueError()
+        for entry in result["results"][0]["alternatives"]:
+            if "transcript" in entry: return entry["transcript"]
+
+        # no transcriptions available
+        raise UnknownValueError()
 
     def listen_in_background(self, source, callback):
         """
         Spawns a thread to repeatedly record phrases from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance and call ``callback`` with that ``AudioData`` instance as soon as each phrase are detected.
 
-        Returns a function object that, when called, stops the background listener thread. The background thread is a daemon and will not stop the program from exiting if there are no other non-daemon threads.
+        Returns a function object that, when called, requests that the background listener thread stop, and waits until it does before returning. The background thread is a daemon and will not stop the program from exiting if there are no other non-daemon threads.
 
         Phrase recognition uses the exact same mechanism as ``recognizer_instance.listen(source)``.
 
-        The ``callback`` parameter is a function that should accept two parameters - the ``recognizer_instance``, and an ``AudioData`` instance representing the captured audio. Note that this function will be called from a non-main thread.
+        The ``callback`` parameter is a function that should accept two parameters - the ``recognizer_instance``, and an ``AudioData`` instance representing the captured audio. Note that ``callback`` function will be called from a non-main thread.
         """
         assert isinstance(source, AudioSource), "Source must be an audio source"
-        import threading
         running = [True]
         def threaded_listen():
             with source as s:
                 while running[0]:
-                    try: # try to detect speech for only one second to do another check if running is enabled
+                    try: # listen for 1 second, then check again if the stop function has been called
                         audio = self.listen(s, 1)
-                    except OSError:
+                    except WaitTimeoutError: # listening timed out, just try again
                         pass
                     else:
                         if running[0]: callback(self, audio)
         def stopper():
             running[0] = False
+            listener_thread.join() # block until the background thread is done
         listener_thread = threading.Thread(target=threaded_listen)
         listener_thread.daemon = True
         listener_thread.start()
