@@ -26,7 +26,6 @@ except sr.RequestError:
 
 # recognize speech using Wit.ai
 WIT_AI_KEY = "INSERT WIT.AI API KEY HERE" # Wit.ai keys are 32-character uppercase alphanumeric strings
-WIT_AI_KEY = "G23C24NTSW4DXZMBFTUPTGLMAHHZWGJ4" # Wit.ai keys are 32-character uppercase alphanumeric strings
 try:
     from pprint import pprint
     print("Wit.ai recognition results:")
@@ -39,8 +38,6 @@ except sr.RequestError:
 # recognize speech using IBM Speech to Text
 IBM_USERNAME = "INSERT IBM SPEECH TO TEXT USERNAME HERE" # IBM Speech to Text usernames are strings of the form XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
 IBM_PASSWORD = "INSERT IBM SPEECH TO TEXT PASSWORD HERE" # IBM Speech to Text passwords are mixed-case alphanumeric strings
-IBM_USERNAME = "e3fbf76d-d2c0-4c18-8d5a-288ca84d1bfc" # IBM Speech to Text usernames are strings of the form XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
-IBM_PASSWORD = "B31pQdw8p5U8" # IBM Speech to Text passwords are mixed-case alphanumeric strings
 try:
     from pprint import pprint
     print("IBM Speech to Text results:")
