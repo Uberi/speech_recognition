@@ -45,11 +45,13 @@ Also check out the `Python Baidu Yuyin API <https://github.com/DelightRun/PyBaid
 Examples
 --------
 
--  [Recognize speech input from the microphone.](examples/microphone_recognition.py)
--  [Transcribe a WAV audio file](examples/wav_transcribe.py)
--  [Show extended recognition results](examples/extended_results.py)
--  [Calibrate the recognizer energy threshold for ambient noise levels](examples/calibrate_energy_threshold.py) (see ``recognizer_instance.energy_threshold`` for details)
--  [Listening to a microphone in the background](examples/background_listening.py)
+See the ``examples/`` directory for usage examples:
+
+-  `Recognize speech input from the microphone <examples/microphone_recognition.py>`__
+-  `Transcribe a WAV audio file <examples/wav_transcribe.py>`__
+-  `Show extended recognition results <examples/extended_results.py>`__
+-  `Calibrate the recognizer energy threshold for ambient noise levels <examples/calibrate_energy_threshold.py>`__ (see ``recognizer_instance.energy_threshold`` for details)
+-  `Listening to a microphone in the background <examples/background_listening.py>`__
 
 Installing
 ----------
