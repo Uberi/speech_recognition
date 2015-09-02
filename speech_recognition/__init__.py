@@ -3,7 +3,7 @@
 """Library for performing speech recognition with the Google Speech Recognition API."""
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "3.0.0"
+__version__ = "3.1.0"
 __license__ = "BSD"
 
 import io, os, subprocess, wave, base64
@@ -380,7 +380,7 @@ class Recognizer(AudioSource):
         # check for invalid key response from the server
         try:
             response = urlopen(request)
-        except HTTPError as e:
+        except HTTPError:
             raise RequestError("request failed, ensure that key is correct and quota is not maxed out")
         except URLError:
             raise RequestError("no internet connection available to transfer audio data")
@@ -416,7 +416,7 @@ class Recognizer(AudioSource):
 
         The recognition language is configured in the Wit.ai app settings.
 
-        Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the raw API response as a JSON dictionary.
+        Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <https://wit.ai/docs/http/20141022#get-intent-via-text-link>`__ as a JSON dictionary.
 
         Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the key isn't valid, the quota for the key is maxed out, or there is no internet connection.
         """
@@ -440,7 +440,7 @@ class Recognizer(AudioSource):
         if "_text" not in result or result["_text"] is None: raise UnknownValueError()
         return result["_text"]
 
-    def recognize_ibm(self, audio_data, username, password, language="en-US", show_all = False):
+    def recognize_ibm(self, audio_data, username, password, language = "en-US", show_all = False):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the IBM Speech to Text API.
 
@@ -448,14 +448,14 @@ class Recognizer(AudioSource):
 
         The recognition language is determined by ``language``, an IETF language tag with a dialect like ``"en-US"`` or ``"es-ES"``, defaulting to US English. At the moment, this supports the tags ``"en-US"``, ``"es-ES"``, and ``"ja-JP"``.
 
-        Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the raw API response as a JSON dictionary.
+        Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text/api/v1/#recognize>`__ as a JSON dictionary.
 
         Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the key isn't valid, or there is no internet connection.
         """
         assert isinstance(audio_data, AudioData), "Data must be audio data"
         assert isinstance(username, str), "`username` must be a string"
         assert isinstance(password, str), "`password` must be a string"
-        assert language in {"en-US", "es-ES", "ja-JP"}, "`language` must be a valid language."
+        assert language in ["en-US", "es-ES", "ja-JP"], "`language` must be a valid language."
 
         flac_data = audio_data.get_flac_data()
         model = "{0}_BroadbandModel".format(language)
@@ -468,7 +468,7 @@ class Recognizer(AudioSource):
         request.add_header("Authorization", "Basic {0}".format(authorization_value))
         try:
             response = urlopen(request)
-        except HTTPError as e:
+        except HTTPError:
             raise RequestError("request failed, ensure that username and password are correct")
         except URLError:
             raise RequestError("no internet connection available to transfer audio data")
@@ -481,6 +481,61 @@ class Recognizer(AudioSource):
             raise UnknownValueError()
         for entry in result["results"][0]["alternatives"]:
             if "transcript" in entry: return entry["transcript"]
+
+        # no transcriptions available
+        raise UnknownValueError()
+
+    def recognize_att(self, audio_data, app_key, app_secret, language = "en-US", show_all = False):
+        """
+        Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the AT&T Speech to Text API.
+
+        The AT&T Speech to Text app key and app secret are specified by ``app_key`` and ``app_secret``, respectively. Unfortunately, these are not available without `signing up for an account <http://developer.att.com/apis/speech>`__ and creating an app.
+
+        To get the app key and app secret for an AT&T app, go to the `My Apps page <https://matrix.bf.sl.attcompute.com/apps>`__ and look for "APP KEY" and "APP SECRET". AT&T app keys and app secrets are 32-character lowercase alphanumeric strings.
+
+        The recognition language is determined by ``language``, an IETF language tag with a dialect like ``"en-US"`` or ``"es-ES"``, defaulting to US English. At the moment, this supports the tags ``"en-US"``, ``"es-ES"``, and ``"ja-JP"``.
+
+        Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <https://developer.att.com/apis/speech/docs#resources-speech-to-text>`__ as a JSON dictionary.
+
+        Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the key isn't valid, or there is no internet connection.
+        """
+        assert isinstance(audio_data, AudioData), "Data must be audio data"
+        assert isinstance(app_key, str), "`app_key` must be a string"
+        assert isinstance(app_secret, str), "`app_secret` must be a string"
+        assert language in ["en-US", "es-US"], "`language` must be a valid language."
+
+        # ensure we have an authentication token
+        authorization_url = "https://api.att.com/oauth/v4/token"
+        authorization_body = "client_id={0}&client_secret={1}&grant_type=client_credentials&scope=SPEECH".format(app_key, app_secret)
+        try:
+            authorization_response = urlopen(authorization_url, data = authorization_body.encode("utf-8"))
+        except HTTPError:
+            raise RequestError("credential request failed, ensure that app key and app secret are correct")
+        except URLError:
+            raise RequestError("no internet connection available to request credentials")
+        authorization_text = authorization_response.read().decode("utf-8")
+        authorization_bearer = json.loads(authorization_text).get("access_token")
+        if authorization_bearer is None: raise RequestError("missing OAuth access token in requested credentials")
+
+        wav_data = audio_data.get_wav_data()
+        url = "https://api.att.com/speech/v3/speechToText"
+        request = Request(url, data = wav_data, headers = {"Authorization": "Bearer {0}".format(authorization_bearer), "Content-Language": language, "Content-Type": "audio/wav"})
+        try:
+            response = urlopen(request)
+        except HTTPError:
+            raise RequestError("request failed, ensure that username and password are correct")
+        except URLError:
+            raise RequestError("no internet connection available to transfer audio data")
+        response_text = response.read().decode("utf-8")
+        result = json.loads(response_text)
+ 
+        if show_all: return result
+
+        if "Recognition" not in result or "NBest" not in result["Recognition"]:
+            raise UnknownValueError()
+        for entry in result["Recognition"]["NBest"]:
+            if entry.get("Grade") == "accept" and "ResultText" in entry:
+                return entry["ResultText"]
 
         # no transcriptions available
         raise UnknownValueError()

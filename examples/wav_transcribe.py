@@ -40,3 +40,13 @@ except sr.UnknownValueError:
     print("IBM Speech to Text could not understand audio")
 except sr.RequestError:
     print("Could not request results from IBM Speech to Text service")
+
+# recognize speech using AT&T Speech to Text
+ATT_APP_KEY = "INSERT AT&T SPEECH TO TEXT APP KEY HERE" # AT&T Speech to Text app keys are 32-character lowercase alphanumeric strings
+ATT_APP_SECRET = "INSERT AT&T SPEECH TO TEXT APP SECRET HERE" # AT&T Speech to Text app secrets are 32-character lowercase alphanumeric strings
+try:
+    print("AT&T Speech to Text thinks you said " + r.recognize_att(audio, app_key=ATT_APP_KEY, app_secret=ATT_APP_SECRET))
+except sr.UnknownValueError:
+    print("AT&T Speech to Text could not understand audio")
+except sr.RequestError:
+    print("Could not request results from AT&T Speech to Text service")
