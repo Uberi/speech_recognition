@@ -225,6 +225,8 @@ Creates a new ``WavFile`` instance given a WAV audio file `filename_or_fileobjec
 
 If ``filename_or_fileobject`` is a string, then it is interpreted as a path to a WAV audio file (mono or stereo) on the filesystem. Otherwise, ``filename_or_fileobject`` should be a file-like object such as ``io.BytesIO`` or similar.
 
+Note that the WAV file must be in PCM/LPCM format; WAVE_FORMAT_EXTENSIBLE and compressed WAV are not supported and may result in undefined behaviour.
+
 Instances of this class are context managers, and are designed to be used with ``with`` statements:
 
 .. code:: python
