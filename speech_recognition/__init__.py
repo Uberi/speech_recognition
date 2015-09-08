@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""Library for performing speech recognition with the Google Speech Recognition API."""
+"""Library for performing speech recognition with support for Google Speech Recognition, `Wit.ai <https://wit.ai/>`__, `IBM Speech to Text <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text.html>`__, and `AT&T Speech to Text <http://developer.att.com/apis/speech>`__."""
 
 __author__ = "Anthony Zhang (Uberi)"
 __version__ = "3.1.0"

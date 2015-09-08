@@ -21,7 +21,7 @@ setup(
     description = speech_recognition.__doc__,
     long_description = open("README.rst").read(),
     license = speech_recognition.__license__,
-    keywords = "speech recognition google",
+    keywords = "speech recognition google wit ibm att",
     url = "https://github.com/Uberi/speech_recognition#readme",
     classifiers = [
         "Development Status :: 5 - Production/Stable",
@@ -30,6 +30,7 @@ setup(
         "License :: OSI Approved :: BSD License",
         "Operating System :: Microsoft :: Windows",
         "Operating System :: POSIX :: Linux",
+        "Operating System :: MacOS :: MacOS X",
         "Operating System :: Other OS",
         "Programming Language :: Python",
         "Programming Language :: Python :: 2",
@@ -39,5 +40,6 @@ setup(
         "Programming Language :: Python :: 3.3",
         "Programming Language :: Python :: 3.4",
         "Topic :: Software Development :: Libraries :: Python Modules",
+        "Topic :: Multimedia :: Sound/Audio :: Speech",
     ],
 )
