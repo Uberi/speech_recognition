@@ -377,7 +377,7 @@ class Recognizer(AudioSource):
         url = "http://www.google.com/speech-api/v2/recognize?client=chromium&lang={0}&key={1}".format(language, key)
         request = Request(url, data = flac_data, headers = {"Content-Type": "audio/x-flac; rate={0}".format(sample_rate)})
 
-        # check for invalid key response from the server
+        # obtain audio transcription results
         try:
             response = urlopen(request)
         except HTTPError:
