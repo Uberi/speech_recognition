@@ -49,6 +49,7 @@ See the ``examples/`` directory for usage examples:
 
 -  `Recognize speech input from the microphone <https://github.com/Uberi/speech_recognition/blob/master/examples/microphone_recognition.py>`__
 -  `Transcribe a WAV audio file <https://github.com/Uberi/speech_recognition/blob/master/examples/wav_transcribe.py>`__
+-  `Save audio data to a WAV file <https://github.com/Uberi/speech_recognition/blob/master/examples/write_audio.py>`__
 -  `Show extended recognition results <https://github.com/Uberi/speech_recognition/blob/master/examples/extended_results.py>`__
 -  `Calibrate the recognizer energy threshold for ambient noise levels <https://github.com/Uberi/speech_recognition/blob/master/examples/calibrate_energy_threshold.py>`__ (see ``recognizer_instance.energy_threshold`` for details)
 -  `Listening to a microphone in the background <https://github.com/Uberi/speech_recognition/blob/master/examples/background_listening.py>`__
@@ -209,7 +210,7 @@ Higher ``sample_rate`` values result in better audio quality, but also more band
 
 Higher ``chunk_size`` values help avoid triggering on rapidly changing ambient noise, but also makes detection less sensitive. This value, generally, should be left at its default.
 
-This class is a context manager, and is designed to be used with ``with`` statements:
+Instances of this class are context managers, and are designed to be used with ``with`` statements:
 
 .. code:: python
 
@@ -220,16 +221,17 @@ This class is a context manager, and is designed to be used with ``with`` statem
 ``WavFile(filename_or_fileobject)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Creates a new ``WavFile`` instance, which represents a WAV audio file. Subclass of ``AudioSource``.
+Creates a new ``WavFile`` instance given a WAV audio file `filename_or_fileobject`. Subclass of ``AudioSource``.
 
-If ``filename_or_fileobject`` is a string, then it is interpreted as a path to a WAV audio file (mono or stereo) on the filesystem. Otherwise, ``filename_or_fileobject`` should be a file-like object such as ``io.BytesIO`` or similar. In either case, the specified file is used as the audio source.
+If ``filename_or_fileobject`` is a string, then it is interpreted as a path to a WAV audio file (mono or stereo) on the filesystem. Otherwise, ``filename_or_fileobject`` should be a file-like object such as ``io.BytesIO`` or similar.
 
-This class is a context manager, and is designed to be used with ``with`` statements:
+Instances of this class are context managers, and are designed to be used with ``with`` statements:
 
 .. code:: python
 
-    with WavFile("test.wav") as source:    # open the WAV file for reading
-        pass                               # do things here - ``source`` is the WavFile instance created above
+    import speech_recognition as sr
+    with sr.WavFile("test.wav") as source:    # open the WAV file for reading
+        pass                                  # do things here - ``source`` is the WavFile instance created above
 
 ``wavfile_instance.DURATION``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -402,6 +404,20 @@ Instances of subclasses of this class, such as ``Microphone`` and ``WavFile``, c
 Storage class for audio data. Do not instantiate.
 
 Instances of this class are returned from ``recognizer_instance.record`` and ``recognizer_instance.listen``, and are passed to callbacks of ``recognizer_instance.listen_in_background``.
+
+``audiodata_instance.get_wav_data()``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Returns a byte string representing the contents of a WAV file containing the audio represented by the ``AudioData`` instance.
+
+Writing these bytes directly to a file results in a valid WAV file.
+
+``audiodata_instance.get_flac_data()``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Returns a byte string representing the contents of a FLAC file containing the audio represented by the ``AudioData`` instance.
+
+Writing these bytes directly to a file results in a valid FLAC file.
 
 Developing
 ----------

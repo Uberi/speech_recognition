@@ -87,16 +87,16 @@ except ImportError:
 
 class WavFile(AudioSource):
     """
-    Creates a new ``WavFile`` instance, which represents a WAV audio file. Subclass of ``AudioSource``.
+    Creates a new ``WavFile`` instance given a WAV audio file `filename_or_fileobject`. Subclass of ``AudioSource``.
 
-    If ``filename_or_fileobject`` is a string, then it is interpreted as a path to a WAV audio file (mono or stereo) on the filesystem. Otherwise, ``filename_or_fileobject`` should be a file-like object such as ``io.BytesIO`` or similar. In either case, the specified file is used as the audio source.
+    If ``filename_or_fileobject`` is a string, then it is interpreted as a path to a WAV audio file (mono or stereo) on the filesystem. Otherwise, ``filename_or_fileobject`` should be a file-like object such as ``io.BytesIO`` or similar.
     """
 
     def __init__(self, filename_or_fileobject):
         if isinstance(filename_or_fileobject, str):
             self.filename = filename_or_fileobject
         else:
-            assert filename_or_fileobject.read, "Given WAV file must be a filename string or a file object"
+            assert filename_or_fileobject.read, "Given WAV file must be a filename string or a file-like object"
             self.filename = None
             self.wav_file = filename_or_fileobject
         self.stream = None
@@ -104,7 +104,7 @@ class WavFile(AudioSource):
 
     def __enter__(self):
         assert self.stream is None, "This audio source is already inside a context manager"
-        if self.filename: self.wav_file = open(self.filename, "rb")
+        if self.filename is not None: self.wav_file = open(self.filename, "rb")
         self.wav_reader = wave.open(self.wav_file, "rb")
         self.SAMPLE_WIDTH = self.wav_reader.getsampwidth()
         self.SAMPLE_RATE = self.wav_reader.getframerate()
@@ -142,6 +142,11 @@ class AudioData(object):
         self.channels = channels
 
     def get_wav_data(self):
+        """
+        Returns a byte string representing the contents of a WAV file containing the audio represented by the ``AudioData`` instance.
+
+        Writing these bytes directly to a file results in a valid WAV file.
+        """
         with io.BytesIO() as wav_file:
             wav_writer = wave.open(wav_file, "wb")
             try: # note that we can't use context manager due to Python 2 not supporting it
@@ -155,6 +160,11 @@ class AudioData(object):
         return wav_data
 
     def get_flac_data(self):
+        """
+        Returns a byte string representing the contents of a FLAC file containing the audio represented by the ``AudioData`` instance.
+
+        Writing these bytes directly to a file results in a valid FLAC file.
+        """
         wav_data = self.get_wav_data()
 
         # determine which converter executable to use
@@ -178,7 +188,7 @@ class AudioData(object):
         except OSError: pass
 
         # run the FLAC converter with the WAV data to get the FLAC data
-        process = subprocess.Popen("\"%s\" --stdout --totally-silent --best -" % flac_converter, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+        process = subprocess.Popen("\"{0}\" --stdout --totally-silent --best -".format(flac_converter), stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
         flac_data, stderr = process.communicate(wav_data)
         return flac_data
 
@@ -434,7 +444,7 @@ class Recognizer(AudioSource):
             raise RequestError("no internet connection available to transfer audio data")
         response_text = response.read().decode("utf-8")
         result = json.loads(response_text)
- 
+
         if show_all: return result
 
         if "_text" not in result or result["_text"] is None: raise UnknownValueError()
@@ -474,7 +484,7 @@ class Recognizer(AudioSource):
             raise RequestError("no internet connection available to transfer audio data")
         response_text = response.read().decode("utf-8")
         result = json.loads(response_text)
- 
+
         if show_all: return result
 
         if "results" not in result or len(result["results"]) < 1 or "alternatives" not in result["results"][0]:
@@ -528,7 +538,7 @@ class Recognizer(AudioSource):
             raise RequestError("no internet connection available to transfer audio data")
         response_text = response.read().decode("utf-8")
         result = json.loads(response_text)
- 
+
         if show_all: return result
 
         if "Recognition" not in result or "NBest" not in result["Recognition"]:
