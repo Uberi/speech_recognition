@@ -47,11 +47,11 @@ Examples
 
 See the ``examples/`` directory for usage examples:
 
--  `Recognize speech input from the microphone <examples/microphone_recognition.py>`__
--  `Transcribe a WAV audio file <examples/wav_transcribe.py>`__
--  `Show extended recognition results <examples/extended_results.py>`__
--  `Calibrate the recognizer energy threshold for ambient noise levels <examples/calibrate_energy_threshold.py>`__ (see ``recognizer_instance.energy_threshold`` for details)
--  `Listening to a microphone in the background <examples/background_listening.py>`__
+-  `Recognize speech input from the microphone <https://github.com/Uberi/speech_recognition/blob/master/examples/microphone_recognition.py>`__
+-  `Transcribe a WAV audio file <https://github.com/Uberi/speech_recognition/blob/master/examples/wav_transcribe.py>`__
+-  `Show extended recognition results <https://github.com/Uberi/speech_recognition/blob/master/examples/extended_results.py>`__
+-  `Calibrate the recognizer energy threshold for ambient noise levels <https://github.com/Uberi/speech_recognition/blob/master/examples/calibrate_energy_threshold.py>`__ (see ``recognizer_instance.energy_threshold`` for details)
+-  `Listening to a microphone in the background <https://github.com/Uberi/speech_recognition/blob/master/examples/background_listening.py>`__
 
 Installing
 ----------
