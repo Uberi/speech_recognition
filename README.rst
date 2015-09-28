@@ -355,9 +355,11 @@ Raises a ``speech_recognition.UnknownValueError`` exception if the speech is uni
 
 Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Wit.ai API.
 
-The Wit.ai API key is specified by ``key``. Unfortunately, these are not available without `signing up for an account <https://wit.ai/getting-started>`__ and creating an app.
+The Wit.ai API key is specified by ``key``. Unfortunately, these are not available without `signing up for an account <https://wit.ai/getting-started>`__ and creating an app. You will need to add at least one intent (recognizable sentence) before the API key can be accessed, though the actual intent values don't matter.
 
 To get the API key for a Wit.ai app, go to the app settings, go to the section titled "API Details", and look for "Server Access Token" or "Client Access Token". If the desired field is blank, click on the "Reset token" button on the right of the field. Wit.ai API keys are 32-character uppercase alphanumeric strings.
+
+Though Wit.ai is designed to be used with a fixed set of phrases, it still provides services for general-purpose speech recognition.
 
 The recognition language is configured in the Wit.ai app settings.
 
