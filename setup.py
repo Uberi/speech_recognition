@@ -4,7 +4,7 @@ from setuptools import setup
 
 import sys
 if sys.version_info < (2, 6):
-    print("THIS MODULE REQUIRES PYTHON 2.6 OR LATER. YOU ARE CURRENTLY USING PYTHON {0}".format(sys.version))
+    print("THIS MODULE REQUIRES PYTHON 2.6, 2.7, OR 3.3+. YOU ARE CURRENTLY USING PYTHON {0}".format(sys.version))
     sys.exit(1)
 
 import speech_recognition
