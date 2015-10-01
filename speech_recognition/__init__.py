@@ -392,10 +392,10 @@ class Recognizer(AudioSource):
         # obtain audio transcription results
         try:
             response = urlopen(request)
-        except HTTPError:
-            raise RequestError("request failed, ensure that key is correct and quota is not maxed out")
-        except URLError:
-            raise RequestError("no internet connection available to transfer audio data")
+        except HTTPError as e:
+            raise RequestError("recognition request failed: {0}".format(getattr(e, "reason", "status {0}".format(e.code)))) # use getattr to be compatible with Python 2.6
+        except URLError as e:
+            raise RequestError("recognition connection failed: {0}".format(getattr(e, "reason", "status {0}".format(e.code)))) # use getattr to be compatible with Python 2.6
         response_text = response.read().decode("utf-8")
 
         # ignore any blank blocks
@@ -440,10 +440,10 @@ class Recognizer(AudioSource):
         request = Request(url, data = wav_data, headers = {"Authorization": "Bearer {0}".format(key), "Content-Type": "audio/wav"})
         try:
             response = urlopen(request)
-        except HTTPError:
-            raise RequestError("request failed, ensure that key is correct and quota is not maxed out")
-        except URLError:
-            raise RequestError("no internet connection available to transfer audio data")
+        except HTTPError as e:
+            raise RequestError("recognition request failed: {0}".format(getattr(e, "reason", "status {0}".format(e.code)))) # use getattr to be compatible with Python 2.6
+        except URLError as e:
+            raise RequestError("recognition connection failed: {0}".format(getattr(e, "reason", "status {0}".format(e.code)))) # use getattr to be compatible with Python 2.6
         response_text = response.read().decode("utf-8")
         result = json.loads(response_text)
 
@@ -480,10 +480,10 @@ class Recognizer(AudioSource):
         request.add_header("Authorization", "Basic {0}".format(authorization_value))
         try:
             response = urlopen(request)
-        except HTTPError:
-            raise RequestError("request failed, ensure that username and password are correct")
-        except URLError:
-            raise RequestError("no internet connection available to transfer audio data")
+        except HTTPError as e:
+            raise RequestError("recognition request failed: {0}".format(getattr(e, "reason", "status {0}".format(e.code)))) # use getattr to be compatible with Python 2.6
+        except URLError as e:
+            raise RequestError("recognition connection failed: {0}".format(getattr(e, "reason", "status {0}".format(e.code)))) # use getattr to be compatible with Python 2.6
         response_text = response.read().decode("utf-8")
         result = json.loads(response_text)
 
@@ -521,10 +521,10 @@ class Recognizer(AudioSource):
         authorization_body = "client_id={0}&client_secret={1}&grant_type=client_credentials&scope=SPEECH".format(app_key, app_secret)
         try:
             authorization_response = urlopen(authorization_url, data = authorization_body.encode("utf-8"))
-        except HTTPError:
-            raise RequestError("credential request failed, ensure that app key and app secret are correct")
-        except URLError:
-            raise RequestError("no internet connection available to request credentials")
+        except HTTPError as e:
+            raise RequestError("credential request failed: {0}".format(getattr(e, "reason", "status {0}".format(e.code)))) # use getattr to be compatible with Python 2.6
+        except URLError as e:
+            raise RequestError("credential connection failed: {0}".format(getattr(e, "reason", "status {0}".format(e.code)))) # use getattr to be compatible with Python 2.6
         authorization_text = authorization_response.read().decode("utf-8")
         authorization_bearer = json.loads(authorization_text).get("access_token")
         if authorization_bearer is None: raise RequestError("missing OAuth access token in requested credentials")
@@ -534,10 +534,10 @@ class Recognizer(AudioSource):
         request = Request(url, data = wav_data, headers = {"Authorization": "Bearer {0}".format(authorization_bearer), "Content-Language": language, "Content-Type": "audio/wav"})
         try:
             response = urlopen(request)
-        except HTTPError:
-            raise RequestError("request failed, ensure that username and password are correct")
-        except URLError:
-            raise RequestError("no internet connection available to transfer audio data")
+        except HTTPError as e:
+            raise RequestError("recognition request failed: {0}".format(getattr(e, "reason", "status {0}".format(e.code)))) # use getattr to be compatible with Python 2.6
+        except URLError as e:
+            raise RequestError("recognition connection failed: {0}".format(getattr(e, "reason", "status {0}".format(e.code)))) # use getattr to be compatible with Python 2.6
         response_text = response.read().decode("utf-8")
         result = json.loads(response_text)
 
