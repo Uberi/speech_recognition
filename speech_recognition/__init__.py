@@ -9,7 +9,7 @@ __license__ = "BSD"
 import io, os, subprocess, wave, base64
 import math, audioop, collections, threading
 import platform, stat
-import json
+import json, random
 
 try: # try to use python2 module
     from urllib2 import Request, urlopen, URLError, HTTPError
@@ -388,6 +388,56 @@ class Recognizer(AudioSource):
         if key is None: key = "AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw"
         url = "http://www.google.com/speech-api/v2/recognize?client=chromium&lang={0}&key={1}".format(language, key)
         request = Request(url, data = flac_data, headers = {"Content-Type": "audio/x-flac; rate={0}".format(sample_rate)})
+
+        # obtain audio transcription results
+        try:
+            response = urlopen(request)
+        except HTTPError as e:
+            raise RequestError("recognition request failed: {0}".format(getattr(e, "reason", "status {0}".format(e.code)))) # use getattr to be compatible with Python 2.6
+        except URLError as e:
+            raise RequestError("recognition connection failed: {0}".format(getattr(e, "reason", "status {0}".format(e.code)))) # use getattr to be compatible with Python 2.6
+        response_text = response.read().decode("utf-8")
+
+        # ignore any blank blocks
+        actual_result = []
+        for line in response_text.split("\n"):
+            if not line: continue
+            result = json.loads(line)["result"]
+            if len(result) != 0:
+                actual_result = result[0]
+                break
+
+        if show_all: return actual_result
+
+        # return the best guess
+        if "alternative" not in actual_result: raise UnknownValueError()
+        for entry in actual_result["alternative"]:
+            if "transcript" in entry:
+                return entry["transcript"]
+
+        # no transcriptions available
+        raise UnknownValueError()
+
+    def recognize_google_streaming(self, audio_data, key = None, language = "en-US", show_all = False):
+        """
+        ;wip
+        """
+        assert isinstance(audio_data, AudioData), "`audio_data` must be audio data"
+        assert key is None or isinstance(key, str), "`key` must be `None` or a string"
+        assert isinstance(language, str), "`language` must be a string"
+
+        try:
+            from http.client import HTTPConnection
+        except ImportError:
+            from httplib import HTTPConnection
+
+        flac_data, sample_rate = audio_data.get_flac_data(), audio_data.sample_rate
+        if key is None: key = "AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw"
+        pair = "".join(random.randrange(10) for _ in range(16))
+        down_url = "https://www.google.com/speech-api/full-duplex/v1/up?pair={0}".format(pair)
+        down_request = Request(url)
+        up_url = "https://www.google.com/speech-api/full-duplex/v1/down?lang={0}&lm=dictation&client=chromium&pair={1}&key={2}".format(language, pair, key)
+        up_request = Request(url, data = flac_data, headers = {"Content-Type": "audio/x-flac; rate={0}".format(sample_rate), "Transfer-Encoding": "chunked"})
 
         # obtain audio transcription results
         try:
