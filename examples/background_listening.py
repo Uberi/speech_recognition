@@ -14,8 +14,8 @@ def callback(recognizer, audio):
         print("Google Speech Recognition thinks you said " + recognizer.recognize_google(audio))
     except sr.UnknownValueError:
         print("Google Speech Recognition could not understand audio")
-    except sr.RequestError:
-        print("Could not request results from Google Speech Recognition service")
+    except sr.RequestError as e:
+        print("Could not request results from Google Speech Recognition service; {0}".format(e))
 
 r = sr.Recognizer()
 m = sr.Microphone()

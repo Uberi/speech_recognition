@@ -23,7 +23,7 @@ try:
                     print("You said {}".format(value))
             except sr.UnknownValueError:
                 print("Oops! Didn't catch that")
-            except sr.RequestError:
-                print("Uh oh! Couldn't request results from Google Speech Recognition service")
+            except sr.RequestError as e:
+                print("Uh oh! Couldn't request results from Google Speech Recognition service; {0}".format(e))
 except KeyboardInterrupt:
     pass
