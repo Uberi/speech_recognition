@@ -80,10 +80,10 @@ If you want to use audio input from microphones, `PyAudio <http://people.csail.m
 
 The installation instructions are quite good as of PyAudio v0.2.9. For convenience, they are summarized below:
 
-* On Windows, install PyAudio using [Pip](https://pip.readthedocs.org/): `pip install pyaudio`.
-* On Debian and Debian-based Linux distributions like Ubuntu, install PyAudio using [APT](https://wiki.debian.org/Apt): execute `sudo apt-get install python-pyaudio python3-pyaudio` in a terminal, which will install PyAudio for both Python 2 and Python 3.
-* On OS X, install PortAudio using [Homebrew](http://brew.sh/): `brew install portaudio`. Then, install PyAudio using [Pip](https://pip.readthedocs.org/): `pip install pyaudio`.
-* On other POSIX-based systems, install the `portaudio19-dev` and `python-all-dev` using a package manager of your choice, and then install PyAudio using [Pip](https://pip.readthedocs.org/): `pip install pyaudio`.
+* On Windows, install PyAudio using `Pip <https://pip.readthedocs.org/>`__: ``pip install pyaudio``.
+* On Debian and Debian-based Linux distributions like Ubuntu, install PyAudio using `APT <https://wiki.debian.org/Apt>`__: execute ``sudo apt-get install python-pyaudio python3-pyaudio`` in a terminal, which will install PyAudio for both Python 2 and Python 3.
+* On OS X, install PortAudio using `Homebrew <http://brew.sh/>`__: ``brew install portaudio``. Then, install PyAudio using `Pip <https://pip.readthedocs.org/>`__: ``pip install pyaudio``.
+* On other POSIX-based systems, install the ``portaudio19-dev`` and ``python-all-dev`` using a package manager of your choice, and then install PyAudio using `Pip <https://pip.readthedocs.org/>`__: ``pip install pyaudio``.
 
 FLAC (for some systems)
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -157,7 +157,7 @@ The program doesn't run when compiled with `PyInstaller <https://github.com/pyin
 
 As of PyInstaller version 3.0, SpeechRecognition is supported out of the box. If you're getting weird issues when compiling your program using PyInstaller, simply update PyInstaller.
 
-You can easily do this by running `pip install --upgrade pyinstaller`.
+You can easily do this by running ``pip install --upgrade pyinstaller``.
 
 On Ubuntu/Debian, I get errors like "jack server is not running or cannot be started" or "Cannot lock down [...] byte memory area (Cannot allocate memory)".
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -212,7 +212,7 @@ Instances of this class are context managers, and are designed to be used with `
 ``WavFile(filename_or_fileobject)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Creates a new ``WavFile`` instance given a WAV audio file `filename_or_fileobject`. Subclass of ``AudioSource``.
+Creates a new ``WavFile`` instance given a WAV audio file ``filename_or_fileobject``. Subclass of ``AudioSource``.
 
 If ``filename_or_fileobject`` is a string, then it is interpreted as a path to a WAV audio file (mono or stereo) on the filesystem. Otherwise, ``filename_or_fileobject`` should be a file-like object such as ``io.BytesIO`` or similar.
 
