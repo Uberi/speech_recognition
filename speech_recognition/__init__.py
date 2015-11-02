@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""Library for performing speech recognition with support for Google Speech Recognition, `Wit.ai <https://wit.ai/>`__, `IBM Speech to Text <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text.html>`__, and `AT&T Speech to Text <http://developer.att.com/apis/speech>`__."""
+"""Library for performing speech recognition with support for Google Speech Recognition, Wit.ai, IBM Speech to Text, and AT&T Speech to Text."""
 
 __author__ = "Anthony Zhang (Uberi)"
 __version__ = "3.1.2"
@@ -78,7 +78,8 @@ try:
             return self
 
         def __exit__(self, exc_type, exc_value, traceback):
-            self.stream.stop_stream()
+            if not self.stream.is_stopped():
+                self.stream.stop_stream()
             self.stream.close()
             self.stream = None
             self.audio.terminate()
@@ -365,6 +366,18 @@ class Recognizer(AudioSource):
         listener_thread.daemon = True
         listener_thread.start()
         return stopper
+
+    def recognize_sphinx(self, audio_data, language = "en-US", show_all = False):
+        """
+        ;wip
+        """
+        assert isinstance(audio_data, AudioData), "`audio_data` must be audio data"
+        assert isinstance(language, str), "`language` must be a string"
+
+        flac_data, sample_rate = audio_data.get_flac_data(), audio_data.sample_rate
+        
+        # no transcriptions available
+        raise UnknownValueError()
 
     def recognize_google(self, audio_data, key = None, language = "en-US", show_all = False):
         """

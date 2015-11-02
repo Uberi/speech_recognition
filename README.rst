@@ -408,7 +408,7 @@ Returns a byte string representing the contents of a WAV file containing the aud
 Writing these bytes directly to a file results in a valid WAV file.
 
 ``audiodata_instance.get_flac_data()``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Returns a byte string representing the contents of a FLAC file containing the audio represented by the ``AudioData`` instance.
 
