@@ -78,11 +78,12 @@ PyAudio (for microphone users)
 
 If you want to use audio input from microphones, `PyAudio <http://people.csail.mit.edu/hubert/pyaudio/#downloads>`__ is also necessary. If not installed, the library will still work, but ``Microphone`` will not be defined.
 
-The official PyAudio builds seem to be broken on Windows. As a result, in the ``installers`` folder you will find `unofficial PyAudio builds for Windows <http://www.lfd.uci.edu/~gohlke/pythonlibs/#pyaudio>`__ that actually work. Run the installer corresponding to your Python version to install PyAudio.
+The installation instructions are quite good as of PyAudio v0.2.9. For convenience, they are summarized below:
 
-On Debain-based distributions such as Ubuntu, you can generally install PyAudio by running ``sudo apt-get install python-pyaudio python3-pyaudio``, which will install it for both Python 2 and Python 3.
-
-On other POSIX-based systems, simply use the packages provided on the downloads page linked above, or compile and install it from source.
+* On Windows, install PyAudio using [Pip](https://pip.readthedocs.org/): `pip install pyaudio`.
+* On Debian and Debian-based Linux distributions like Ubuntu, install PyAudio using [APT](https://wiki.debian.org/Apt): execute `sudo apt-get install python-pyaudio python3-pyaudio` in a terminal, which will install PyAudio for both Python 2 and Python 3.
+* On OS X, install PortAudio using [Homebrew](http://brew.sh/): `brew install portaudio`. Then, install PyAudio using [Pip](https://pip.readthedocs.org/): `pip install pyaudio`.
+* On other POSIX-based systems, install the `portaudio19-dev` and `python-all-dev` using a package manager of your choice, and then install PyAudio using [Pip](https://pip.readthedocs.org/): `pip install pyaudio`.
 
 FLAC (for some systems)
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -154,19 +155,9 @@ This change, however, will prevent the code from working in Python 3.
 The program doesn't run when compiled with `PyInstaller <https://github.com/pyinstaller/pyinstaller/wiki>`__.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-PyInstaller doesn't know that the FLAC converters need to be bundled with the application. To resolve this, we need to make a PyInstaller hook to include those files and tell PyInstaller where that hook is:
+As of PyInstaller version 3.0, SpeechRecognition is supported out of the box. If you're getting weird issues when compiling your program using PyInstaller, simply update PyInstaller.
 
-1. Create a folder in your project directory to store PyInstaller hooks, if the project doesn't already have one. For example, a folder ``pyinstaller-hooks`` in the project root directory.
-2. Create a file called ``hook-speech_recognition.py`` in that folder, with the following contents:
-
-    .. code:: python
-
-        from PyInstaller.hooks.hookutils import collect_data_files
-        datas = collect_data_files("speech_recognition")
-
-3. When building the project using something like ``pyinstaller SOME_SCRIPT.py``, simply supply the ``--additional-hooks-dir`` option set to the PyInstaller hooks folder. For example, ``pyinstaller --additional-hooks-dir pyinstaller-hooks/ SOME_SCRIPT.py``.
-
-Note that the development versions of PyInstaller already include this hook, and will therefore work out of the box.
+You can easily do this by running `pip install --upgrade pyinstaller`.
 
 On Ubuntu/Debian, I get errors like "jack server is not running or cannot be started" or "Cannot lock down [...] byte memory area (Cannot allocate memory)".
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
