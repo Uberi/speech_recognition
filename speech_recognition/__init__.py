@@ -61,7 +61,6 @@ try:
             self.format = pyaudio.paInt16 # 16-bit int sampling
             self.SAMPLE_WIDTH = pyaudio.get_sample_size(self.format) # size of each sample
             self.SAMPLE_RATE = sample_rate # sampling rate in Hertz
-            self.CHANNELS = 1 # mono audio
             self.CHUNK = chunk_size # number of frames stored in each buffer
 
             self.audio = None
@@ -71,8 +70,8 @@ try:
             assert self.stream is None, "This audio source is already inside a context manager"
             self.audio = pyaudio.PyAudio()
             self.stream = self.audio.open(
-                input_device_index = self.device_index,
-                format = self.format, rate = self.SAMPLE_RATE, channels = self.CHANNELS, frames_per_buffer = self.CHUNK,
+                input_device_index = self.device_index, channels = 1,
+                format = self.format, rate = self.SAMPLE_RATE, frames_per_buffer = self.CHUNK,
                 input = True, # stream is an input stream
             )
             return self
@@ -109,10 +108,9 @@ class WavFile(AudioSource):
         assert self.stream is None, "This audio source is already inside a context manager"
         if self.filename is not None: self.wav_file = open(self.filename, "rb")
         self.wav_reader = wave.open(self.wav_file, "rb")
+        assert 1 <= self.wav_reader.getnchannels() <= 2, "Audio must be mono or stereo"
         self.SAMPLE_WIDTH = self.wav_reader.getsampwidth()
         self.SAMPLE_RATE = self.wav_reader.getframerate()
-        self.CHANNELS = self.wav_reader.getnchannels()
-        assert self.CHANNELS == 1 or self.CHANNELS == 2, "Audio must be mono or stereo"
         self.CHUNK = 4096
         self.FRAME_COUNT = self.wav_reader.getnframes()
         self.DURATION = self.FRAME_COUNT / float(self.SAMPLE_RATE)
@@ -130,19 +128,18 @@ class WavFile(AudioSource):
 
         def read(self, size = -1):
             buffer = self.wav_reader.readframes(self.wav_reader.getnframes() if size == -1 else size)
+            if isinstance(buffer, str) and str is not bytes: buffer = b"" # workaround for https://bugs.python.org/issue24608, unfortunately only fixes the issue for little-endian systems
             if self.wav_reader.getnchannels() != 1: # stereo audio
                 buffer = audioop.tomono(buffer, self.wav_reader.getsampwidth(), 1, 1) # convert stereo audio data to mono
             return buffer
 
 class AudioData(object):
-    def __init__(self, frame_data, sample_rate, sample_width, channels):
+    def __init__(self, frame_data, sample_rate, sample_width):
         assert sample_rate > 0, "Sample rate must be a positive integer"
         assert sample_width % 1 == 0 and sample_width > 0, "Sample width must be a positive integer"
-        assert channels == 1 or channels == 2, "Audio must be mono or stereo"
         self.frame_data = frame_data
         self.sample_rate = sample_rate
         self.sample_width = int(sample_width)
-        self.channels = channels
 
     def get_wav_data(self):
         """
@@ -155,7 +152,7 @@ class AudioData(object):
             try: # note that we can't use context manager due to Python 2 not supporting it
                 wav_writer.setframerate(self.sample_rate)
                 wav_writer.setsampwidth(self.sample_width)
-                wav_writer.setnchannels(self.channels)
+                wav_writer.setnchannels(1)
                 wav_writer.writeframes(self.frame_data)
             finally:  # make sure resources are cleaned up
                 wav_writer.close()
@@ -238,7 +235,7 @@ class Recognizer(AudioSource):
 
         frame_data = frames.getvalue()
         frames.close()
-        return AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH, source.CHANNELS)
+        return AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
 
     def adjust_for_ambient_noise(self, source, duration = 1):
         """
@@ -336,7 +333,7 @@ class Recognizer(AudioSource):
         for i in range(pause_count - non_speaking_buffer_count): frames.pop() # remove extra non-speaking frames at the end
         frame_data = b"".join(list(frames))
 
-        return AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH, source.CHANNELS)
+        return AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
 
     def listen_in_background(self, source, callback):
         """
