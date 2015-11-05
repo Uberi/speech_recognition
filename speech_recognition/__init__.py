@@ -3,7 +3,7 @@
 """Library for performing speech recognition with support for Google Speech Recognition, Wit.ai, IBM Speech to Text, and AT&T Speech to Text."""
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "3.1.2"
+__version__ = "3.1.3"
 __license__ = "BSD"
 
 import io, os, subprocess, wave, base64
