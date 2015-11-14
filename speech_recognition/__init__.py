@@ -2,6 +2,8 @@
 
 """Library for performing speech recognition with support for Google Speech Recognition, Wit.ai, IBM Speech to Text, and AT&T Speech to Text."""
 
+#wip: convert sample rate and widths as necessary for all API calls
+
 __author__ = "Anthony Zhang (Uberi)"
 __version__ = "3.1.3"
 __license__ = "BSD"
@@ -136,36 +138,72 @@ class WavFile(AudioSource):
 class AudioData(object):
     def __init__(self, frame_data, sample_rate, sample_width):
         assert sample_rate > 0, "Sample rate must be a positive integer"
-        assert sample_width % 1 == 0 and sample_width > 0, "Sample width must be a positive integer"
+        assert sample_width % 1 == 0 and 2 <= sample_width <= 4, "Sample width must be 2, 3, or 4"
         self.frame_data = frame_data
         self.sample_rate = sample_rate
         self.sample_width = int(sample_width)
 
-    def get_wav_data(self):
+    def get_raw_data(self, convert_rate = None, convert_width = None):
+        """
+        Returns a byte string representing the raw frame data for the audio represented by the ``AudioData`` instance.
+
+        If ``convert_rate`` is specified and the audio sample rate is not ``convert_rate`` Hz, the resulting audio is resampled to match.
+
+        If ``convert_width`` is specified and the audio samples are not ``convert_width`` bytes each, the resulting audio is converted to match.
+
+        Writing these bytes directly to a file results in a valid `RAW/PCM audio file <https://en.wikipedia.org/wiki/Raw_audio_format>`__.
+        """
+        assert convert_rate > 0, "Sample rate to convert to must be a positive integer"
+        assert convert_width % 1 == 0 and 2 <= convert_width <= 4, "Sample width to convert to must be 2, 3, or 4"
+
+        raw_data = self.frame_data
+
+        # resample audio at the desired rate if specified
+        if convert_rate is not None and self.sample_rate != convert_rate:
+            raw_data, _ = audioop.ratecv(raw_data, self.sample_width, 1, self.sample_rate, convert_rate, None)
+
+        # convert samples to desired byte format if specified
+        if convert_width is not None and self.sample_width != convert_width:
+            raw_data = audioop.lin2lin(raw_data, self.sample_width, convert_width)
+
+        return raw_data
+
+    def get_wav_data(self, convert_rate = None, convert_width = None):
         """
         Returns a byte string representing the contents of a WAV file containing the audio represented by the ``AudioData`` instance.
 
-        Writing these bytes directly to a file results in a valid WAV file.
+        If ``convert_width`` is specified and the audio samples are not ``convert_width`` bytes each, the resulting audio is converted to match.
+
+        If ``convert_rate`` is specified and the audio sample rate is not ``convert_rate`` Hz, the resulting audio is resampled to match.
+
+        Writing these bytes directly to a file results in a valid `WAV file <https://en.wikipedia.org/wiki/WAV>`__.
         """
+        raw_data = self.get_raw_data(convert_rate, convert_width)
+
+        # generate the WAV file contents
         with io.BytesIO() as wav_file:
             wav_writer = wave.open(wav_file, "wb")
             try: # note that we can't use context manager due to Python 2 not supporting it
                 wav_writer.setframerate(self.sample_rate)
                 wav_writer.setsampwidth(self.sample_width)
                 wav_writer.setnchannels(1)
-                wav_writer.writeframes(self.frame_data)
+                wav_writer.writeframes(raw_data)
             finally:  # make sure resources are cleaned up
                 wav_writer.close()
             wav_data = wav_file.getvalue()
         return wav_data
 
-    def get_flac_data(self):
+    def get_flac_data(self, convert_rate = None, convert_width = None):
         """
         Returns a byte string representing the contents of a FLAC file containing the audio represented by the ``AudioData`` instance.
 
-        Writing these bytes directly to a file results in a valid FLAC file.
+        If ``convert_rate`` is specified and the audio sample rate is not ``convert_rate`` Hz, the resulting audio is resampled to match.
+
+        If ``convert_width`` is specified and the audio samples are not ``convert_width`` bytes each, the resulting audio is converted to match.
+
+        Writing these bytes directly to a file results in a valid `FLAC file <https://en.wikipedia.org/wiki/FLAC>`__.
         """
-        wav_data = self.get_wav_data()
+        wav_data = self.get_wav_data(convert_rate, convert_width)
 
         # determine which converter executable to use
         system = platform.system()
@@ -370,11 +408,50 @@ class Recognizer(AudioSource):
         """
         assert isinstance(audio_data, AudioData), "`audio_data` must be audio data"
         assert isinstance(language, str), "`language` must be a string"
-
-        flac_data, sample_rate = audio_data.get_flac_data(), audio_data.sample_rate
         
-        # no transcriptions available
-        raise UnknownValueError()
+        # import the PocketSphinx speech recognition module
+        try:
+            from pocketsphinx import pocketsphinx
+            from sphinxbase import sphinxbase
+        except ImportError:
+            raise RequestError("missing PocketSphinx module: see the \"Setting up PocketSphinx\" section of the README.")
+
+        model_directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), "pocketsphinx-data")
+        if not os.path.isdir(model_directory):
+            raise RequestError("missing PocketSphinx model directory: \"{}\"".format(model_directory))
+        model_parameters_directory = os.path.join(model_directory, "en-us", "en-us")
+        if not os.path.isdir(model_parameters_directory):
+            raise RequestError("missing PocketSphinx model parameters directory: \"{}\"".format(model_parameters_directory))
+        language_model_file = os.path.join(model_directory, "en-us", "en-us.lm.bin")
+        if not os.path.isfile(language_model_file):
+            raise RequestError("missing PocketSphinx language model file: \"{}\"".format(language_model_file))
+        phoneme_dictionary_file = os.path.join(model_directory, "en-us", "cmudict-en-us.dict")
+        if not os.path.isfile(phoneme_dictionary_file):
+            raise RequestError("missing PocketSphinx phoneme dictionary file: \"{}\"".format(phoneme_dictionary_file))
+
+        # create decoder object
+        config = pocketsphinx.Decoder.default_config()
+        config.set_string("-hmm", model_parameters_directory)
+        config.set_string("-lm", language_model_file)
+        config.set_string("-dict", phoneme_dictionary_file)
+        config.set_string("-logfn", os.devnull) # disable logging (logging causes unwanted output in terminal)
+        decoder = pocketsphinx.Decoder(config)
+        
+        # obtain audio data
+        if audio_data.sample_rate < 16000: # check that we have the minimum sample rate
+            raise RequestError("audio data must have a sample rate of at least 16 kHz, but actually has a sample rate of {0} Hz.".format(sample_rate))
+        raw_data = audio_data.get_raw_data(16000, 2) # obtain audio in 16-bit mono 16 kHz audio in little-endian format
+
+        # obtain recognition results
+        decoder.start_utt() # begin utterance processing
+        decoder.process_raw(raw_data, False, True) # process audio data with recognition enabled (no_search = False), as a full utterance (full_utt = True)
+        hypothesis = decoder.hyp()
+        decoder.end_utt() # stop utterance processing
+
+        # return results
+        if show_all: return hypothesis
+        if hypothesis is not None: return hypothesis.hypstr
+        raise UnknownValueError() # no transcriptions available
 
     def recognize_google(self, audio_data, key = None, language = "en-US", show_all = False):
         """
@@ -417,16 +494,13 @@ class Recognizer(AudioSource):
                 actual_result = result[0]
                 break
 
+        # return results
         if show_all: return actual_result
-
-        # return the best guess
         if "alternative" not in actual_result: raise UnknownValueError()
         for entry in actual_result["alternative"]:
             if "transcript" in entry:
                 return entry["transcript"]
-
-        # no transcriptions available
-        raise UnknownValueError()
+        raise UnknownValueError() # no transcriptions available
 
     def recognize_wit(self, audio_data, key, show_all = False):
         """
@@ -459,8 +533,8 @@ class Recognizer(AudioSource):
         response_text = response.read().decode("utf-8")
         result = json.loads(response_text)
 
+        # return results
         if show_all: return result
-
         if "_text" not in result or result["_text"] is None: raise UnknownValueError()
         return result["_text"]
 
@@ -499,15 +573,13 @@ class Recognizer(AudioSource):
         response_text = response.read().decode("utf-8")
         result = json.loads(response_text)
 
+        # return results
         if show_all: return result
-
         if "results" not in result or len(result["results"]) < 1 or "alternatives" not in result["results"][0]:
             raise UnknownValueError()
         for entry in result["results"][0]["alternatives"]:
             if "transcript" in entry: return entry["transcript"]
-
-        # no transcriptions available
-        raise UnknownValueError()
+        raise UnknownValueError() # no transcriptions available
 
     def recognize_att(self, audio_data, app_key, app_secret, language = "en-US", show_all = False):
         """
@@ -553,16 +625,14 @@ class Recognizer(AudioSource):
         response_text = response.read().decode("utf-8")
         result = json.loads(response_text)
 
+        # return results
         if show_all: return result
-
         if "Recognition" not in result or "NBest" not in result["Recognition"]:
             raise UnknownValueError()
         for entry in result["Recognition"]["NBest"]:
             if entry.get("Grade") == "accept" and "ResultText" in entry:
                 return entry["ResultText"]
-
-        # no transcriptions available
-        raise UnknownValueError()
+        raise UnknownValueError() # no transcriptions available
 
 def shutil_which(pgm):
     """
