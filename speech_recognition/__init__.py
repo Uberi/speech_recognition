@@ -3,6 +3,7 @@
 """Library for performing speech recognition with support for Google Speech Recognition, Wit.ai, IBM Speech to Text, and AT&T Speech to Text."""
 
 #wip: convert sample rate and widths as necessary for all API calls
+#wip: get more models from http://sourceforge.net/projects/cmusphinx/files/Acoustic%20and%20Language%20Models/
 
 __author__ = "Anthony Zhang (Uberi)"
 __version__ = "3.1.3"
@@ -179,13 +180,15 @@ class AudioData(object):
         Writing these bytes directly to a file results in a valid `WAV file <https://en.wikipedia.org/wiki/WAV>`__.
         """
         raw_data = self.get_raw_data(convert_rate, convert_width)
+        sample_rate = self.sample_rate if convert_rate is None else convert_rate
+        sample_width = self.sample_width if convert_width is None else convert_width
 
         # generate the WAV file contents
         with io.BytesIO() as wav_file:
             wav_writer = wave.open(wav_file, "wb")
             try: # note that we can't use context manager due to Python 2 not supporting it
-                wav_writer.setframerate(self.sample_rate)
-                wav_writer.setsampwidth(self.sample_width)
+                wav_writer.setframerate(sample_rate)
+                wav_writer.setsampwidth(sample_width)
                 wav_writer.setnchannels(1)
                 wav_writer.writeframes(raw_data)
             finally:  # make sure resources are cleaned up
@@ -436,11 +439,9 @@ class Recognizer(AudioSource):
         config.set_string("-dict", phoneme_dictionary_file)
         config.set_string("-logfn", os.devnull) # disable logging (logging causes unwanted output in terminal)
         decoder = pocketsphinx.Decoder(config)
-        
+
         # obtain audio data
-        if audio_data.sample_rate < 16000: # check that we have the minimum sample rate
-            raise RequestError("audio data must have a sample rate of at least 16 kHz, but actually has a sample rate of {0} Hz.".format(sample_rate))
-        raw_data = audio_data.get_raw_data(16000, 2) # obtain audio in 16-bit mono 16 kHz audio in little-endian format
+        raw_data = audio_data.get_raw_data(convert_rate = 16000, convert_width = 2) # Sphinx requires audio to be 16-bit mono 16 kHz in little-endian format
 
         # obtain recognition results
         decoder.start_utt() # begin utterance processing
@@ -471,10 +472,12 @@ class Recognizer(AudioSource):
         assert key is None or isinstance(key, str), "`key` must be `None` or a string"
         assert isinstance(language, str), "`language` must be a string"
 
-        flac_data, sample_rate = audio_data.get_flac_data(), audio_data.sample_rate
+        flac_data = audio_data.get_flac_data(
+            convert_rate = None if audio_data.sample_rate >= 8000 else 8000, # audio samples must be at least 8 kHz
+        )
         if key is None: key = "AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw"
         url = "http://www.google.com/speech-api/v2/recognize?client=chromium&lang={0}&key={1}".format(language, key)
-        request = Request(url, data = flac_data, headers = {"Content-Type": "audio/x-flac; rate={0}".format(sample_rate)})
+        request = Request(url, data = flac_data, headers = {"Content-Type": "audio/x-flac; rate={0}".format(audio_data.sample_rate)})
 
         # obtain audio transcription results
         try:
@@ -521,7 +524,10 @@ class Recognizer(AudioSource):
         assert isinstance(audio_data, AudioData), "Data must be audio data"
         assert isinstance(key, str), "`key` must be a string"
 
-        wav_data = audio_data.get_wav_data()
+        wav_data = audio_data.get_wav_data(
+            convert_rate = None if audio_data.sample_rate >= 8000 else 8000, # audio samples must be at least 8 kHz
+            convert_width = None if audio_data.sample_width in [2, 4] else 4 # audio samples should be either 16-bit or 32-bit
+        )
         url = "https://api.wit.ai/speech?v=20141022"
         request = Request(url, data = wav_data, headers = {"Authorization": "Bearer {0}".format(key), "Content-Type": "audio/wav"})
         try:
@@ -544,18 +550,20 @@ class Recognizer(AudioSource):
 
         The IBM Speech to Text username and password are specified by ``username`` and ``password``, respectively. Unfortunately, these are not available without an account. IBM has published instructions for obtaining these credentials in the `IBM Watson Developer Cloud documentation <https://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/doc/getting_started/gs-credentials.shtml>`__.
 
-        The recognition language is determined by ``language``, an IETF language tag with a dialect like ``"en-US"`` or ``"es-ES"``, defaulting to US English. At the moment, this supports the tags ``"en-US"``, ``"es-ES"``, and ``"ja-JP"``.
+        The recognition language is determined by ``language``, an IETF language tag with a dialect like ``"en-US"`` or ``"es-ES"``, defaulting to US English. At the moment, this supports the tags ``"en-US"``, ``"es-ES"``, ``"pt-BR"``, and ``"zh-CN"``.
 
         Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text/api/v1/#recognize>`__ as a JSON dictionary.
 
-        Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the key isn't valid, or there is no internet connection.
+        Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if an error occurred, such as an invalid key, or a broken internet connection.
         """
         assert isinstance(audio_data, AudioData), "Data must be audio data"
         assert isinstance(username, str), "`username` must be a string"
         assert isinstance(password, str), "`password` must be a string"
-        assert language in ["en-US", "es-ES", "ja-JP"], "`language` must be a valid language."
+        assert language in ["en-US", "es-ES", "pt-BR", "zh-CN"], "`language` must be a valid language."
 
-        flac_data = audio_data.get_flac_data()
+        flac_data = audio_data.get_flac_data(
+            convert_rate = None if audio_data.sample_rate >= 16000 else 16000 # audio samples should be at least 16 kHz
+        )
         model = "{0}_BroadbandModel".format(language)
         url = "https://stream.watsonplatform.net/speech-to-text/api/v1/recognize?continuous=true&model={0}".format(model)
         request = Request(url, data = flac_data, headers = {"Content-Type": "audio/x-flac"})
@@ -613,7 +621,10 @@ class Recognizer(AudioSource):
         authorization_bearer = json.loads(authorization_text).get("access_token")
         if authorization_bearer is None: raise RequestError("missing OAuth access token in requested credentials")
 
-        wav_data = audio_data.get_wav_data()
+        wav_data = audio_data.get_wav_data(
+            convert_rate = 8000 if audio_data.sample_rate < 16000 else 16000, # audio samples should be either 8 kHz or 16 kHz
+            convert_width = 2 # audio samples should be 16-bit
+        )
         url = "https://api.att.com/speech/v3/speechToText"
         request = Request(url, data = wav_data, headers = {"Authorization": "Bearer {0}".format(authorization_bearer), "Content-Language": language, "Content-Type": "audio/wav"})
         try:
