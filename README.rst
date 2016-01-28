@@ -34,11 +34,11 @@ To quickly try it out, run ``python -m speech_recognition`` after installing.
 
 How to cite this library (APA style):
 
-    Zhang, A. (2015). Speech Recognition (Version 3.1) [Software]. Available from https://github.com/Uberi/speech_recognition#readme.
+    Zhang, A. (2016). Speech Recognition (Version 3.1) [Software]. Available from https://github.com/Uberi/speech_recognition#readme.
 
 How to cite this library (Chicago style):
 
-    Zhang, Anthony. 2015. *Speech Recognition* (version 3.1).
+    Zhang, Anthony. 2016. *Speech Recognition* (version 3.1).
 
 Also check out the `Python Baidu Yuyin API <https://github.com/DelightRun/PyBaiduYuyin>`__, which is based on an older version of this project, and adds support for `Baidu Yuyin <http://yuyin.baidu.com/>`__.
 
@@ -80,10 +80,92 @@ If you want to use audio input from microphones, `PyAudio <http://people.csail.m
 
 The installation instructions are quite good as of PyAudio v0.2.9. For convenience, they are summarized below:
 
-* On Windows, install PyAudio using `Pip <https://pip.readthedocs.org/>`__: ``pip install pyaudio``.
-* On Debian and Debian-based Linux distributions like Ubuntu, install PyAudio using `APT <https://wiki.debian.org/Apt>`__: execute ``sudo apt-get install python-pyaudio python3-pyaudio`` in a terminal, which will install PyAudio for both Python 2 and Python 3.
+* On Windows, install PyAudio using `Pip <https://pip.readthedocs.org/>`__: execute ``pip install pyaudio`` in a terminal.
+* On Debian-derived Linux distributions (like Ubuntu and Mint), install PyAudio using `APT <https://wiki.debian.org/Apt>`__: execute ``sudo apt-get install python-pyaudio python3-pyaudio`` in a terminal.
+    * If you want to use the latest version of PyAudio rather than the version in the repositories, you can install the latest release using Pip: execute ``sudo apt-get install portaudio19-dev python-all-dev python3-all-dev && pip install pyaudio`` (replace ``pip`` with ``pip3`` if using Python 3).
 * On OS X, install PortAudio using `Homebrew <http://brew.sh/>`__: ``brew install portaudio``. Then, install PyAudio using `Pip <https://pip.readthedocs.org/>`__: ``pip install pyaudio``.
-* On other POSIX-based systems, install the ``portaudio19-dev`` and ``python-all-dev`` using a package manager of your choice, and then install PyAudio using `Pip <https://pip.readthedocs.org/>`__: ``pip install pyaudio``.
+* On other POSIX-based systems, install the ``portaudio19-dev`` and ``python-all-dev`` (or ``python3-all-dev`` if using Python 3) packages (or their closest equivalents) using a package manager of your choice, and then install PyAudio using `Pip <https://pip.readthedocs.org/>`__: ``pip install pyaudio`` (replace ``pip`` with ``pip3`` if using Python 3).
+
+PyAudio `wheel packages <https://pypi.python.org/pypi/wheel>`__ for 64-bit Python 2.7, 3.4, and 3.5 on Windows and Linux are included for convenience. To install, simply run ``pip install wheel`` followed by ``pip install ./third-party/WHEEL_FILENAME`` (replace ``pip`` with ``pip3`` if using Python 3) in the SpeechRecognition folder.
+
+PocketSphinx-Python (for Sphinx users)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you want to use the Sphinx recognizer, `PocketSphinx-Python <https://github.com/bambocher/pocketsphinx-python>`__ is required. If not installed, calling ``recognizer_instance.recognize_sphinx`` will fail.
+
+PocketSphinx-Python `wheel packages <https://pypi.python.org/pypi/wheel>`__ for 64-bit Python 2.7, 3.4, and 3.5 on Windows and Linux are included for convenience. To install, simply run ``pip install wheel`` followed by ``pip install ./third-party/WHEEL_FILENAME`` (replace ``pip`` with ``pip3`` if using Python 3) in the SpeechRecognition folder.
+
+Note that the versions available in most package repositories are outdated and will not work with the bundled language data. Using the bundled wheel packages or building from source is recommended.
+
+To build PocketSphinx-Python from source:
+
+* On Windows:
+    1. Install `Python <https://www.python.org/downloads/>`__, `Pip <https://pip.pypa.io/en/stable/installing/>`__, `SWIG <http://www.swig.org/download.html>`__, and `Git <https://git-scm.com/downloads>`__, preferably using a package manager.
+    2. Install the necessary `compilers suite <http://blog.ionelmc.ro/2014/12/21/compiling-python-extensions-on-windows/>`__ (`here's a PDF version <third-party/Compiling Python extensions on Windows.pdf>`__ in case the link goes down) for compiling modules for your particular Python version:
+        * `Microsoft Visual C++ Compiler for Python 2.7 <http://www.microsoft.com/en-us/download/details.aspx?id=44266>`__ for Python 2.7.
+        * `Visual Studio 2015 Community Edition <https://www.visualstudio.com/downloads/download-visual-studio-vs>`__ for Python 3.5.
+        * The installation process for Python 3.4 is outlined in the article above
+    3. Add the folders containing the Python, SWIG, and Git binaries to your ``PATH`` environment variable.
+    4. Reboot to apply changes.
+    5. If not using Python 2.7, install PocketSphinx using Pip: execute ``pip install pocketsphinx`` in a terminal. Otherwise:
+        1. Download the full PocketSphinx-Python source code by running ``git clone --recursive https://github.com/bambocher/pocketsphinx-python``.
+        2. Download [msinttypes](https://code.google.com/archive/p/msinttypes/) and copy ``inttypes.h`` and ``stdint.h`` from it into the ``sphinxbase/include/sphinxbase`` folder under the project root folder. This is necessary because the MSVC compiler version used for Python 2.7 is missing a lot of C99 features; msinttypes implements the important ones that Sphinx needs.
+        3. Run ``python setup.py install`` to compile and install PocketSphinx.
+* On any Debian-derived Linux distributions (like Ubuntu and Mint):
+    1. Run ``sudo apt-get install python python-all-dev python-pip build-essential swig git`` for Python 2, or ``sudo apt-get install python3 python3-all-dev python3-pip build-essential swig git`` for Python 3.
+    2. Run ``pip install pocketsphinx`` for Python 2, or ``pip3 install pocketsphinx`` for Python 3.
+* On other POSIX-based systems:
+    1. Install `Python <https://www.python.org/downloads/>`__, `Pip <https://pip.pypa.io/en/stable/installing/>`__, `SWIG <http://www.swig.org/download.html>`__, and `Git <https://git-scm.com/downloads>`__, preferably using a package manager.
+    2. Install PocketSphinx-Python using Pip: ``pip install pocketsphinx``.
+
+To build an installable `wheel package <https://pypi.python.org/pypi/wheel>`__ (like the ones included with this project) instead of just installing, run ``git clone --recursive https://github.com/bambocher/pocketsphinx-python && cd pocketsphinx-python && python setup.py bdist_wheel`` instead of ``pip install pocketsphinx``/``python setup.py install``. The resulting Wheel will be found in the ``dist`` folder of the PocketSphinx-Python project directory.
+
+Notes on the structure of the language data:
+
+* Every language has its own folder under ``/speech_recognition/pocketsphinx-data/LANGUAGE_NAME/``, where ``LANGUAGE_NAME`` is the IETF language tag, like ``"en-US"`` (US English) or ``"en-GB"`` (UK English).
+    * For example, the US English data is stored in ``/speech_recognition/pocketsphinx-data/en-US/``.
+* Languages are composed of 3 parts:
+    * An acoustic model ``/speech_recognition/pocketsphinx-data/LANGUAGE_NAME/acoustic-model/``, which describes how to interpret audio data.
+        * Acoustic models can be downloaded from the `CMU Sphinx files <http://sourceforge.net/projects/cmusphinx/files/Acoustic%20and%20Language%20Models/>`__. These are pretty disorganized, but instructions for cleaning up specific versions are listed below.
+        * All of these should be 16 kHz (broadband) models, since that's what the library will assume is being used.
+    * A language model ``/speech_recognition/pocketsphinx-data/LANGUAGE_NAME/language-model.lm.bin`` (in `CMU binary format <http://cmusphinx.sourceforge.net/wiki/tutoriallm#language_models>`__).
+    * A pronounciation dictionary ``/speech_recognition/pocketsphinx-data/LANGUAGE_NAME/pronounciation-dictionary.dict``, which describes how words in the language are pronounced.
+
+Notes on building the language data from source
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* All of the following points assume a Debian-derived Linux Distibution (like Ubuntu or Mint).
+* To work with any complete, real-world languages, you will need quite a bit of RAM (16 GB recommended) and a fair bit of disk space (20 GB recommended).
+* `SphinxBase <https://github.com/cmusphinx/sphinxbase>`__ is needed for all language model file format conversions. We use it to convert between ``*.dmp`` DMP files (an obselete Sphinx binary format), ``*.lm`` ARPA files, and Sphinx binary ``*.lm.bin`` files:
+    * Install all the SphinxBase build dependencies with ``sudo apt-get install build-essential automake autotools-dev autoconf libtool``.
+    * Download and extract the `SphinxBase source code <https://github.com/cmusphinx/sphinxbase/archive/master.zip>`__.
+    * Follow the instructions in the README to install SphinxBase. Basically, run ``sh autogen.sh --force && ./configure && make && sudo make install`` in the SphinxBase folder.
+* Pruning (getting rid of less important information) is useful if language model files are too large. We can do this using `IRSTLM <https://github.com/irstlm-team/irstlm>`__:
+    * Install all the IRSTLM build dependencies with ``sudo apt-get install build-essential automake autotools-dev autoconf libtool``
+    * Download and extract the ``IRSTLM source code <https://github.com/irstlm-team/irstlm/archive/master.zip>`__.
+    * Follow the instructions in the README to install IRSTLM. Basically, run ``sh regenerate-makefiles.sh --force && ./configure && make && sudo make install`` in the IRSTLM folder.
+    * If the language model is not in ARPA format, convert it to the ARPA format. To do this, ensure that SphinxBase is installed and run ``sphinx_lm_convert -i LANGUAGE_MODEL_FILE_GOES_HERE -o language-model.lm -ofmt arpa``.
+    * Prune the model using IRSTLM: run ``prune-lm --threshold=1e-8 t.lm pruned.lm`` to prune with a threshold of 0.00000001. The higher the threshold, the smaller the resulting file.
+    * Convert the model back into binary format if it was originally not in ARPA format. To do this, ensure that SphinxBase is installed and run ``sphinx_lm_convert -i language-model.lm -o LANGUAGE_MODEL_FILE_GOES_HERE``.
+* US English: ``/speech_recognition/pocketsphinx-data/en-US/`` is taken directly from the contents of `PocketSphinx's US English model <https://github.com/cmusphinx/pocketsphinx/tree/master/model/en-us>`__.
+* Metropolitan French: ``/speech_recognition/pocketsphinx-data/fr-FR/``:
+    * ``/speech_recognition/pocketsphinx-data/fr-FR/language-model.lm.bin`` is ``fr-small.lm.bin`` from the `Sphinx French language model <http://sourceforge.net/projects/cmusphinx/files/Acoustic%20and%20Language%20Models/French%20Language%20Model/>`__.
+    * ``/speech_recognition/pocketsphinx-data/fr-FR/pronounciation-dictionary.dict`` is ``fr.dict`` from the `Sphinx French language model <http://sourceforge.net/projects/cmusphinx/files/Acoustic%20and%20Language%20Models/French%20Language%20Model/>`__.
+    * ``/speech_recognition/pocketsphinx-data/fr-FR/acoustic-model/`` is extracted from ``cmusphinx-fr-5.2.tar.gz`` in the `Sphinx French acoustic model <http://sourceforge.net/projects/cmusphinx/files/Acoustic%20and%20Language%20Models/French/>`__.
+    * To get better French recognition accuracy at the expense of higher disk space and RAM usage:
+        1. Download ``fr.lm.gmp`` from the `Sphinx French language model <http://sourceforge.net/projects/cmusphinx/files/Acoustic%20and%20Language%20Models/French%20Language%20Model/>`__.
+        2. Convert from DMP (an obselete Sphinx binary format) to ARPA format: ``sphinx_lm_convert -i fr.lm.gmp -o french.lm.bin``.
+        3. Replace ``/speech_recognition/pocketsphinx-data/fr-FR/language-model.lm.bin`` with ``french.lm.bin`` created in the previous step.
+* Mandarin Chinese: ``/speech_recognition/pocketsphinx-data/zh-CN/``:
+    * ``/speech_recognition/pocketsphinx-data/zh-CN/language-model.lm.bin`` is generated as follows:
+        1. Download ``zh_broadcastnews_64000_utf8.DMP`` from the `Sphinx Mandarin language model <http://sourceforge.net/projects/cmusphinx/files/Acoustic%20and%20Language%20Models/Mandarin%20Language%20Model/>`__.
+        2. Convert from DMP (an obselete Sphinx binary format) to ARPA format: ``sphinx_lm_convert -i zh_broadcastnews_64000_utf8.DMP -o chinese.lm -ofmt arpa``.
+        3. Prune with a threshold of 0.00000004 using ``prune-lm --threshold=4e-8 chinese.lm chinese.lm``.
+        4. Convert from ARPA format to Sphinx binary format: ``sphinx_lm_convert -i chinese.lm -o chinese.lm.bin``.
+        5. Replace ``/speech_recognition/pocketsphinx-data/zh-CN/language-model.lm.bin`` with ``chinese.lm.bin`` created in the previous step.
+    * ``/speech_recognition/pocketsphinx-data/zh-CN/pronounciation-dictionary.dict`` is ``zh_broadcastnews_utf8.dic`` from the `Sphinx Mandarin language model <http://sourceforge.net/projects/cmusphinx/files/Acoustic%20and%20Language%20Models/Mandarin%20Language%20Model/>`__.
+    * ``/speech_recognition/pocketsphinx-data/zh-CN/acoustic-model/`` is extracted from ``zh_broadcastnews_16k_ptm256_8000.tar.bz2`` in the `Sphinx Mandarin acoustic model <http://sourceforge.net/projects/cmusphinx/files/Acoustic%20and%20Language%20Models/Mandarin%20Broadcast%20News%20acoustic%20models/>`__.
+    * To get better Chinese recognition accuracy at the expense of higher disk space and RAM usage, simply skip step 3 when preparing ``zh_broadcastnews_64000_utf8.DMP``.
 
 FLAC (for some systems)
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -96,6 +178,7 @@ In summary, this library requires:
 
 * Python 2.6, 2.7, or 3.3+
 * PyAudio (required only if you need to use microphone input)
+* PocketSphinx (required only if you need to use the Sphinx recognizer)
 * FLAC encoder (required only if the system is not x86-based Windows/Linux/OS X)
 
 Troubleshooting
@@ -230,8 +313,8 @@ Instances of this class are context managers, and are designed to be used with `
 .. code:: python
 
     import speech_recognition as sr
-    with sr.WavFile("test.wav") as source:    # open the WAV file for reading
-        pass                                  # do things here - ``source`` is the WavFile instance created above
+    with sr.WavFile("SOMETHING.wav") as source:    # open the WAV file for reading
+        pass                                       # do things here - ``source`` is the WavFile instance created above
 
 ``wavfile_instance.DURATION``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -332,6 +415,17 @@ Returns a function object that, when called, requests that the background listen
 Phrase recognition uses the exact same mechanism as ``recognizer_instance.listen(source)``.
 
 The ``callback`` parameter is a function that should accept two parameters - the ``recognizer_instance``, and an ``AudioData`` instance representing the captured audio. Note that ``callback`` function will be called from a non-main thread.
+
+``recognizer_instance.recognize_sphinx(audio_data, language = "en-US", show_all = False)``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using CMU Sphinx.
+
+The recognition language is determined by ``language``, an IETF language tag like ``"en-US"`` or ``"en-GB"``, defaulting to US English. By default, only ``en-US`` is supported. Additional languages can be installed from ;wip
+
+Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the Sphinx ``pocketsphinx.pocketsphinx.Hypothesis`` object generated by Sphinx.
+
+Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if there are any issues with the Sphinx installation.
 
 ``recognizer_instance.recognize_google(audio_data, key = None, language = "en-US", show_all = False)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -473,8 +567,12 @@ Please report bugs and suggestions at the `issue tracker <https://github.com/Ube
 License
 -------
 
-Copyright 2014-2015 `Anthony Zhang (Uberi) <https://uberi.github.io>`__.
+Copyright 2014-2016 `Anthony Zhang (Uberi) <https://uberi.github.io>`__.
 
 The source code is available online at `GitHub <https://github.com/Uberi/speech_recognition>`__.
 
 This program is made available under the 3-clause BSD license. See ``LICENSE.txt`` in the project's root directory for more information.
+
+This program distributes source code, binaries, and language files from `CMU Sphinx <http://cmusphinx.sourceforge.net/>`__. These files are BSD-licensed and redistributable as long as copyright notices are correctly retained. See ``speech_recognition/pocketsphinx-data/*/LICENSE*.txt`` and ``third-party/LICENSE-Sphinx.txt`` for details concerning individual files.
+
+This program distributes source code and binaries from `PyAudio <http://people.csail.mit.edu/hubert/pyaudio/>`__. These files are MIT-licensed and redistributable as long as copyright notices are correctly retained. See license files inside ``third-party/LICENSE-PyAudio.txt`` for details concerning individual files.

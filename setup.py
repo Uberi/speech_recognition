@@ -1,19 +1,35 @@
 #!/usr/bin/env python3
 
-from setuptools import setup
+import sys, os, stat
 
-import sys
+from setuptools import setup
+from setuptools.command.install import install
+from distutils import log
+
+import speech_recognition
+
 if sys.version_info < (2, 6):
     print("THIS MODULE REQUIRES PYTHON 2.6, 2.7, OR 3.3+. YOU ARE CURRENTLY USING PYTHON {0}".format(sys.version))
     sys.exit(1)
 
-import speech_recognition
+FILES_TO_MARK_EXECUTABLE = ["flac-linux-i386", "flac-mac", "flac-win32.exe"]
+class InstallWithExtraSteps(install):
+    def run(self):
+        install.run(self) # do the original install steps
+
+        # mark the FLAC executables as executable by all users (this fixes occasional issues when file permissions get messed up)
+        for output_path in self.get_outputs():
+            if os.path.basename(output_path) in FILES_TO_MARK_EXECUTABLE:
+                log.info("setting executable permissions on {}".format(output_path))
+                stat_info = os.stat(output_path)
+                os.chmod(output_path, stat_info.st_mode | stat.S_IEXEC)
 
 setup(
     name = "SpeechRecognition",
     version = speech_recognition.__version__,
     packages = ["speech_recognition"],
     include_package_data = True,
+    cmdclass = {"install": InstallWithExtraSteps},
 
     # PyPI metadata
     author = speech_recognition.__author__,
