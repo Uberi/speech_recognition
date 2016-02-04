@@ -86,18 +86,31 @@ The installation instructions are quite good as of PyAudio v0.2.9. For convenien
 * On OS X, install PortAudio using `Homebrew <http://brew.sh/>`__: ``brew install portaudio``. Then, install PyAudio using `Pip <https://pip.readthedocs.org/>`__: ``pip install pyaudio``.
 * On other POSIX-based systems, install the ``portaudio19-dev`` and ``python-all-dev`` (or ``python3-all-dev`` if using Python 3) packages (or their closest equivalents) using a package manager of your choice, and then install PyAudio using `Pip <https://pip.readthedocs.org/>`__: ``pip install pyaudio`` (replace ``pip`` with ``pip3`` if using Python 3).
 
-PyAudio `wheel packages <https://pypi.python.org/pypi/wheel>`__ for 64-bit Python 2.7, 3.4, and 3.5 on Windows and Linux are included for convenience. To install, simply run ``pip install wheel`` followed by ``pip install ./third-party/WHEEL_FILENAME`` (replace ``pip`` with ``pip3`` if using Python 3) in the SpeechRecognition folder.
+PyAudio `wheel packages <https://pypi.python.org/pypi/wheel>`__ for 64-bit Python 2.7, 3.4, and 3.5 on Windows and Linux are included for convenience, under the ``third-party/`` directory. To install, simply run ``pip install wheel`` followed by ``pip install ./third-party/WHEEL_FILENAME`` (replace ``pip`` with ``pip3`` if using Python 3) in the SpeechRecognition folder.
 
 PocketSphinx-Python (for Sphinx users)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you want to use the Sphinx recognizer, `PocketSphinx-Python <https://github.com/bambocher/pocketsphinx-python>`__ is required. If not installed, calling ``recognizer_instance.recognize_sphinx`` will fail.
+`PocketSphinx-Python <https://github.com/bambocher/pocketsphinx-python>`__ is required if and only if you want to use the Sphinx recognizer (``recognizer_instance.recognize_sphinx``).
 
-PocketSphinx-Python `wheel packages <https://pypi.python.org/pypi/wheel>`__ for 64-bit Python 2.7, 3.4, and 3.5 on Windows and Linux are included for convenience. To install, simply run ``pip install wheel`` followed by ``pip install ./third-party/WHEEL_FILENAME`` (replace ``pip`` with ``pip3`` if using Python 3) in the SpeechRecognition folder.
+PocketSphinx-Python `wheel packages <https://pypi.python.org/pypi/wheel>`__ for 64-bit Python 2.7, 3.4, and 3.5 on Windows and Linux are included for convenience, under the ``third-party/`` directory. To install, simply run ``pip install wheel`` followed by ``pip install ./third-party/WHEEL_FILENAME`` (replace ``pip`` with ``pip3`` if using Python 3) in the SpeechRecognition folder.
 
 Note that the versions available in most package repositories are outdated and will not work with the bundled language data. Using the bundled wheel packages or building from source is recommended.
 
-To build PocketSphinx-Python from source:
+Installing other languages
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+By default, SpeechRecognition's Sphinx functionality supports only US English. Additional language packs are also available, but not included due to the files being too large:
+
+* `Metropolitan French <https://db.tt/tVNcZXao>`__
+* `Mandarin Chinese <https://db.tt/2YQVXmEk>`__
+
+To install a language pack, download the ZIP archives and extract them directly into the module install directory (you can find the module install directory by running ``python -c "import speech_recognition as sr, os.path as p; print(p.dirname(sr.__file__))"``).
+
+Once installed, you can simply specify the language using the ``language`` parameter of ``recognizer_instance.recognize_sphinx``. For example, French would be specified with ``"fr-FR"`` and Mandarin with ``"zh-CN"``.
+
+Building PocketSphinx-Python from source
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * On Windows:
     1. Install `Python <https://www.python.org/downloads/>`__, `Pip <https://pip.pypa.io/en/stable/installing/>`__, `SWIG <http://www.swig.org/download.html>`__, and `Git <https://git-scm.com/downloads>`__, preferably using a package manager.
@@ -120,10 +133,12 @@ To build PocketSphinx-Python from source:
 
 To build an installable `wheel package <https://pypi.python.org/pypi/wheel>`__ (like the ones included with this project) instead of just installing, run ``git clone --recursive https://github.com/bambocher/pocketsphinx-python && cd pocketsphinx-python && python setup.py bdist_wheel`` instead of ``pip install pocketsphinx``/``python setup.py install``. The resulting Wheel will be found in the ``dist`` folder of the PocketSphinx-Python project directory.
 
-Notes on the structure of the language data:
+Notes on the structure of the language data
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Every language has its own folder under ``/speech_recognition/pocketsphinx-data/LANGUAGE_NAME/``, where ``LANGUAGE_NAME`` is the IETF language tag, like ``"en-US"`` (US English) or ``"en-GB"`` (UK English).
     * For example, the US English data is stored in ``/speech_recognition/pocketsphinx-data/en-US/``.
+    * The ``language`` parameter of ``recognizer_instance.recognize_sphinx`` simply chooses the folder with the given name.
 * Languages are composed of 3 parts:
     * An acoustic model ``/speech_recognition/pocketsphinx-data/LANGUAGE_NAME/acoustic-model/``, which describes how to interpret audio data.
         * Acoustic models can be downloaded from the `CMU Sphinx files <http://sourceforge.net/projects/cmusphinx/files/Acoustic%20and%20Language%20Models/>`__. These are pretty disorganized, but instructions for cleaning up specific versions are listed below.
@@ -299,6 +314,22 @@ Instances of this class are context managers, and are designed to be used with `
         pass                        # do things here - ``source`` is the Microphone instance created above
                                     # the microphone is automatically released at this point
 
+``Microphone.list_microphone_names()``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Returns a list of the names of all available microphones. For microphones where the name can't be retrieved, the list entry contains ``None`` instead.
+
+The index of each microphone's name is the same as its device index when creating a ``Microphone`` instance - indices in this list can be used as values of ``device_index``.
+
+To create a ``Microphone`` instance by name:
+
+.. code:: python
+
+    m = None
+    for microphone_name in Microphone.list_microphone_names():
+        if microphone_name == "HDA Intel HDMI: 0 (hw:0,3)":
+            m = Microphone(i)
+
 ``WavFile(filename_or_fileobject)``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -421,7 +452,7 @@ The ``callback`` parameter is a function that should accept two parameters - the
 
 Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using CMU Sphinx.
 
-The recognition language is determined by ``language``, an IETF language tag like ``"en-US"`` or ``"en-GB"``, defaulting to US English. By default, only ``en-US`` is supported. Additional languages can be installed from ;wip
+The recognition language is determined by ``language``, an IETF language tag like ``"en-US"`` or ``"en-GB"``, defaulting to US English. Out of the box, only ``en-US`` is supported. See the "Installing other languages" section in the README for information about additional language packs.
 
 Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the Sphinx ``pocketsphinx.pocketsphinx.Hypothesis`` object generated by Sphinx.
 
@@ -434,7 +465,7 @@ Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using
 
 The Google Speech Recognition API key is specified by ``key``. If not specified, it uses a generic key that works out of the box. This should generally be used for personal or testing purposes only, as it **may be revoked by Google at any time**.
 
-To obtain your own API key, simply follow the steps on the `API Keys <http://www.chromium.org/developers/how-tos/api-keys>`__ page at the Chromium Developers site. In the Google Developers Console, Google Speech Recognition is listed as "Speech API". Note that **the API quota is 50 requests per day**, and there is currently no way to raise this limit.
+To obtain your own API key, simply follow the steps on the `API Keys <http://www.chromium.org/developers/how-tos/api-keys>`__ page at the Chromium Developers site. In the Google Developers Console, Google Speech Recognition is listed as "Speech API". Note that **the API quota for your own keys is 50 requests per day**, and there is currently no way to raise this limit.
 
 The recognition language is determined by ``language``, an IETF language tag like ``"en-US"`` or ``"en-GB"``, defaulting to US English. A list of supported language codes can be found `here <http://stackoverflow.com/questions/14257598/>`__. Basically, language codes can be just the language (``en``), or a language with a dialect (``en-US``).
 
@@ -466,7 +497,7 @@ Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using
 
 The IBM Speech to Text username and password are specified by ``username`` and ``password``, respectively. Unfortunately, these are not available without an account. IBM has published instructions for obtaining these credentials in the `IBM Watson Developer Cloud documentation <https://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/doc/getting_started/gs-credentials.shtml>`__.
 
-The recognition language is determined by ``language``, an IETF language tag with a dialect like ``"en-US"`` or ``"es-ES"``, defaulting to US English. At the moment, this supports the tags ``"en-US"``, ``"es-ES"``, ``"pt-BR"``, and ``"zh-CN"``.
+The recognition language is determined by ``language``, an IETF language tag with a dialect like ``"en-US"`` or ``"es-ES"``, defaulting to US English. At the moment, this supports the tags ``"en-US"`` and ``"es-ES"``.
 
 Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text/api/v1/#recognize>`__ as a JSON dictionary.
 
@@ -481,7 +512,7 @@ The AT&T Speech to Text app key and app secret are specified by ``app_key`` and 
 
 To get the app key and app secret for an AT&T app, go to the `My Apps page <https://matrix.bf.sl.attcompute.com/apps>`__ and look for "APP KEY" and "APP SECRET". AT&T app keys and app secrets are 32-character lowercase alphanumeric strings.
 
-The recognition language is determined by ``language``, an IETF language tag with a dialect like ``"en-US"`` or ``"es-ES"``, defaulting to US English. At the moment, this supports the tags ``"en-US"``, ``"es-ES"``, and ``"ja-JP"``.
+The recognition language is determined by ``language``, an IETF language tag with a dialect like ``"en-US"`` or ``"es-ES"``, defaulting to US English. At the moment, this supports the tags ``"en-US"`` and ``"es-ES"``.
 
 Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <https://developer.att.com/apis/speech/docs#resources-speech-to-text>`__ as a JSON dictionary.
 
