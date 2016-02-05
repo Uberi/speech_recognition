@@ -157,7 +157,7 @@ Notes on building the language data from source
     * Follow the instructions in the README to install SphinxBase. Basically, run ``sh autogen.sh --force && ./configure && make && sudo make install`` in the SphinxBase folder.
 * Pruning (getting rid of less important information) is useful if language model files are too large. We can do this using `IRSTLM <https://github.com/irstlm-team/irstlm>`__:
     * Install all the IRSTLM build dependencies with ``sudo apt-get install build-essential automake autotools-dev autoconf libtool``
-    * Download and extract the ``IRSTLM source code <https://github.com/irstlm-team/irstlm/archive/master.zip>`__.
+    * Download and extract the `IRSTLM source code <https://github.com/irstlm-team/irstlm/archive/master.zip>`__.
     * Follow the instructions in the README to install IRSTLM. Basically, run ``sh regenerate-makefiles.sh --force && ./configure && make && sudo make install`` in the IRSTLM folder.
     * If the language model is not in ARPA format, convert it to the ARPA format. To do this, ensure that SphinxBase is installed and run ``sphinx_lm_convert -i LANGUAGE_MODEL_FILE_GOES_HERE -o language-model.lm -ofmt arpa``.
     * Prune the model using IRSTLM: run ``prune-lm --threshold=1e-8 t.lm pruned.lm`` to prune with a threshold of 0.00000001. The higher the threshold, the smaller the resulting file.
