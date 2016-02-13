@@ -32,16 +32,6 @@ Quickstart: ``pip install SpeechRecognition``. See the "Installing" section for 
 
 To quickly try it out, run ``python -m speech_recognition`` after installing.
 
-How to cite this library (APA style):
-
-    Zhang, A. (2016). Speech Recognition (Version 3.2) [Software]. Available from https://github.com/Uberi/speech_recognition#readme.
-
-How to cite this library (Chicago style):
-
-    Zhang, Anthony. 2016. *Speech Recognition* (version 3.2).
-
-Also check out the `Python Baidu Yuyin API <https://github.com/DelightRun/PyBaiduYuyin>`__, which is based on an older version of this project, and adds support for `Baidu Yuyin <http://yuyin.baidu.com/>`__.
-
 Library Reference
 -----------------
 
@@ -237,6 +227,16 @@ Authors
     maverickagm
 
 Please report bugs and suggestions at the `issue tracker <https://github.com/Uberi/speech_recognition/issues>`__!
+
+How to cite this library (APA style):
+
+    Zhang, A. (2016). Speech Recognition (Version 3.2) [Software]. Available from https://github.com/Uberi/speech_recognition#readme.
+
+How to cite this library (Chicago style):
+
+    Zhang, Anthony. 2016. *Speech Recognition* (version 3.2).
+
+Also check out the `Python Baidu Yuyin API <https://github.com/DelightRun/PyBaiduYuyin>`__, which is based on an older version of this project, and adds support for `Baidu Yuyin <http://yuyin.baidu.com/>`__.
 
 License
 -------
