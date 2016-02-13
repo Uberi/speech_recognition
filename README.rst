@@ -23,14 +23,15 @@ Speech Recognition
 
 Library for performing speech recognition with support for `CMU Sphinx <http://cmusphinx.sourceforge.net/wiki/>`__, Google Speech Recognition, `Wit.ai <https://wit.ai/>`__, `IBM Speech to Text <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text.html>`__, and `AT&T Speech to Text <http://developer.att.com/apis/speech>`__.
 
-Links:
-
--  `PyPI <https://pypi.python.org/pypi/SpeechRecognition/>`__
--  `GitHub <https://github.com/Uberi/speech_recognition>`__
-
-Quickstart: ``pip install SpeechRecognition``. See the "Installing" section for more details.
+**Quickstart:** ``pip install SpeechRecognition``. See the "Installing" section for more details.
 
 To quickly try it out, run ``python -m speech_recognition`` after installing.
+
+Project links:
+
+-  `PyPI <https://pypi.python.org/pypi/SpeechRecognition/>`__
+-  `Source code <https://github.com/Uberi/speech_recognition>`__
+-  `Issue tracker <https://github.com/Uberi/speech_recognition/issues>`__
 
 Library Reference
 -----------------
@@ -65,10 +66,10 @@ Requirements
 
 In summary, this library requires:
 
-* Python 2.6, 2.7, or 3.3+
-* PyAudio (required only if you need to use microphone input)
-* PocketSphinx (required only if you need to use the Sphinx recognizer)
-* FLAC encoder (required only if the system is not x86-based Windows/Linux/OS X)
+* **Python** 2.6, 2.7, or 3.3+
+* **PyAudio** (required only if you need to use microphone input)
+* **PocketSphinx** (required only if you need to use the Sphinx recognizer)
+* **FLAC encoder** (required only if the system is not x86-based Windows/Linux/OS X)
 
 Python
 ~~~~~~
@@ -206,12 +207,14 @@ To hack on this library, first make sure you have all the requirements listed in
 -  Most of the library code lives in ``speech_recognition/__init__.py``.
 -  Examples live under the ``examples/`` directory, and the demo script lives in ``speech_recognition/__main__.py``.
 -  The FLAC encoder binaries are in the ``speech_recognition/`` directory.
+-  Documentation can be found in the ``reference/`` directory.
+-  Third-party libraries, utilities, and reference material are in the ``third-party/`` directory.
 
 To install/reinstall the library locally, run ``python setup.py install`` in the project root directory.
 
-Releases are done by running either ``build.sh`` or ``build.bat``. These are bash and batch scripts, respectively, that build Python source packages and `Python Wheels <http://pythonwheels.com/>`__, then upload them to PyPI.
+Releases are done by running either ``build.sh`` or ``build.bat``. These are bash and batch scripts, respectively, that automatically build Python source packages and `Python Wheels <http://pythonwheels.com/>`__, then upload them to PyPI.
 
-Features and bugfixes should be tested, at minimum, on Python 2.7 and a recent version of Python 3. It is highly recommended to test features on Python 2.6, 2.7, 3.3, and the latest version of Python 3.
+Features and bugfixes should be tested, at minimum, on Python 2.7 and a recent version of Python 3. It is highly recommended to test new features on Python 2.6, 2.7, 3.3, and the latest version of Python 3.
 
 Authors
 -------
