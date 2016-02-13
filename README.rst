@@ -36,7 +36,7 @@ Project links:
 Library Reference
 -----------------
 
-The `library reference <https://github.com/Uberi/speech_recognition/blob/master/reference/library-reference.rst>`__ documents every publicly accessible object in the library. This file is also included under `reference/library-reference.rst`.
+The `library reference <https://github.com/Uberi/speech_recognition/blob/master/reference/library-reference.rst>`__ documents every publicly accessible object in the library. This file is also included under ``reference/library-reference.rst``.
 
 Examples
 --------
@@ -100,7 +100,7 @@ PocketSphinx-Python `wheel packages <https://pypi.python.org/pypi/wheel>`__ for 
 
 Note that the versions available in most package repositories are outdated and will not work with the bundled language data. Using the bundled wheel packages or building from source is recommended.
 
-See [Notes on using `PocketSphinx <https://github.com/Uberi/speech_recognition/blob/master/reference/pocketsphinx.rst>`__ for information about installing languages, compiling PocketSphinx, and building language packs from online resources. This file is also included under `reference/pocketsphinx.rst`.
+See [Notes on using `PocketSphinx <https://github.com/Uberi/speech_recognition/blob/master/reference/pocketsphinx.rst>`__ for information about installing languages, compiling PocketSphinx, and building language packs from online resources. This file is also included under ``reference/pocketsphinx.rst``.
 
 FLAC (for some systems)
 ~~~~~~~~~~~~~~~~~~~~~~~
