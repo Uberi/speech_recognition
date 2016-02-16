@@ -346,7 +346,7 @@ class Recognizer(AudioSource):
                 if timeout and elapsed_time > timeout: # handle timeout if specified
                     raise WaitTimeoutError("listening timed out")
 
-                buffer = source.stream.read(source.CHUNK)
+                buffer = source.stream.read(source.CHUNK, exception_on_overflow = False)
                 if len(buffer) == 0: break # reached end of the stream
                 frames.append(buffer)
                 if len(frames) > non_speaking_buffer_count: # ensure we only keep the needed amount of non-speaking buffers
@@ -367,7 +367,7 @@ class Recognizer(AudioSource):
             while True:
                 elapsed_time += seconds_per_buffer
 
-                buffer = source.stream.read(source.CHUNK)
+                buffer = source.stream.read(source.CHUNK, exception_on_overflow = False)
                 if len(buffer) == 0: break # reached end of the stream
                 frames.append(buffer)
                 phrase_count += 1
