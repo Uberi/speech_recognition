@@ -4,9 +4,9 @@ Speech Recognition Library Reference
 ``Microphone(device_index = None, sample_rate = 16000, chunk_size = 1024)``
 ---------------------------------------------------------------------------
 
-This is available if PyAudio is available, and is undefined otherwise.
-
 Creates a new ``Microphone`` instance, which represents a physical microphone on the computer. Subclass of ``AudioSource``.
+
+This will throw an ``AttributeError`` if you don't have PyAudio 0.2.9 or later installed.
 
 If ``device_index`` is unspecified or ``None``, the default microphone is used as the audio source. Otherwise, ``device_index`` should be the index of the device to use for audio input.
 

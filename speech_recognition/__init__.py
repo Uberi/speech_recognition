@@ -3,7 +3,7 @@
 """Library for performing speech recognition with support for Google Speech Recognition, Wit.ai, IBM Speech to Text, and AT&T Speech to Text."""
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "3.2.1"
+__version__ = "3.3.0"
 __license__ = "BSD"
 
 import io, os, subprocess, wave, base64
@@ -32,73 +32,94 @@ class AudioSource(object):
     def __exit__(self, exc_type, exc_value, traceback):
         raise NotImplementedError("this is an abstract class")
 
-try:
-    import pyaudio
-    class Microphone(AudioSource):
+class Microphone(AudioSource):
+    """
+    Creates a new ``Microphone`` instance, which represents a physical microphone on the computer. Subclass of ``AudioSource``.
+
+    This will throw an ``AttributeError`` if you don't have PyAudio 0.2.9 or later installed.
+
+    If ``device_index`` is unspecified or ``None``, the default microphone is used as the audio source. Otherwise, ``device_index`` should be the index of the device to use for audio input.
+
+    A device index is an integer between 0 and ``pyaudio.get_device_count() - 1`` (assume we have used ``import pyaudio`` beforehand) inclusive. It represents an audio device such as a microphone or speaker. See the `PyAudio documentation <http://people.csail.mit.edu/hubert/pyaudio/docs/>`__ for more details.
+
+    The microphone audio is recorded in chunks of ``chunk_size`` samples, at a rate of ``sample_rate`` samples per second (Hertz).
+
+    Higher ``sample_rate`` values result in better audio quality, but also more bandwidth (and therefore, slower recognition). Additionally, some machines, such as some Raspberry Pi models, can't keep up if this value is too high.
+
+    Higher ``chunk_size`` values help avoid triggering on rapidly changing ambient noise, but also makes detection less sensitive. This value, generally, should be left at its default.
+    """
+    def __init__(self, device_index = None, sample_rate = 16000, chunk_size = 1024):
+        # set up PyAudio
+        try:
+            import pyaudio
+        except ImportError:
+            raise AttributeError("Could not find PyAudio; check installation")
+        from distutils.version import LooseVersion
+        if LooseVersion(pyaudio.__version__) < LooseVersion("0.2.9"):
+            raise AttributeError("PyAudio 0.2.9 or later is required (found version {0})".format(pyaudio.__version__))
+        self.pyaudio_module = pyaudio
+
+        assert device_index is None or isinstance(device_index, int), "Device index must be None or an integer"
+        if device_index is not None: # ensure device index is in range
+            audio = self.pyaudio_module.PyAudio()
+            try:
+                count = audio.get_device_count() # obtain device count
+            except:
+                audio.terminate()
+                raise
+            assert 0 <= device_index < count, "Device index out of range ({0} devices available; device index should be between 0 and {1} inclusive)".format(count, count - 1)
+        assert isinstance(sample_rate, int) and sample_rate > 0, "Sample rate must be a positive integer"
+        assert isinstance(chunk_size, int) and chunk_size > 0, "Chunk size must be a positive integer"
+        self.device_index = device_index
+        self.format = self.pyaudio_module.paInt16 # 16-bit int sampling
+        self.SAMPLE_WIDTH = self.pyaudio_module.get_sample_size(self.format) # size of each sample
+        self.SAMPLE_RATE = sample_rate # sampling rate in Hertz
+        self.CHUNK = chunk_size # number of frames stored in each buffer
+
+        self.audio = None
+        self.stream = None
+
+    @staticmethod
+    def list_microphone_names():
         """
-        This is available if PyAudio is available, and is undefined otherwise.
+        Returns a list of the names of all available microphones. For microphones where the name can't be retrieved, the list entry contains ``None`` instead.
 
-        Creates a new ``Microphone`` instance, which represents a physical microphone on the computer. Subclass of ``AudioSource``.
-
-        If ``device_index`` is unspecified or ``None``, the default microphone is used as the audio source. Otherwise, ``device_index`` should be the index of the device to use for audio input.
-
-        A device index is an integer between 0 and ``pyaudio.get_device_count() - 1`` (assume we have used ``import pyaudio`` beforehand) inclusive. It represents an audio device such as a microphone or speaker. See the `PyAudio documentation <http://people.csail.mit.edu/hubert/pyaudio/docs/>`__ for more details.
-
-        The microphone audio is recorded in chunks of ``chunk_size`` samples, at a rate of ``sample_rate`` samples per second (Hertz).
-
-        Higher ``sample_rate`` values result in better audio quality, but also more bandwidth (and therefore, slower recognition). Additionally, some machines, such as some Raspberry Pi models, can't keep up if this value is too high.
-
-        Higher ``chunk_size`` values help avoid triggering on rapidly changing ambient noise, but also makes detection less sensitive. This value, generally, should be left at its default.
+        The index of each microphone's name is the same as its device index when creating a ``Microphone`` instance - indices in this list can be used as values of ``device_index``.
         """
-        def __init__(self, device_index = None, sample_rate = 16000, chunk_size = 1024):
-            assert device_index is None or isinstance(device_index, int), "Device index must be None or an integer"
-            if device_index is not None: # ensure device index is in range
-                audio = pyaudio.PyAudio(); count = audio.get_device_count(); audio.terminate() # obtain device count
-                assert 0 <= device_index < count, "Device index out of range"
-            assert isinstance(sample_rate, int) and sample_rate > 0, "Sample rate must be a positive integer"
-            assert isinstance(chunk_size, int) and chunk_size > 0, "Chunk size must be a positive integer"
-            self.device_index = device_index
-            self.format = pyaudio.paInt16 # 16-bit int sampling
-            self.SAMPLE_WIDTH = pyaudio.get_sample_size(self.format) # size of each sample
-            self.SAMPLE_RATE = sample_rate # sampling rate in Hertz
-            self.CHUNK = chunk_size # number of frames stored in each buffer
-
-            self.audio = None
-            self.stream = None
-
-        @staticmethod
-        def list_microphone_names():
-            """
-            Returns a list of the names of all available microphones. For microphones where the name can't be retrieved, the list entry contains ``None`` instead.
-
-            The index of each microphone's name is the same as its device index when creating a ``Microphone`` instance - indices in this list can be used as values of ``device_index``.
-            """
-            audio = pyaudio.PyAudio()
+        audio = self.pyaudio_module.PyAudio()
+        try:
             result = []
             for i in range(audio.get_device_count()):
                 device_info = audio.get_device_info_by_index(i)
                 result.append(device_info.get("name"))
+        finally:
             audio.terminate()
-            return result
+        return result
 
-        def __enter__(self):
-            assert self.stream is None, "This audio source is already inside a context manager"
-            self.audio = pyaudio.PyAudio()
+    def __enter__(self):
+        assert self.stream is None, "This audio source is already inside a context manager"
+        self.audio = self.pyaudio_module.PyAudio()
+        try:
             self.stream = self.audio.open(
                 input_device_index = self.device_index, channels = 1,
                 format = self.format, rate = self.SAMPLE_RATE, frames_per_buffer = self.CHUNK,
                 input = True, # stream is an input stream
             )
-            return self
+        except:
+            self.audio.terminate()
+            raise
+        return self
 
-        def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type, exc_value, traceback):
+        try:
             if not self.stream.is_stopped():
                 self.stream.stop_stream()
-            self.stream.close()
-            self.stream = None
-            self.audio.terminate()
-except ImportError:
-    pass
+        finally:
+            try:
+                self.stream.close()
+            finally:
+                self.stream = None
+                self.audio.terminate()
 
 class WavFile(AudioSource):
     """

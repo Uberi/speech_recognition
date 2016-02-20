@@ -69,7 +69,7 @@ Requirements
 In summary, this library requires:
 
 * **Python** 2.6, 2.7, or 3.3+
-* **PyAudio** (required only if you need to use microphone input)
+* **PyAudio** 0.2.9+ (required only if you need to use microphone input)
 * **PocketSphinx** (required only if you need to use the Sphinx recognizer)
 * **FLAC encoder** (required only if the system is not x86-based Windows/Linux/OS X)
 
@@ -81,13 +81,15 @@ The first software requirement is `Python 2.6, 2.7, or Python 3.3+ <https://www.
 PyAudio (for microphone users)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you want to use audio input from microphones, `PyAudio <http://people.csail.mit.edu/hubert/pyaudio/#downloads>`__ is also necessary. If not installed, the library will still work, but ``Microphone`` will not be defined.
+If you want to use audio input from microphones, `PyAudio <http://people.csail.mit.edu/hubert/pyaudio/#downloads>`__ is also necessary. Version 0.2.9+ is required in order to avoid overflow issues with recording on certain machines.
+
+If not installed, everything in the library will still work, except attempting to instantiate a ``Microphone`` object will throw an ``AttributeError``.
 
 The installation instructions are quite good as of PyAudio v0.2.9. For convenience, they are summarized below:
 
 * On Windows, install PyAudio using `Pip <https://pip.readthedocs.org/>`__: execute ``pip install pyaudio`` in a terminal.
 * On Debian-derived Linux distributions (like Ubuntu and Mint), install PyAudio using `APT <https://wiki.debian.org/Apt>`__: execute ``sudo apt-get install python-pyaudio python3-pyaudio`` in a terminal.
-    * If you want to use the latest version of PyAudio rather than the version in the repositories, you can install the latest release using Pip: execute ``sudo apt-get install portaudio19-dev python-all-dev python3-all-dev && pip install pyaudio`` (replace ``pip`` with ``pip3`` if using Python 3).
+    * If the version in the repositories is too old, install the latest release using Pip: execute ``sudo apt-get install portaudio19-dev python-all-dev python3-all-dev && sudo pip install pyaudio`` (replace ``pip`` with ``pip3`` if using Python 3).
 * On OS X, install PortAudio using `Homebrew <http://brew.sh/>`__: ``brew install portaudio``. Then, install PyAudio using `Pip <https://pip.readthedocs.org/>`__: ``pip install pyaudio``.
 * On other POSIX-based systems, install the ``portaudio19-dev`` and ``python-all-dev`` (or ``python3-all-dev`` if using Python 3) packages (or their closest equivalents) using a package manager of your choice, and then install PyAudio using `Pip <https://pip.readthedocs.org/>`__: ``pip install pyaudio`` (replace ``pip`` with ``pip3`` if using Python 3).
 
@@ -113,15 +115,6 @@ Otherwise, ensure that you have the ``flac`` command line tool, which is often a
 
 Troubleshooting
 ---------------
-
-The ``Microphone`` class is missing/not defined!
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-This class is not defined when PyAudio is not available.
-
-Make sure you have PyAudio installed, and make sure you can import it correctly. Test this out by opening a Python console (make sure to use the same version you're running your program with!) and typing in ``import pyaudio``. If you get an error, PyAudio is not installed or not configured correctly.
-
-See the "Requirements" section for more information about installing PyAudio.
 
 The recognizer tries to recognize speech even when I'm not speaking.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
