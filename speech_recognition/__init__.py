@@ -50,14 +50,7 @@ class Microphone(AudioSource):
     """
     def __init__(self, device_index = None, sample_rate = 16000, chunk_size = 1024):
         # set up PyAudio
-        try:
-            import pyaudio
-        except ImportError:
-            raise AttributeError("Could not find PyAudio; check installation")
-        from distutils.version import LooseVersion
-        if LooseVersion(pyaudio.__version__) < LooseVersion("0.2.9"):
-            raise AttributeError("PyAudio 0.2.9 or later is required (found version {0})".format(pyaudio.__version__))
-        self.pyaudio_module = pyaudio
+        self.pyaudio_module = self.get_pyaudio()
 
         assert device_index is None or isinstance(device_index, int), "Device index must be None or an integer"
         if device_index is not None: # ensure device index is in range
@@ -80,13 +73,27 @@ class Microphone(AudioSource):
         self.stream = None
 
     @staticmethod
+    def get_pyaudio():
+        """
+        Imports the pyaudio module and checks its version. Throws exceptions if pyaudio can't be found or a wrong version is installed
+        """
+        try:
+                import pyaudio
+                return pyaudio
+        except ImportError:
+            raise AttributeError("Could not find PyAudio; check installation")
+        from distutils.version import LooseVersion
+        if LooseVersion(pyaudio.__version__) < LooseVersion("0.2.9"):
+            raise AttributeError("PyAudio 0.2.9 or later is required (found version {0})".format(pyaudio.__version__))
+
+    @staticmethod
     def list_microphone_names():
         """
         Returns a list of the names of all available microphones. For microphones where the name can't be retrieved, the list entry contains ``None`` instead.
 
         The index of each microphone's name is the same as its device index when creating a ``Microphone`` instance - indices in this list can be used as values of ``device_index``.
         """
-        audio = self.pyaudio_module.PyAudio()
+        audio = Microphone.get_pyaudio().PyAudio()
         try:
             result = []
             for i in range(audio.get_device_count()):
