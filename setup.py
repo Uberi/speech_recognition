@@ -22,7 +22,13 @@ class InstallWithExtraSteps(install):
             if os.path.basename(output_path) in FILES_TO_MARK_EXECUTABLE:
                 log.info("setting executable permissions on {}".format(output_path))
                 stat_info = os.stat(output_path)
-                os.chmod(output_path, stat_info.st_mode | stat.S_IEXEC)
+                os.chmod(
+                    output_path,
+                    stat_info.st_mode |
+                    stat.S_IRUSR | stat.S_IXUSR | # owner can read/execute
+                    stat.S_IRGRP | stat.S_IXGRP | # group can read/execute
+                    stat.S_IROTH | stat.S_IXOTH # everyone else can read/execute
+                )
 
 setup(
     name = "SpeechRecognition",

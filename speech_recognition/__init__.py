@@ -3,7 +3,7 @@
 """Library for performing speech recognition with support for Google Speech Recognition, Wit.ai, IBM Speech to Text, and AT&T Speech to Text."""
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "3.3.1"
+__version__ = "3.3.2"
 __license__ = "BSD"
 
 import io, os, subprocess, wave, base64
@@ -107,10 +107,12 @@ class Microphone(AudioSource):
         assert self.stream is None, "This audio source is already inside a context manager"
         self.audio = self.pyaudio_module.PyAudio()
         try:
-            self.stream = self.audio.open(
-                input_device_index = self.device_index, channels = 1,
-                format = self.format, rate = self.SAMPLE_RATE, frames_per_buffer = self.CHUNK,
-                input = True, # stream is an input stream
+            self.stream = Microphone.MicrophoneStream(
+                self.audio.open(
+                    input_device_index = self.device_index, channels = 1,
+                    format = self.format, rate = self.SAMPLE_RATE, frames_per_buffer = self.CHUNK,
+                    input = True, # stream is an input stream
+                )
             )
         except:
             self.audio.terminate()
@@ -119,14 +121,25 @@ class Microphone(AudioSource):
 
     def __exit__(self, exc_type, exc_value, traceback):
         try:
-            if not self.stream.is_stopped():
-                self.stream.stop_stream()
+            self.stream.close()
         finally:
+            self.stream = None
+            self.audio.terminate()
+
+    class MicrophoneStream(object):
+        def __init__(self, pyaudio_stream):
+            self.pyaudio_stream = pyaudio_stream
+
+        def read(self, size):
+            return self.pyaudio_stream.read(size, exception_on_overflow = False)
+
+        def close(self):
             try:
-                self.stream.close()
+                # sometimes, if the stream isn't stopped, closing the stream throws an exception
+                if not self.pyaudio_stream.is_stopped():
+                    self.pyaudio_stream.stop_stream()
             finally:
-                self.stream = None
-                self.audio.terminate()
+                self.pyaudio_stream.close()
 
 class WavFile(AudioSource):
     """
@@ -374,7 +387,7 @@ class Recognizer(AudioSource):
                 if timeout and elapsed_time > timeout: # handle timeout if specified
                     raise WaitTimeoutError("listening timed out")
 
-                buffer = source.stream.read(source.CHUNK, exception_on_overflow = False)
+                buffer = source.stream.read(source.CHUNK)
                 if len(buffer) == 0: break # reached end of the stream
                 frames.append(buffer)
                 if len(frames) > non_speaking_buffer_count: # ensure we only keep the needed amount of non-speaking buffers
@@ -395,7 +408,7 @@ class Recognizer(AudioSource):
             while True:
                 elapsed_time += seconds_per_buffer
 
-                buffer = source.stream.read(source.CHUNK, exception_on_overflow = False)
+                buffer = source.stream.read(source.CHUNK)
                 if len(buffer) == 0: break # reached end of the stream
                 frames.append(buffer)
                 phrase_count += 1
