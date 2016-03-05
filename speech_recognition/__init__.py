@@ -3,7 +3,7 @@
 """Library for performing speech recognition with support for Google Speech Recognition, Wit.ai, IBM Speech to Text, and AT&T Speech to Text."""
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "3.3.2"
+__version__ = "3.3.3"
 __license__ = "BSD"
 
 import io, os, subprocess, wave, base64
@@ -79,12 +79,12 @@ class Microphone(AudioSource):
         """
         try:
             import pyaudio
-            return pyaudio
         except ImportError:
             raise AttributeError("Could not find PyAudio; check installation")
         from distutils.version import LooseVersion
         if LooseVersion(pyaudio.__version__) < LooseVersion("0.2.9"):
             raise AttributeError("PyAudio 0.2.9 or later is required (found version {0})".format(pyaudio.__version__))
+        return pyaudio
 
     @staticmethod
     def list_microphone_names():
