@@ -607,6 +607,83 @@ class Recognizer(AudioSource):
         if "_text" not in result or result["_text"] is None: raise UnknownValueError()
         return result["_text"]
 
+    def recognize_api(self, audio_data, username, password, language="EN", show_all=False):
+        """
+        Perform speech recognition on ``audio_data`` (an ``AudioData`` instance), using the api.ai Speech to Text API.
+
+        The api.ai Speech to Text access token and subscription key are specified by ``username `` and ``password``, respectively.
+
+        These are not available without `signing up for an account <https://api.ai/>`__ and creating an app.
+
+        Note: Use the developer access token for managing entities and intents, and use the client access token for making queries.
+
+        The recognition language is determined by ``language``.
+
+        Languages (and tags) supported by api.ai are `listed in their documentation <https://docs.api.ai/v10/docs/languages>`__.
+
+        The default is "EN" for English.
+
+        Currently, the sound files must be 16000 Hz, Signed PCM, 16 bit, and mono.
+        """
+        assert isinstance(audio_data, AudioData), "Data must be audio data"
+        assert isinstance(username, str), "`username` must be a string"
+        assert isinstance(password, str), "`password` must be a string"
+        assert language in ["EN", "ES"], "`language` must be a valid language."
+
+        wav_data = audio_data.get_wav_data(
+            convert_rate=None if audio_data.sample_rate >= 16000 else 16000,  # audio samples must be at least 16 kHz
+            convert_width=None if audio_data.sample_width in [2, 4] else 4  # audio samples should be either 16-bit or 32-bit
+        )
+        url = "https://api.api.ai/v1/query?v=20150910"
+
+        # Make a multipart POST
+        boundary = "------------------------efb64e22077c5a72"
+
+        multipart_list = [
+            "--" + boundary,
+            'Content-Disposition: form-data; name="request"',
+            "Content-Type: application/json",
+            "",
+            json.dumps({"timezone": "America/New_York", "lang": "en"}),
+            "--" + boundary,
+            'Content-Disposition: form-data; name="voiceData"; filename="english.wav"',
+            "Content-Type: audio/wav",
+            "",
+            wav_data,
+            "--" + boundary + "--",
+        ]
+
+        data = "\r\n".join(multipart_list)
+
+        content_length = str(len(data))
+
+        request = Request(
+            url,
+            data=data,
+            headers={
+                "Authorization": "Bearer {0}".format(username),
+                "ocp-apim-subscription-key": "{0}".format(password),
+                "Content-Length": "{0}".format(content_length),
+                "Expect": "100-continue",
+                "Content-Type": "multipart/form-data; boundary={0}".format(boundary)
+            }
+        )
+        try:
+            response = urlopen(request)
+        except HTTPError as e:
+            raise RequestError("recognition request failed: {0}".format(getattr(e, "reason", "status {0}".format(e.code)))) # use getattr to be compatible with Python 2.6
+        except URLError as e:
+            raise RequestError("recognition connection failed: {0}".format(e.reason))
+        response_text = response.read().decode("utf-8")
+        result = json.loads(response_text)
+
+        # return results
+        if show_all:
+            return result
+        if "asr" not in result or result["asr"] is None:
+            raise UnknownValueError()
+        return result["result"]["resolvedQuery"]
+
     def recognize_ibm(self, audio_data, username, password, language = "en-US", show_all = False):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the IBM Speech to Text API.
