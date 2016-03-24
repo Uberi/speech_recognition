@@ -147,6 +147,8 @@ class WavFile(AudioSource):
 
     If ``filename_or_fileobject`` is a string, then it is interpreted as a path to a WAV audio file (mono or stereo) on the filesystem. Otherwise, ``filename_or_fileobject`` should be a file-like object such as ``io.BytesIO`` or similar.
 
+    Note that using functions that read from the audio (such as ``recognizer_instance.record`` or ``recognizer_instance.listen``) will move ahead in the stream. For example, if you execute ``recognizer_instance.record(wavfile_instance, duration=10)`` twice, the first time it will return the first 10 seconds of audio, and the second time it will return the 10 seconds of audio right after that.
+
     Note that the WAV file must be in PCM/LPCM format; WAVE_FORMAT_EXTENSIBLE and compressed WAV are not supported and may result in undefined behaviour.
     """
 
@@ -725,9 +727,14 @@ class Recognizer(AudioSource):
         if show_all: return result
         if "results" not in result or len(result["results"]) < 1 or "alternatives" not in result["results"][0]:
             raise UnknownValueError()
-        for entry in result["results"][0]["alternatives"]:
-            if "transcript" in entry: return entry["transcript"]
-        raise UnknownValueError() # no transcriptions available
+
+        transcription = []
+        for utterance in result["results"]:
+            if "alternatives" not in utterance: raise UnknownValueError()
+            for hypothesis in utterance["alternatives"]:
+                if "transcript" in hypothesis:
+                    transcription.append(hypothesis["transcript"])
+        return "\n".join(transcription)
 
     def recognize_att(self, audio_data, app_key, app_secret, language = "en-US", show_all = False):
         """
