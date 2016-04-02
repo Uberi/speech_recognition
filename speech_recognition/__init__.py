@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""Library for performing speech recognition with support for Google Speech Recognition, Wit.ai, IBM Speech to Text, and AT&T Speech to Text."""
+"""Library for performing speech recognition, with support for several engines and APIs, online and offline."""
 
 __author__ = "Anthony Zhang (Uberi)"
 __version__ = "3.3.3"
@@ -574,11 +574,9 @@ class Recognizer(AudioSource):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Wit.ai API.
 
-        The Wit.ai API key is specified by ``key``. Unfortunately, these are not available without `signing up for an account <https://wit.ai/getting-started>`__ and creating an app. You will need to add at least one intent (recognizable sentence) before the API key can be accessed, though the actual intent values don't matter.
+        The Wit.ai API key is specified by ``key``. Unfortunately, these are not available without `signing up for an account <https://wit.ai/>`__ and creating an app. You will need to add at least one intent to the app before you can see the API key, though the actual intent settings don't matter.
 
-        To get the API key for a Wit.ai app, go to the app settings, go to the section titled "API Details", and look for "Server Access Token" or "Client Access Token". If the desired field is blank, click on the "Reset token" button on the right of the field. Wit.ai API keys are 32-character uppercase alphanumeric strings.
-
-        Though Wit.ai is designed to be used with a fixed set of phrases, it still provides services for general-purpose speech recognition.
+        To get the API key for a Wit.ai app, go to the app's overview page, go to the section titled "Make an API request", and look for something along the lines of ``Authorization: Bearer XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX``; ``XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`` is the API key. Wit.ai API keys are 32-character uppercase alphanumeric strings.
 
         The recognition language is configured in the Wit.ai app settings.
 
@@ -609,67 +607,51 @@ class Recognizer(AudioSource):
         if "_text" not in result or result["_text"] is None: raise UnknownValueError()
         return result["_text"]
 
-    def recognize_api(self, audio_data, username, password, language="EN", show_all=False):
+    def recognize_api(self, audio_data, client_access_token, show_all = False):
         """
         Perform speech recognition on ``audio_data`` (an ``AudioData`` instance), using the api.ai Speech to Text API.
 
-        The api.ai Speech to Text access token and subscription key are specified by ``username `` and ``password``, respectively.
+        The api.ai API client access token is specified by ``client_access_token``. Unfortunately, this is not available without `signing up for an account <https://console.api.ai/api-client/#/signup>`__ and creating an agent. To get the API client access token, go to the agent settings, go to the section titled "API keys", and look for "Client access token". API client access tokens are 32-character lowercase hexadecimal strings.
 
-        These are not available without `signing up for an account <https://api.ai/>`__ and creating an app.
+        The recognition language is set when creating an agent in the web console.
 
-        Note: Use the developer access token for managing entities and intents, and use the client access token for making queries.
+        Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <https://api.ai/docs/reference/#a-namepost-multipost-query-multipart>`__ as a JSON dictionary.
 
-        The recognition language is determined by ``language``.
-
-        Languages (and tags) supported by api.ai are `listed in their documentation <https://docs.api.ai/v10/docs/languages>`__.
-
-        The default is "EN" for English.
-
-        Currently, the sound files must be 16000 Hz, Signed PCM, 16 bit, and mono.
+        Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the key isn't valid, the quota for the key is maxed out, or there is no internet connection.
         """
         assert isinstance(audio_data, AudioData), "Data must be audio data"
-        assert isinstance(username, str), "`username` must be a string"
-        assert isinstance(password, str), "`password` must be a string"
-        assert language in ["EN", "ES"], "`language` must be a valid language."
+        assert isinstance(client_access_token, str), "`username` must be a string"
 
-        wav_data = audio_data.get_wav_data(
-            convert_rate=None if audio_data.sample_rate >= 16000 else 16000,  # audio samples must be at least 16 kHz
-            convert_width=None if audio_data.sample_width in [2, 4] else 4  # audio samples should be either 16-bit or 32-bit
+        wav_data = audio_data.get_wav_data(convert_rate = 16000, convert_width = 2) # audio must be 16-bit mono 16 kHz
+        url = "https://api.api.ai/v1/query"
+
+        # pick a good multipart boundary; one that is guaranteed not to be in the text
+        import random
+        while True:
+            boundary = "{0:>016x}".format(random.randrange(0x10000000000000000)) # generate a random boundary
+            if boundary.encode("utf-8") not in wav_data:
+                break
+
+        data = (
+            b"--" + boundary.encode("utf-8") + b"\r\n" +
+            b"Content-Disposition: form-data; name=\"request\"\r\n" +
+            b"Content-Type: application/json\r\n" +
+            b"\r\n" +
+            b"{\"v\": \"20150910\", \"timezone\": \"America/New_York\", \"lang\": \"en\"}\r\n" +
+            b"--" + boundary.encode("utf-8") + b"\r\n" +
+            b"Content-Disposition: form-data; name=\"voiceData\"; filename=\"audio.wav\"\r\n" +
+            b"Content-Type: audio/wav\r\n" +
+            b"\r\n" +
+            wav_data + b"\r\n" +
+            b"--" + boundary.encode("utf-8") + b"--\r\n"
         )
-        url = "https://api.api.ai/v1/query?v=20150910"
 
-        # Make a multipart POST
-        boundary = "------------------------efb64e22077c5a72"
-
-        multipart_list = [
-            "--" + boundary,
-            'Content-Disposition: form-data; name="request"',
-            "Content-Type: application/json",
-            "",
-            json.dumps({"timezone": "America/New_York", "lang": "en"}),
-            "--" + boundary,
-            'Content-Disposition: form-data; name="voiceData"; filename="english.wav"',
-            "Content-Type: audio/wav",
-            "",
-            wav_data,
-            "--" + boundary + "--",
-        ]
-
-        data = "\r\n".join(multipart_list)
-
-        content_length = str(len(data))
-
-        request = Request(
-            url,
-            data=data,
-            headers={
-                "Authorization": "Bearer {0}".format(username),
-                "ocp-apim-subscription-key": "{0}".format(password),
-                "Content-Length": "{0}".format(content_length),
-                "Expect": "100-continue",
-                "Content-Type": "multipart/form-data; boundary={0}".format(boundary)
-            }
-        )
+        request = Request(url, data = data, headers = {
+            "Authorization": "Bearer {0}".format(client_access_token),
+            "Content-Length": str(len(data)),
+            "Expect": "100-continue",
+            "Content-Type": "multipart/form-data; boundary={0}".format(boundary)
+        })
         try:
             response = urlopen(request)
         except HTTPError as e:
@@ -680,28 +662,26 @@ class Recognizer(AudioSource):
         result = json.loads(response_text)
 
         # return results
-        if show_all:
-            return result
+        if show_all: return result
         if "asr" not in result or result["asr"] is None:
             raise UnknownValueError()
         return result["result"]["resolvedQuery"]
 
     def recognize_ibm(self, audio_data, username, password, language = "en-US", show_all = False):
         """
-        Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the IBM Speech to Text API.
+        Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the IBM Speech To Text API.
 
-        The IBM Speech to Text username and password are specified by ``username`` and ``password``, respectively. Unfortunately, these are not available without an account. IBM has published instructions for obtaining these credentials in the `IBM Watson Developer Cloud documentation <https://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/doc/getting_started/gs-credentials.shtml>`__.
+        The IBM Speech to Text username and password are specified by ``username`` and ``password``, respectively. Unfortunately, these are not available without `signing up for an account <https://console.ng.bluemix.net/registration/>`__. Once logged into the Bluemix console, follow the instructions for `creating an IBM Watson service instance <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/doc/getting_started/gs-credentials.shtml>`__, where the Watson service is "Speech To Text". IBM Speech To Text usernames are strings of the form XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX, while passwords are mixed-case alphanumeric strings.
 
-        The recognition language is determined by ``language``, an IETF language tag with a dialect like ``"en-US"`` or ``"es-ES"``, defaulting to US English. At the moment, this supports the tags ``"en-US"`` and ``"es-ES"``.
+        The recognition language is determined by ``language``, an IETF language tag with a dialect like ``"en-US"`` or ``"es-ES"``, defaulting to US English. The supported languages are listed under the ``model`` parameter of the `audio recognition API documentation <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text/api/v1/#recognize_audio_sessionless12>`__.
 
-        Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text/api/v1/#recognize>`__ as a JSON dictionary.
+        Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text/api/v1/#recognize_audio_sessionless12>`__ as a JSON dictionary.
 
         Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if an error occurred, such as an invalid key, or a broken internet connection.
         """
         assert isinstance(audio_data, AudioData), "Data must be audio data"
         assert isinstance(username, str), "`username` must be a string"
         assert isinstance(password, str), "`password` must be a string"
-        assert language in ["en-US", "es-ES"], "`language` must be a valid language."
 
         flac_data = audio_data.get_flac_data(
             convert_rate = None if audio_data.sample_rate >= 16000 else 16000 # audio samples should be at least 16 kHz
@@ -735,62 +715,6 @@ class Recognizer(AudioSource):
                 if "transcript" in hypothesis:
                     transcription.append(hypothesis["transcript"])
         return "\n".join(transcription)
-
-    def recognize_att(self, audio_data, app_key, app_secret, language = "en-US", show_all = False):
-        """
-        Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the AT&T Speech to Text API.
-
-        The AT&T Speech to Text app key and app secret are specified by ``app_key`` and ``app_secret``, respectively. Unfortunately, these are not available without `signing up for an account <http://developer.att.com/apis/speech>`__ and creating an app.
-
-        To get the app key and app secret for an AT&T app, go to the `My Apps page <https://matrix.bf.sl.attcompute.com/apps>`__ and look for "APP KEY" and "APP SECRET". AT&T app keys and app secrets are 32-character lowercase alphanumeric strings.
-
-        The recognition language is determined by ``language``, an IETF language tag with a dialect like ``"en-US"`` or ``"es-ES"``, defaulting to US English. At the moment, this supports the tags ``"en-US"`` and ``"es-ES"``.
-
-        Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <https://developer.att.com/apis/speech/docs#resources-speech-to-text>`__ as a JSON dictionary.
-
-        Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the key isn't valid, or there is no internet connection.
-        """
-        assert isinstance(audio_data, AudioData), "Data must be audio data"
-        assert isinstance(app_key, str), "`app_key` must be a string"
-        assert isinstance(app_secret, str), "`app_secret` must be a string"
-        assert language in ["en-US", "es-US"], "`language` must be a valid language."
-
-        # ensure we have an authentication token
-        authorization_url = "https://api.att.com/oauth/v4/token"
-        authorization_body = "client_id={0}&client_secret={1}&grant_type=client_credentials&scope=SPEECH".format(app_key, app_secret)
-        try:
-            authorization_response = urlopen(authorization_url, data = authorization_body.encode("utf-8"))
-        except HTTPError as e:
-            raise RequestError("credential request failed: {0}".format(getattr(e, "reason", "status {0}".format(e.code)))) # use getattr to be compatible with Python 2.6
-        except URLError as e:
-            raise RequestError("credential connection failed: {0}".format(e.reason))
-        authorization_text = authorization_response.read().decode("utf-8")
-        authorization_bearer = json.loads(authorization_text).get("access_token")
-        if authorization_bearer is None: raise RequestError("missing OAuth access token in requested credentials")
-
-        wav_data = audio_data.get_wav_data(
-            convert_rate = 8000 if audio_data.sample_rate < 16000 else 16000, # audio samples should be either 8 kHz or 16 kHz
-            convert_width = 2 # audio samples should be 16-bit
-        )
-        url = "https://api.att.com/speech/v3/speechToText"
-        request = Request(url, data = wav_data, headers = {"Authorization": "Bearer {0}".format(authorization_bearer), "Content-Language": language, "Content-Type": "audio/wav"})
-        try:
-            response = urlopen(request)
-        except HTTPError as e:
-            raise RequestError("recognition request failed: {0}".format(getattr(e, "reason", "status {0}".format(e.code)))) # use getattr to be compatible with Python 2.6
-        except URLError as e:
-            raise RequestError("recognition connection failed: {0}".format(e.reason))
-        response_text = response.read().decode("utf-8")
-        result = json.loads(response_text)
-
-        # return results
-        if show_all: return result
-        if "Recognition" not in result or "NBest" not in result["Recognition"]:
-            raise UnknownValueError()
-        for entry in result["Recognition"]["NBest"]:
-            if entry.get("Grade") == "accept" and "ResultText" in entry:
-                return entry["ResultText"]
-        raise UnknownValueError() # no transcriptions available
 
 def shutil_which(pgm):
     """

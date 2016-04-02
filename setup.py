@@ -43,7 +43,7 @@ setup(
     description = speech_recognition.__doc__,
     long_description = open("README.rst").read(),
     license = speech_recognition.__license__,
-    keywords = "speech recognition google wit ibm att",
+    keywords = "speech recognition google wit api ibm",
     url = "https://github.com/Uberi/speech_recognition#readme",
     classifiers = [
         "Development Status :: 5 - Production/Stable",

@@ -21,7 +21,15 @@ Speech Recognition
     :target: https://pypi.python.org/pypi/SpeechRecognition/
     :alt: License
 
-Library for performing speech recognition with support for `CMU Sphinx <http://cmusphinx.sourceforge.net/wiki/>`__, Google Speech Recognition, `Wit.ai <https://wit.ai/>`__, `IBM Speech to Text <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text.html>`__, and `AT&T Speech to Text <http://developer.att.com/apis/speech>`__.
+Library for performing speech recognition, with support for several engines and APIs, online and offline.
+
+Speech recognition engine/API support:
+
+* `CMU Sphinx <http://cmusphinx.sourceforge.net/wiki/>`__ (works offline)
+* Google Speech Recognition
+* `Wit.ai <https://wit.ai/>`__
+* `api.ai <https://api.ai/>`__
+* `IBM Speech To Text <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text.html>`__
 
 **Quickstart:** ``pip install SpeechRecognition``. See the "Installing" section for more details.
 
@@ -135,7 +143,7 @@ The solution is to decrease this threshold, or call ``recognizer_instance.adjust
 The recognizer doesn't understand my particular language/dialect.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Try setting the recognition language to your language/dialect. To do this, see the documentation for ``recognizer_instance.recognize_sphinx``, ``recognizer_instance.recognize_google``, ``recognizer_instance.recognize_wit``, ``recognizer_instance.recognize_ibm``, and ``recognizer_instance.recognize_att``.
+Try setting the recognition language to your language/dialect. To do this, see the documentation for ``recognizer_instance.recognize_sphinx``, ``recognizer_instance.recognize_google``, ``recognizer_instance.recognize_wit``, ``recognizer_instance.recognize_api``, and ``recognizer_instance.recognize_ibm``.
 
 For example, if your language/dialect is British English, it is better to use ``"en-GB"`` as the language rather than ``"en-US"``.
 
@@ -144,7 +152,7 @@ The code examples throw ``UnicodeEncodeError: 'ascii' codec can't encode charact
 
 When you're using Python 2, and your language uses non-ASCII characters, and the terminal or file-like object you're printing to only supports ASCII, an error is thrown when trying to write non-ASCII characters.
 
-This is because in Python 2, ``recognizer_instance.recognize_sphinx``, ``recognizer_instance.recognize_google``, ``recognizer_instance.recognize_wit``, ``recognizer_instance.recognize_ibm``, and ``recognizer_instance.recognize_att`` return unicode strings (``u"something"``) rather than byte strings (``"something"``). In Python 3, all strings are unicode strings.
+This is because in Python 2, ``recognizer_instance.recognize_sphinx``, ``recognizer_instance.recognize_google``, ``recognizer_instance.recognize_wit``, ``recognizer_instance.recognize_api``, and ``recognizer_instance.recognize_ibm`` return unicode strings (``u"something"``) rather than byte strings (``"something"``). In Python 3, all strings are unicode strings.
 
 To make printing of unicode strings work in Python 2 as well, replace all print statements in your code of the following form:
 
@@ -225,18 +233,20 @@ Authors
     haas85
     DelightRun <changxu.mail@gmail.com>
     maverickagm
+    kamushadenes <kamushadenes@hyadesinc.com> (Kamus Hadenes)
+    sbraden <braden.sarah@gmail.com> (Sarah Braden)
 
 Please report bugs and suggestions at the `issue tracker <https://github.com/Uberi/speech_recognition/issues>`__!
 
 How to cite this library (APA style):
 
-    Zhang, A. (2016). Speech Recognition (Version 3.2) [Software]. Available from https://github.com/Uberi/speech_recognition#readme.
+    Zhang, A. (2016). Speech Recognition (Version 3.3) [Software]. Available from https://github.com/Uberi/speech_recognition#readme.
 
 How to cite this library (Chicago style):
 
-    Zhang, Anthony. 2016. *Speech Recognition* (version 3.2).
+    Zhang, Anthony. 2016. *Speech Recognition* (version 3.3).
 
-Also check out the `Python Baidu Yuyin API <https://github.com/DelightRun/PyBaiduYuyin>`__, which is based on an older version of this project, and adds support for `Baidu Yuyin <http://yuyin.baidu.com/>`__.
+Also check out the `Python Baidu Yuyin API <https://github.com/DelightRun/PyBaiduYuyin>`__, which is based on an older version of this project, and adds support for `Baidu Yuyin <http://yuyin.baidu.com/>`__. Note that Baidu Yuyin is only available inside China.
 
 License
 -------

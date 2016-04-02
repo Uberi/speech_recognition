@@ -39,6 +39,15 @@ except sr.UnknownValueError:
 except sr.RequestError as e:
     print("Could not request results from Wit.ai service; {0}".format(e))
 
+# recognize speech using api.ai
+API_AI_CLIENT_ACCESS_TOKEN = "INSERT API.AI API KEY HERE" # api.ai keys are 32-character lowercase hexadecimal strings
+try:
+    print("api.ai thinks you said " + r.recognize_api(audio, client_access_token=API_AI_CLIENT_ACCESS_TOKEN))
+except sr.UnknownValueError:
+    print("api.ai could not understand audio")
+except sr.RequestError as e:
+    print("Could not request results from api.ai service; {0}".format(e))
+
 # recognize speech using IBM Speech to Text
 IBM_USERNAME = "INSERT IBM SPEECH TO TEXT USERNAME HERE" # IBM Speech to Text usernames are strings of the form XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
 IBM_PASSWORD = "INSERT IBM SPEECH TO TEXT PASSWORD HERE" # IBM Speech to Text passwords are mixed-case alphanumeric strings
@@ -48,24 +57,3 @@ except sr.UnknownValueError:
     print("IBM Speech to Text could not understand audio")
 except sr.RequestError as e:
     print("Could not request results from IBM Speech to Text service; {0}".format(e))
-
-# recognize speech using api.ai Speech to Text
-# Note: Use the developer access token for managing entities and intents, and use the client access token for making queries.
-API_AI_CLIENT_ACCESS_TOKEN = "INSERT API.AI SPEECH TO TEXT ACCESS TOKEN HERE"  # api.ai access tokens are 32-character lowercase alphanumeric strings
-API_AI_SUBSCRIPTION_KEY = "INSERT API.AI SPEECH TO TEXT SUBSCRIPTION KEY HERE"  # api.ai subscription_keys are strings of the form XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
-try:
-    print("api.ai Speech to Text thinks you said " + r.recognize_api(audio, username=API_AI_CLIENT_ACCESS_TOKEN, password=API_AI_SUBSCRIPTION_KEY))
-except sr.UnknownValueError:
-    print("api.ai Speech to Text could not understand audio")
-except sr.RequestError as e:
-    print("Could not request results from api.ai Speech to Text service; {0}".format(e))
-
-# recognize speech using AT&T Speech to Text
-ATT_APP_KEY = "INSERT AT&T SPEECH TO TEXT APP KEY HERE" # AT&T Speech to Text app keys are 32-character lowercase alphanumeric strings
-ATT_APP_SECRET = "INSERT AT&T SPEECH TO TEXT APP SECRET HERE" # AT&T Speech to Text app secrets are 32-character lowercase alphanumeric strings
-try:
-    print("AT&T Speech to Text thinks you said " + r.recognize_att(audio, app_key=ATT_APP_KEY, app_secret=ATT_APP_SECRET))
-except sr.UnknownValueError:
-    print("AT&T Speech to Text could not understand audio")
-except sr.RequestError as e:
-    print("Could not request results from AT&T Speech to Text service; {0}".format(e))
