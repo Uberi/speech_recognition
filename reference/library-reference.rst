@@ -185,7 +185,7 @@ The recognition language is determined by ``language``, an IETF language tag lik
 
 Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the raw API response as a JSON dictionary.
 
-Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the key isn't valid, the quota for the key is maxed out, or there is no internet connection.
+Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
 
 ``recognizer_instance.recognize_wit(audio_data, key, show_all = False)``
 ------------------------------------------------------------------------
@@ -200,10 +200,25 @@ The recognition language is configured in the Wit.ai app settings.
 
 Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <https://wit.ai/docs/http/20141022#get-intent-via-text-link>`__ as a JSON dictionary.
 
-Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the key isn't valid, the quota for the key is maxed out, or there is no internet connection.
+Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
+
+``recognizer_instance.recognize_bing(audio_data, key, language = "en-US", show_all = False)``
+---------------------------------------------------------------------------------------------
+
+Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Microsoft Bing Voice Recognition API.
+
+The Microsoft Bing Voice Recognition API key is specified by ``key``. Unfortunately, these are not available without `signing up for an account <https://www.microsoft.com/cognitive-services/en-us/speech-api>`__ with Microsoft Cognitive Services.
+
+To get the API key, go to the `Microsoft Cognitive Services subscriptions overview <https://www.microsoft.com/cognitive-services/en-us/subscriptions>`__, go to the entry titled "Speech", and look for the key under the "Keys" column. Microsoft Bing Voice Recognition API keys are 32-character lowercase hexadecimal strings.
+
+The recognition language is determined by ``language``, an RFC5646 language tag like ``"en-US"`` (US English) or ``"fr-FR"`` (International French), defaulting to US English. A list of supported language values can be found in the `API documentation <https://www.microsoft.com/cognitive-services/en-us/speech-api/documentation/api-reference-rest/BingVoiceRecognition#user-content-4-supported-locales>`__.
+
+Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <https://wit.ai/docs/http/20141022#get-intent-via-text-link>`__ as a JSON dictionary.
+
+Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
 
 ``recognizer_instance.recognize_api(audio_data, client_access_token, show_all = False)``
-------------------------------------------------------------------------
+----------------------------------------------------------------------------------------
 
 Perform speech recognition on ``audio_data`` (an ``AudioData`` instance), using the api.ai Speech to Text API.
 
@@ -213,20 +228,20 @@ The recognition language is set when creating an agent in the web console.
 
 Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <https://api.ai/docs/reference/#a-namepost-multipost-query-multipart>`__ as a JSON dictionary.
 
-Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the key isn't valid, the quota for the key is maxed out, or there is no internet connection.
+Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
 
 ``recognizer_instance.recognize_ibm(audio_data, username, password, language = "en-US", show_all = False)``
 -----------------------------------------------------------------------------------------------------------
 
-Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the IBM Speech To Text API.
+Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the IBM Speech to Text API.
 
-The IBM Speech to Text username and password are specified by ``username`` and ``password``, respectively. Unfortunately, these are not available without `signing up for an account <https://console.ng.bluemix.net/registration/>`__. Once logged into the Bluemix console, follow the instructions for `creating an IBM Watson service instance <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/doc/getting_started/gs-credentials.shtml>`__, where the Watson service is "Speech To Text". IBM Speech To Text usernames are strings of the form XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX, while passwords are mixed-case alphanumeric strings.
+The IBM Speech to Text username and password are specified by ``username`` and ``password``, respectively. Unfortunately, these are not available without `signing up for an account <https://console.ng.bluemix.net/registration/>`__. Once logged into the Bluemix console, follow the instructions for `creating an IBM Watson service instance <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/doc/getting_started/gs-credentials.shtml>`__, where the Watson service is "Speech To Text". IBM Speech to Text usernames are strings of the form XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX, while passwords are mixed-case alphanumeric strings.
 
 The recognition language is determined by ``language``, an IETF language tag with a dialect like ``"en-US"`` or ``"es-ES"``, defaulting to US English. The supported languages are listed under the ``model`` parameter of the `audio recognition API documentation <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text/api/v1/#recognize_audio_sessionless12>`__.
 
 Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text/api/v1/#recognize_audio_sessionless12>`__ as a JSON dictionary.
 
-Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if an error occurred, such as an invalid key, or a broken internet connection.
+Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
 
 ``AudioSource``
 ---------------

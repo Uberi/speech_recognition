@@ -6,7 +6,7 @@ Installing other languages
 
 By default, SpeechRecognition's Sphinx functionality supports only US English. Additional language packs are also available, but not included due to the files being too large:
 
-* `Metropolitan French <https://db.tt/tVNcZXao>`__
+* `International French <https://db.tt/tVNcZXao>`__
 * `Mandarin Chinese <https://db.tt/2YQVXmEk>`__
 
 To install a language pack, download the ZIP archives and extract them directly into the module install directory (you can find the module install directory by running ``python -c "import speech_recognition as sr, os.path as p; print(p.dirname(sr.__file__))"``).
@@ -71,7 +71,7 @@ Notes on building the language data from source
     * Prune the model using IRSTLM: run ``prune-lm --threshold=1e-8 t.lm pruned.lm`` to prune with a threshold of 0.00000001. The higher the threshold, the smaller the resulting file.
     * Convert the model back into binary format if it was originally not in ARPA format. To do this, ensure that SphinxBase is installed and run ``sphinx_lm_convert -i language-model.lm -o LANGUAGE_MODEL_FILE_GOES_HERE``.
 * US English: ``/speech_recognition/pocketsphinx-data/en-US/`` is taken directly from the contents of `PocketSphinx's US English model <https://github.com/cmusphinx/pocketsphinx/tree/master/model/en-us>`__.
-* Metropolitan French: ``/speech_recognition/pocketsphinx-data/fr-FR/``:
+* International French: ``/speech_recognition/pocketsphinx-data/fr-FR/``:
     * ``/speech_recognition/pocketsphinx-data/fr-FR/language-model.lm.bin`` is ``fr-small.lm.bin`` from the `Sphinx French language model <http://sourceforge.net/projects/cmusphinx/files/Acoustic%20and%20Language%20Models/French%20Language%20Model/>`__.
     * ``/speech_recognition/pocketsphinx-data/fr-FR/pronounciation-dictionary.dict`` is ``fr.dict`` from the `Sphinx French language model <http://sourceforge.net/projects/cmusphinx/files/Acoustic%20and%20Language%20Models/French%20Language%20Model/>`__.
     * ``/speech_recognition/pocketsphinx-data/fr-FR/acoustic-model/`` is extracted from ``cmusphinx-fr-5.2.tar.gz`` in the `Sphinx French acoustic model <http://sourceforge.net/projects/cmusphinx/files/Acoustic%20and%20Language%20Models/French/>`__.

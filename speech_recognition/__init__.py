@@ -8,12 +8,14 @@ __license__ = "BSD"
 
 import io, os, subprocess, wave, base64
 import math, audioop, collections, threading
-import platform, stat
+import platform, stat, random, uuid
 import json
 
 try: # try to use python2 module
+    from urllib import urlencode
     from urllib2 import Request, urlopen, URLError, HTTPError
 except ImportError: # otherwise, use python3 module
+    from urllib.parse import urlencode
     from urllib.request import Request, urlopen
     from urllib.error import URLError, HTTPError
 
@@ -467,7 +469,7 @@ class Recognizer(AudioSource):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using CMU Sphinx.
 
-        The recognition language is determined by ``language``, an IETF language tag like ``"en-US"`` or ``"en-GB"``, defaulting to US English. Out of the box, only ``en-US`` is supported. See `Notes on using `PocketSphinx <https://github.com/Uberi/speech_recognition/blob/master/reference/pocketsphinx.rst>`__ for information about installing other languages. This document is also included under ``reference/pocketsphinx.rst``.
+        The recognition language is determined by ``language``, an RFC5646 language tag like ``"en-US"`` or ``"en-GB"``, defaulting to US English. Out of the box, only ``en-US`` is supported. See `Notes on using `PocketSphinx <https://github.com/Uberi/speech_recognition/blob/master/reference/pocketsphinx.rst>`__ for information about installing other languages. This document is also included under ``reference/pocketsphinx.rst``.
 
         Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the Sphinx ``pocketsphinx.pocketsphinx.Decoder`` object resulting from the recognition.
 
@@ -527,11 +529,11 @@ class Recognizer(AudioSource):
 
         To obtain your own API key, simply following the steps on the `API Keys <http://www.chromium.org/developers/how-tos/api-keys>`__ page at the Chromium Developers site. In the Google Developers Console, Google Speech Recognition is listed as "Speech API".
 
-        The recognition language is determined by ``language``, an IETF language tag like ``"en-US"`` or ``"en-GB"``, defaulting to US English. A list of supported language codes can be found `here <http://stackoverflow.com/questions/14257598/>`__. Basically, language codes can be just the language (``en``), or a language with a dialect (``en-US``).
+        The recognition language is determined by ``language``, an RFC5646 language tag like ``"en-US"`` (US English) or ``"fr-FR"`` (International French), defaulting to US English. A list of supported language values can be found in this `StackOverflow answer <http://stackoverflow.com/a/14302134>`__.
 
         Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the raw API response as a JSON dictionary.
 
-        Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the key isn't valid, the quota for the key is maxed out, or there is no internet connection.
+        Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
         """
         assert isinstance(audio_data, AudioData), "`audio_data` must be audio data"
         assert key is None or isinstance(key, str), "`key` must be `None` or a string"
@@ -541,7 +543,11 @@ class Recognizer(AudioSource):
             convert_rate = None if audio_data.sample_rate >= 8000 else 8000, # audio samples must be at least 8 kHz
         )
         if key is None: key = "AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw"
-        url = "http://www.google.com/speech-api/v2/recognize?client=chromium&lang={0}&key={1}".format(language, key)
+        url = "http://www.google.com/speech-api/v2/recognize?{0}".format(urlencode({
+            "client": "chromium",
+            "lang": language,
+            "key": key,
+        }))
         request = Request(url, data = flac_data, headers = {"Content-Type": "audio/x-flac; rate={0}".format(audio_data.sample_rate)})
 
         # obtain audio transcription results
@@ -582,7 +588,7 @@ class Recognizer(AudioSource):
 
         Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <https://wit.ai/docs/http/20141022#get-intent-via-text-link>`__ as a JSON dictionary.
 
-        Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the key isn't valid, the quota for the key is maxed out, or there is no internet connection.
+        Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
         """
         assert isinstance(audio_data, AudioData), "Data must be audio data"
         assert isinstance(key, str), "`key` must be a string"
@@ -607,6 +613,86 @@ class Recognizer(AudioSource):
         if "_text" not in result or result["_text"] is None: raise UnknownValueError()
         return result["_text"]
 
+    def recognize_bing(self, audio_data, key, language = "en-US", show_all = False):
+        """
+        Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Microsoft Bing Voice Recognition API.
+
+        The Microsoft Bing Voice Recognition API key is specified by ``key``. Unfortunately, these are not available without `signing up for an account <https://www.microsoft.com/cognitive-services/en-us/speech-api>`__ with Microsoft Cognitive Services.
+
+        To get the API key, go to the `Microsoft Cognitive Services subscriptions overview <https://www.microsoft.com/cognitive-services/en-us/subscriptions>`__, go to the entry titled "Speech", and look for the key under the "Keys" column. Microsoft Bing Voice Recognition API keys are 32-character lowercase hexadecimal strings.
+
+        The recognition language is determined by ``language``, an RFC5646 language tag like ``"en-US"`` (US English) or ``"fr-FR"`` (International French), defaulting to US English. A list of supported language values can be found in the `API documentation <https://www.microsoft.com/cognitive-services/en-us/speech-api/documentation/api-reference-rest/BingVoiceRecognition#user-content-4-supported-locales>`__.
+
+        Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <https://wit.ai/docs/http/20141022#get-intent-via-text-link>`__ as a JSON dictionary.
+
+        Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
+        """
+        assert isinstance(audio_data, AudioData), "Data must be audio data"
+        assert isinstance(key, str), "`key` must be a string"
+        assert isinstance(language, str), "`language` must be a string"
+
+        access_token, expire_time = getattr(self, "bing_cached_access_token", None), getattr(self, "bing_cached_access_token_expiry", None)
+        try:
+            from time import monotonic # we need monotonic time to avoid being affected by system clock changes, but this is only available in Python 3.3+
+        except ImportError:
+            expire_time = None # monotonic time not available, don't cache access tokens
+        if expire_time is None or monotonic() > expire_time: # first credential request, or the access token from the previous one expired
+            # get an access token using OAuth
+            credential_url = "https://oxford-speech.cloudapp.net/token/issueToken"
+            credential_request = Request(credential_url, data = urlencode({
+              "grant_type": "client_credentials",
+              "client_id": "python",
+              "client_secret": key,
+              "scope": "https://speech.platform.bing.com"
+            }).encode("utf-8"))
+            start_time = monotonic()
+            try:
+                credential_response = urlopen(credential_request)
+            except HTTPError as e:
+                raise RequestError("recognition request failed: {0}".format(getattr(e, "reason", "status {0}".format(e.code)))) # use getattr to be compatible with Python 2.6
+            except URLError as e:
+                raise RequestError("recognition connection failed: {0}".format(e.reason))
+            credential_text = credential_response.read().decode("utf-8")
+            credentials = json.loads(credential_text)
+            access_token, expiry_seconds = credentials["access_token"], float(credentials["expires_in"])
+
+            # save the token for the duration it is valid for
+            self.bing_cached_access_token = access_token
+            self.bing_cached_access_token_expiry = start_time + expiry_seconds
+
+        wav_data = audio_data.get_wav_data(
+            convert_rate = 16000, # audio samples must be 8kHz or 16 kHz
+            convert_width = None if audio_data.sample_width in [2, 4] else 4 # audio samples should be either 16-bit or 32-bit
+        )
+        url = "https://speech.platform.bing.com/recognize/query?{0}".format(urlencode({
+            "version": "3.0",
+            "requestid": uuid.uuid4(),
+            "appID": "D4D52672-91D7-4C74-8AD8-42B1D98141A5",
+            "format": "json",
+            "locale": language,
+            "device.os": "wp7",
+            "scenarios": "ulm",
+            "instanceid": uuid.uuid4(),
+            "result.profanitymarkup": "0",
+        }))
+        request = Request(url, data = wav_data, headers = {
+            "Authorization": "Bearer {0}".format(access_token),
+            "Content-Type": "audio/wav; samplerate=16000; sourcerate={0}; trustsourcerate=true".format(audio_data.sample_rate),
+        })
+        try:
+            response = urlopen(request)
+        except HTTPError as e:
+            raise RequestError("recognition request failed: {0}".format(getattr(e, "reason", "status {0}".format(e.code)))) # use getattr to be compatible with Python 2.6
+        except URLError as e:
+            raise RequestError("recognition connection failed: {0}".format(e.reason))
+        response_text = response.read().decode("utf-8")
+        result = json.loads(response_text)
+
+        # return results
+        if show_all: return result
+        if "header" not in result or "lexical" not in result["header"]: raise UnknownValueError()
+        return result["header"]["lexical"]
+
     def recognize_api(self, audio_data, client_access_token, show_all = False):
         """
         Perform speech recognition on ``audio_data`` (an ``AudioData`` instance), using the api.ai Speech to Text API.
@@ -617,7 +703,7 @@ class Recognizer(AudioSource):
 
         Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <https://api.ai/docs/reference/#a-namepost-multipost-query-multipart>`__ as a JSON dictionary.
 
-        Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the key isn't valid, the quota for the key is maxed out, or there is no internet connection.
+        Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
         """
         assert isinstance(audio_data, AudioData), "Data must be audio data"
         assert isinstance(client_access_token, str), "`username` must be a string"
@@ -626,7 +712,6 @@ class Recognizer(AudioSource):
         url = "https://api.api.ai/v1/query"
 
         # pick a good multipart boundary; one that is guaranteed not to be in the text
-        import random
         while True:
             boundary = "{0:>016x}".format(random.randrange(0x10000000000000000)) # generate a random boundary
             if boundary.encode("utf-8") not in wav_data:
@@ -669,15 +754,15 @@ class Recognizer(AudioSource):
 
     def recognize_ibm(self, audio_data, username, password, language = "en-US", show_all = False):
         """
-        Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the IBM Speech To Text API.
+        Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the IBM Speech to Text API.
 
-        The IBM Speech to Text username and password are specified by ``username`` and ``password``, respectively. Unfortunately, these are not available without `signing up for an account <https://console.ng.bluemix.net/registration/>`__. Once logged into the Bluemix console, follow the instructions for `creating an IBM Watson service instance <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/doc/getting_started/gs-credentials.shtml>`__, where the Watson service is "Speech To Text". IBM Speech To Text usernames are strings of the form XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX, while passwords are mixed-case alphanumeric strings.
+        The IBM Speech to Text username and password are specified by ``username`` and ``password``, respectively. Unfortunately, these are not available without `signing up for an account <https://console.ng.bluemix.net/registration/>`__. Once logged into the Bluemix console, follow the instructions for `creating an IBM Watson service instance <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/doc/getting_started/gs-credentials.shtml>`__, where the Watson service is "Speech To Text". IBM Speech to Text usernames are strings of the form XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX, while passwords are mixed-case alphanumeric strings.
 
-        The recognition language is determined by ``language``, an IETF language tag with a dialect like ``"en-US"`` or ``"es-ES"``, defaulting to US English. The supported languages are listed under the ``model`` parameter of the `audio recognition API documentation <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text/api/v1/#recognize_audio_sessionless12>`__.
+        The recognition language is determined by ``language``, an RFC5646 language tag with a dialect like ``"en-US"`` (US English) or ``"zh-CN"`` (Mandarin Chinese), defaulting to US English. The supported language values are listed under the ``model`` parameter of the `audio recognition API documentation <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text/api/v1/#recognize_audio_sessionless12>`__, in the form ``LANGUAGE_BroadbandModel``, where ``LANGUAGE`` is the language value.
 
         Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text/api/v1/#recognize_audio_sessionless12>`__ as a JSON dictionary.
 
-        Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if an error occurred, such as an invalid key, or a broken internet connection.
+        Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
         """
         assert isinstance(audio_data, AudioData), "Data must be audio data"
         assert isinstance(username, str), "`username` must be a string"
@@ -687,7 +772,11 @@ class Recognizer(AudioSource):
             convert_rate = None if audio_data.sample_rate >= 16000 else 16000 # audio samples should be at least 16 kHz
         )
         model = "{0}_BroadbandModel".format(language)
-        url = "https://stream.watsonplatform.net/speech-to-text/api/v1/recognize?continuous=true&model={0}".format(model)
+        url = "https://stream.watsonplatform.net/speech-to-text/api/v1/recognize?{0}".format(urlencode({
+            "profanity_filter": "false",
+            "continuous": "true",
+            "model": model,
+        }))
         request = Request(url, data = flac_data, headers = {"Content-Type": "audio/x-flac"})
         if hasattr("", "encode"):
             authorization_value = base64.standard_b64encode("{0}:{1}".format(username, password).encode("utf-8")).decode("utf-8")

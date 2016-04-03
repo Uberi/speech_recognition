@@ -43,6 +43,15 @@ except sr.UnknownValueError:
 except sr.RequestError as e:
     print("Could not request results from Wit.ai service; {0}".format(e))
 
+# recognize speech using Microsoft Bing Voice Recognition
+BING_KEY = "INSERT BING API KEY HERE" # Microsoft Bing Voice Recognition API keys 32-character lowercase hexadecimal strings
+try:
+    print("Microsoft Bing Voice Recognition thinks you said " + r.recognize_bing(audio, key=BING_KEY, show_all=True))
+except sr.UnknownValueError:
+    print("Microsoft Bing Voice Recognition could not understand audio")
+except sr.RequestError as e:
+    print("Could not request results from Microsoft Bing Voice Recognition service; {0}".format(e))
+
 # recognize speech using api.ai
 API_AI_CLIENT_ACCESS_TOKEN = "INSERT API.AI API KEY HERE" # api.ai keys are 32-character lowercase hexadecimal strings
 try:
