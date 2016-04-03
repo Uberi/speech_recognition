@@ -11,10 +11,10 @@ import math, audioop, collections, threading
 import platform, stat, random, uuid
 import json
 
-try: # try to use python2 module
+try: # attempt to use the Python 2 modules
     from urllib import urlencode
     from urllib2 import Request, urlopen, URLError, HTTPError
-except ImportError: # otherwise, use python3 module
+except ImportError: # use the Python 3 modules
     from urllib.parse import urlencode
     from urllib.request import Request, urlopen
     from urllib.error import URLError, HTTPError
@@ -196,7 +196,7 @@ class WavFile(AudioSource):
 class AudioData(object):
     def __init__(self, frame_data, sample_rate, sample_width):
         assert sample_rate > 0, "Sample rate must be a positive integer"
-        assert sample_width % 1 == 0 and 2 <= sample_width <= 4, "Sample width must be 2, 3, or 4"
+        assert sample_width % 1 == 0 and 1 <= sample_width <= 4, "Sample width must be between 1 and 4 inclusive"
         self.frame_data = frame_data
         self.sample_rate = sample_rate
         self.sample_width = int(sample_width)
@@ -212,17 +212,26 @@ class AudioData(object):
         Writing these bytes directly to a file results in a valid `RAW/PCM audio file <https://en.wikipedia.org/wiki/Raw_audio_format>`__.
         """
         assert convert_rate is None or convert_rate > 0, "Sample rate to convert to must be a positive integer"
-        assert convert_width is None or (convert_width % 1 == 0 and 2 <= convert_width <= 4), "Sample width to convert to must be 2, 3, or 4"
+        assert convert_width is None or (convert_width % 1 == 0 and 1 <= convert_width <= 4), "Sample width to convert to must be between 1 and 4 inclusive"
 
         raw_data = self.frame_data
+
+        # make sure unsigned 8-bit audio (which uses unsigned samples) is handled like higher sample width audio (which uses signed samples)
+        if self.sample_width == 1:
+            raw_data = audioop.bias(raw_data, 1, -128) # subtract 128 from every sample to make them act like signed samples
 
         # resample audio at the desired rate if specified
         if convert_rate is not None and self.sample_rate != convert_rate:
             raw_data, _ = audioop.ratecv(raw_data, self.sample_width, 1, self.sample_rate, convert_rate, None)
+            pass
 
         # convert samples to desired byte format if specified
         if convert_width is not None and self.sample_width != convert_width:
             raw_data = audioop.lin2lin(raw_data, self.sample_width, convert_width)
+
+        # if the output is 8-bit audio with unsigned samples, convert the samples we've been treating as signed to unsigned again
+        if convert_width == 1:
+            raw_data = audioop.bias(raw_data, 1, 128) # add 128 to every sample to make them act like unsigned samples again
 
         return raw_data
 
@@ -541,6 +550,7 @@ class Recognizer(AudioSource):
 
         flac_data = audio_data.get_flac_data(
             convert_rate = None if audio_data.sample_rate >= 8000 else 8000, # audio samples must be at least 8 kHz
+            convert_width = None if audio_data.sample_width >= 2 else 2 # audio samples must be at least 16-bit
         )
         if key is None: key = "AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw"
         url = "http://www.google.com/speech-api/v2/recognize?{0}".format(urlencode({
@@ -595,7 +605,7 @@ class Recognizer(AudioSource):
 
         wav_data = audio_data.get_wav_data(
             convert_rate = None if audio_data.sample_rate >= 8000 else 8000, # audio samples must be at least 8 kHz
-            convert_width = None if audio_data.sample_width in [2, 4] else 4 # audio samples should be either 16-bit or 32-bit
+            convert_width = 2 # audio samples should be 16-bit
         )
         url = "https://api.wit.ai/speech?v=20141022"
         request = Request(url, data = wav_data, headers = {"Authorization": "Bearer {0}".format(key), "Content-Type": "audio/wav"})
@@ -662,7 +672,7 @@ class Recognizer(AudioSource):
 
         wav_data = audio_data.get_wav_data(
             convert_rate = 16000, # audio samples must be 8kHz or 16 kHz
-            convert_width = None if audio_data.sample_width in [2, 4] else 4 # audio samples should be either 16-bit or 32-bit
+            convert_width = 2 # audio samples should be 16-bit
         )
         url = "https://speech.platform.bing.com/recognize/query?{0}".format(urlencode({
             "version": "3.0",
@@ -769,7 +779,8 @@ class Recognizer(AudioSource):
         assert isinstance(password, str), "`password` must be a string"
 
         flac_data = audio_data.get_flac_data(
-            convert_rate = None if audio_data.sample_rate >= 16000 else 16000 # audio samples should be at least 16 kHz
+            convert_rate = None if audio_data.sample_rate >= 16000 else 16000, # audio samples should be at least 16 kHz
+            convert_width = None if audio_data.sample_width >= 2 else 2 # audio samples should be at least 16-bit
         )
         model = "{0}_BroadbandModel".format(language)
         url = "https://stream.watsonplatform.net/speech-to-text/api/v1/recognize?{0}".format(urlencode({
