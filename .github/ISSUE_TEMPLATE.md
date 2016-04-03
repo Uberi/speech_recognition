@@ -20,6 +20,8 @@ System information
 
 (Delete all the statements that don't apply.)
 
+My **Python version** is <INSERT VERSION HERE>. (You can check this by running `python -V`.)
+
 My **SpeechRecognition library version** is <INSERT VERSION HERE>. (You can check this by running `python -c "import speech_recognition as sr;print(sr.__version__)"`.)
 
 My **PyAudio library version** is <INSERT VERSION HERE> / I don't have PyAudio installed. (You can check this by running `python -c "import pyaudio as p;print(p.__version__)"`.)

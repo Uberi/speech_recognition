@@ -1,5 +1,5 @@
-Speech Recognition
-==================
+SpeechRecognition
+=================
 
 .. image:: https://img.shields.io/pypi/dm/SpeechRecognition.svg
     :target: https://pypi.python.org/pypi/SpeechRecognition/
@@ -120,9 +120,30 @@ See `Notes on using PocketSphinx <https://github.com/Uberi/speech_recognition/bl
 FLAC (for some systems)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-A FLAC encoder is required to encode the audio data to send to the API. If using Windows, OS X, or Linux on an i385-compatible architecture, the encoder is already bundled with this library - you do not need to install anything else.
+A `FLAC encoder <https://xiph.org/flac/>`__ is required to encode the audio data to send to the API. If using Windows (x86 or x86-64), OS X (Intel Macs only, OS X 10.6 or higher), or Linux (x86 or x86-64), the encoder is already bundled with this library - you do not need to install anything else.
 
 Otherwise, ensure that you have the ``flac`` command line tool, which is often available through the system package manager.
+
+The included ``flac-win32`` executable is the `official FLAC 1.3.1 32-bit Windows binary <http://downloads.xiph.org/releases/flac/flac-1.3.1-win.zip>`__.
+
+The included ``flac-linux-x86`` executable is built from the `FLAC 1.3.1 source code <http://downloads.xiph.org/releases/flac/flac-1.3.1.tar.xz>`__ with `Holy Build Box <http://phusion.github.io/holy-build-box/>`__ to ensure that it's compatible with a wide variety of distributions. The exact commands used are:
+
+```bash
+# download and extract the FLAC source code
+wget http://downloads.xiph.org/releases/flac/flac-1.3.1.tar.xz
+tar xf flac-1.3.1.tar.xz
+sudo docker run --tty --interactive --volume "$(pwd):/root" --rm phusion/holy-build-box-32:latest /hbb_exe/activate-exec bash # download an start a shell inside the Holy Build Box
+
+# we're now in a Bash shell inside the Docker image
+cd /root/flac-1.3.1
+./configure LDFLAGS=-static # compiler flags to make a static build
+make
+exit # return to the original shell
+```
+
+The resulting executable can then be found at ``flac-1.3.1/src/flac`` in the build directory. A copy of the source code can also be found at ``third-party/flac-1.3.1.tar.xz``.
+
+The included ``flac-mac`` executable is extracted from `xACT 2.37 <http://xact.scottcbrown.org/>`__, which is a frontend for FLAC that conveniently includes binaries for all of its encoders. Specifically, it is a copy of ``xACT 2.37/xACT.app/Contents/Resources/flac`` in ``xACT2.37.zip``.
 
 Troubleshooting
 ---------------
@@ -201,9 +222,9 @@ For errors of the form "ALSA lib [...] Unknown PCM", see `this StackOverflow ans
 On OS X, I get a ``ChildProcessError`` saying that it couldn't find the system FLAC converter, even though it's installed.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Installing [FLAC for OS X](https://xiph.org/flac/download.html) directly from the source code will not work, since it doesn't correctly add the executables to the search path.
+Installing `FLAC for OS X <https://xiph.org/flac/download.html>`__ directly from the source code will not work, since it doesn't correctly add the executables to the search path.
 
-Installing FLAC using [Homebrew](http://brew.sh/) ensures that the search path is correctly updated. First, ensure you have Homebrew, then run ``brew install flac`` to install the necessary files.
+Installing FLAC using `Homebrew <http://brew.sh/>`__ ensures that the search path is correctly updated. First, ensure you have Homebrew, then run ``brew install flac`` to install the necessary files.
 
 Developing
 ----------
@@ -252,12 +273,14 @@ Also check out the `Python Baidu Yuyin API <https://github.com/DelightRun/PyBaid
 License
 -------
 
-Copyright 2014-2016 `Anthony Zhang (Uberi) <https://uberi.github.io>`__.
+Copyright 2014-2016 `Anthony Zhang (Uberi) <https://uberi.github.io>`__. The source code for this library is available online at `GitHub <https://github.com/Uberi/speech_recognition>`__.
 
-The source code is available online at `GitHub <https://github.com/Uberi/speech_recognition>`__.
+SpeechRecognition is made available under the 3-clause BSD license. See ``LICENSE.txt`` in the project's root directory for more information.
 
-This program is made available under the 3-clause BSD license. See ``LICENSE.txt`` in the project's root directory for more information.
+For convenience, all the official distributions of SpeechRecognition already include a copy of the necessary copyright notices and licenses. In your project, you can simply **say that licensing information for SpeechRecognition can be found within the SpeechRecognition README, and make sure SpeechRecognition is visible to users if they wish to see it**.
 
-This program distributes source code, binaries, and language files from `CMU Sphinx <http://cmusphinx.sourceforge.net/>`__. These files are BSD-licensed and redistributable as long as copyright notices are correctly retained. See ``speech_recognition/pocketsphinx-data/*/LICENSE*.txt`` and ``third-party/LICENSE-Sphinx.txt`` for details concerning individual files.
+SpeechRecognition distributes source code, binaries, and language files from `CMU Sphinx <http://cmusphinx.sourceforge.net/>`__. These files are BSD-licensed and redistributable as long as copyright notices are correctly retained. See ``speech_recognition/pocketsphinx-data/*/LICENSE*.txt`` and ``third-party/LICENSE-Sphinx.txt`` for license details for individual parts.
 
-This program distributes source code and binaries from `PyAudio <http://people.csail.mit.edu/hubert/pyaudio/>`__. These files are MIT-licensed and redistributable as long as copyright notices are correctly retained. See license files inside ``third-party/LICENSE-PyAudio.txt`` for details concerning individual files.
+SpeechRecognition distributes source code and binaries from `PyAudio <http://people.csail.mit.edu/hubert/pyaudio/>`__. These files are MIT-licensed and redistributable as long as copyright notices are correctly retained. See ``third-party/LICENSE-PyAudio.txt`` for license details.
+
+SpeechRecognition distributes binaries from `FLAC <https://xiph.org/flac/>`__ - ``speech_recognition/flac-win32.exe``, ``speech_recognition/flac-linux-x86``, and ``speech_recognition/flac-mac``. These files are GPLv2-licensed and redistributable, as long as the terms of the GPL are satisfied. The FLAC binaries are an `aggregate <https://www.gnu.org/licenses/gpl-faq.html#MereAggregation>`__ of `separate programs <https://www.gnu.org/licenses/gpl-faq.html#NFUseGPLPlugins>`__, so these GPL restrictions do not apply to the library or your programs that use the library, only to FLAC itself. See ``LICENSE-FLAC.txt`` for license details.

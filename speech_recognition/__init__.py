@@ -3,7 +3,7 @@
 """Library for performing speech recognition, with support for several engines and APIs, online and offline."""
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "3.3.3"
+__version__ = "3.4.0"
 __license__ = "BSD"
 
 import io, os, subprocess, wave, base64
@@ -273,7 +273,7 @@ class AudioData(object):
             if system == "Windows" and platform.machine() in ["i386", "x86", "x86_64", "AMD64"]: # Windows NT, use the bundled FLAC conversion utility
                 flac_converter = os.path.join(path, "flac-win32.exe")
             elif system == "Linux" and platform.machine() in ["i386", "x86", "x86_64", "AMD64"]:
-                flac_converter = os.path.join(path, "flac-linux-i386")
+                flac_converter = os.path.join(path, "flac-linux-x86")
             elif system == "Darwin" and platform.machine() in ["i386", "x86", "x86_64", "AMD64"]:
                 flac_converter = os.path.join(path, "flac-mac")
             else:
