@@ -642,10 +642,9 @@ class Recognizer(AudioSource):
         assert isinstance(language, str), "`language` must be a string"
 
         access_token, expire_time = getattr(self, "bing_cached_access_token", None), getattr(self, "bing_cached_access_token_expiry", None)
-        try:
-            from time import monotonic # we need monotonic time to avoid being affected by system clock changes, but this is only available in Python 3.3+
-        except ImportError:
-            expire_time = None # monotonic time not available, don't cache access tokens
+
+        from monotonic import monotonic # using a pypi module for monotonic to support lower versions of python too ('https://pypi.python.org/pypi/monotonic')
+
         if expire_time is None or monotonic() > expire_time: # first credential request, or the access token from the previous one expired
             # get an access token using OAuth
             credential_url = "https://oxford-speech.cloudapp.net/token/issueToken"
@@ -685,7 +684,7 @@ class Recognizer(AudioSource):
             "instanceid": uuid.uuid4(),
             "result.profanitymarkup": "0",
         }))
-        request = Request(url, data = wav_data, headers = {
+        request = Request(url, data=wav_data, headers={
             "Authorization": "Bearer {0}".format(access_token),
             "Content-Type": "audio/wav; samplerate=16000; sourcerate={0}; trustsourcerate=true".format(audio_data.sample_rate),
         })
