@@ -23,7 +23,11 @@ For Linux and other POSIX systems (like OS X), you'll want to build from source.
 * On any Debian-derived Linux distributions (like Ubuntu and Mint):
     1. Run ``sudo apt-get install python python-all-dev python-pip build-essential swig git`` for Python 2, or ``sudo apt-get install python3 python3-all-dev python3-pip build-essential swig git`` for Python 3.
     2. Run ``pip install pocketsphinx`` for Python 2, or ``pip3 install pocketsphinx`` for Python 3.
-* On other POSIX-based systems (like OS X):
+* On OS X:
+    1. Run ``brew install swig git python`` for Python 2, or ``brew install swig git python3`` for Python 3.
+    2. Install PocketSphinx-Python using Pip: ``pip install pocketsphinx``.
+        * If this gives errors when importing the library in your program, try running ``brew link --overwrite python``.
+* On other POSIX-based systems:
     1. Install `Python <https://www.python.org/downloads/>`__, `Pip <https://pip.pypa.io/en/stable/installing/>`__, `SWIG <http://www.swig.org/download.html>`__, and `Git <https://git-scm.com/downloads>`__, preferably using a package manager.
     2. Install PocketSphinx-Python using Pip: ``pip install pocketsphinx``.
 * On Windows:
