@@ -18,8 +18,14 @@ Building PocketSphinx-Python from source
 
 For Windows, it is recommended to install the precompiled Wheel packages. These are provided because building Pocketsphinx on Windows requires a lot of work, and can take hours to download and install all the surrounding software.
 
-For Linux and other POSIX systems (such as OS X), you'll want to build from source. It should take less than two minutes on a fast machine.
+For Linux and other POSIX systems (like OS X), you'll want to build from source. It should take less than two minutes on a fast machine.
 
+* On any Debian-derived Linux distributions (like Ubuntu and Mint):
+    1. Run ``sudo apt-get install python python-all-dev python-pip build-essential swig git`` for Python 2, or ``sudo apt-get install python3 python3-all-dev python3-pip build-essential swig git`` for Python 3.
+    2. Run ``pip install pocketsphinx`` for Python 2, or ``pip3 install pocketsphinx`` for Python 3.
+* On other POSIX-based systems (like OS X):
+    1. Install `Python <https://www.python.org/downloads/>`__, `Pip <https://pip.pypa.io/en/stable/installing/>`__, `SWIG <http://www.swig.org/download.html>`__, and `Git <https://git-scm.com/downloads>`__, preferably using a package manager.
+    2. Install PocketSphinx-Python using Pip: ``pip install pocketsphinx``.
 * On Windows:
     1. Install `Python <https://www.python.org/downloads/>`__, `Pip <https://pip.pypa.io/en/stable/installing/>`__, `SWIG <http://www.swig.org/download.html>`__, and `Git <https://git-scm.com/downloads>`__, preferably using a package manager.
     2. Install the necessary `compilers suite <http://blog.ionelmc.ro/2014/12/21/compiling-python-extensions-on-windows/>`__ (`here's a PDF version <third-party/Compiling Python extensions on Windows.pdf>`__ in case the link goes down) for compiling modules for your particular Python version:
@@ -32,12 +38,6 @@ For Linux and other POSIX systems (such as OS X), you'll want to build from sour
         1. Download the full PocketSphinx-Python source code by running ``git clone --recursive https://github.com/bambocher/pocketsphinx-python``.
         2. Download `msinttypes <https://code.google.com/archive/p/msinttypes/>`__ and copy ``inttypes.h`` and ``stdint.h`` from it into the ``sphinxbase/include/sphinxbase`` folder under the project root folder. This is necessary because the MSVC compiler version used for Python 2.7 is missing a lot of C99 features; msinttypes implements the important ones that Sphinx needs.
         3. Run ``python setup.py install`` to compile and install PocketSphinx.
-* On any Debian-derived Linux distributions (like Ubuntu and Mint):
-    1. Run ``sudo apt-get install python python-all-dev python-pip build-essential swig git`` for Python 2, or ``sudo apt-get install python3 python3-all-dev python3-pip build-essential swig git`` for Python 3.
-    2. Run ``pip install pocketsphinx`` for Python 2, or ``pip3 install pocketsphinx`` for Python 3.
-* On other POSIX-based systems:
-    1. Install `Python <https://www.python.org/downloads/>`__, `Pip <https://pip.pypa.io/en/stable/installing/>`__, `SWIG <http://www.swig.org/download.html>`__, and `Git <https://git-scm.com/downloads>`__, preferably using a package manager.
-    2. Install PocketSphinx-Python using Pip: ``pip install pocketsphinx``.
 
 To build an installable `wheel package <https://pypi.python.org/pypi/wheel>`__ (like the ones included with this project) instead of just installing, run ``git clone --recursive https://github.com/bambocher/pocketsphinx-python && cd pocketsphinx-python && python setup.py bdist_wheel`` instead of ``pip install pocketsphinx``/``python setup.py install``. The resulting Wheel will be found in the ``dist`` folder of the PocketSphinx-Python project directory.
 
