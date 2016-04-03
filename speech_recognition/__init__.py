@@ -3,7 +3,7 @@
 """Library for performing speech recognition, with support for several engines and APIs, online and offline."""
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "3.4.0"
+__version__ = "3.4.1"
 __license__ = "BSD"
 
 import io, os, subprocess, wave, aifc, base64
