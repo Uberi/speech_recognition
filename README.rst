@@ -128,18 +128,18 @@ The included ``flac-win32`` executable is the `official FLAC 1.3.1 32-bit Window
 
 The included ``flac-linux-x86`` executable is built from the `FLAC 1.3.1 source code <http://downloads.xiph.org/releases/flac/flac-1.3.1.tar.xz>`__ with `Holy Build Box <http://phusion.github.io/holy-build-box/>`__ to ensure that it's compatible with a wide variety of distributions. The exact commands used are:
 
-```bash
-# download and extract the FLAC source code
-wget http://downloads.xiph.org/releases/flac/flac-1.3.1.tar.xz
-tar xf flac-1.3.1.tar.xz
-sudo docker run --tty --interactive --volume "$(pwd):/root" --rm phusion/holy-build-box-32:latest /hbb_exe/activate-exec bash # download an start a shell inside the Holy Build Box
+.. code:: bash
 
-# we're now in a Bash shell inside the Docker image
-cd /root/flac-1.3.1
-./configure LDFLAGS=-static # compiler flags to make a static build
-make
-exit # return to the original shell
-```
+    # download and extract the FLAC source code
+    wget http://downloads.xiph.org/releases/flac/flac-1.3.1.tar.xz
+    tar xf flac-1.3.1.tar.xz
+    sudo docker run --tty --interactive --volume "$(pwd):/root" --rm phusion/holy-build-box-32:latest /hbb_exe/activate-exec bash # download an start a shell inside the Holy Build Box
+
+    # we're now in a Bash shell inside the Docker image
+    cd /root/flac-1.3.1
+    ./configure LDFLAGS=-static # compiler flags to make a static build
+    make
+    exit # return to the original shell
 
 The resulting executable can then be found at ``flac-1.3.1/src/flac`` in the build directory. A copy of the source code can also be found at ``third-party/flac-1.3.1.tar.xz``.
 
