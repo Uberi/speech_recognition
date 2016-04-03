@@ -6,7 +6,7 @@ __author__ = "Anthony Zhang (Uberi)"
 __version__ = "3.4.0"
 __license__ = "BSD"
 
-import io, os, subprocess, wave, base64
+import io, os, subprocess, wave, aifc, base64
 import math, audioop, collections, threading
 import platform, stat, random, uuid
 import json
@@ -143,54 +143,84 @@ class Microphone(AudioSource):
             finally:
                 self.pyaudio_stream.close()
 
-class WavFile(AudioSource):
+class AudioFile(AudioSource):
     """
-    Creates a new ``WavFile`` instance given a WAV audio file `filename_or_fileobject`. Subclass of ``AudioSource``.
+    Creates a new ``AudioFile`` instance given a WAV/AIFF/FLAC audio file `filename_or_fileobject`. Subclass of ``AudioSource``.
 
-    If ``filename_or_fileobject`` is a string, then it is interpreted as a path to a WAV audio file (mono or stereo) on the filesystem. Otherwise, ``filename_or_fileobject`` should be a file-like object such as ``io.BytesIO`` or similar.
+    If ``filename_or_fileobject`` is a string, then it is interpreted as a path to an audio file on the filesystem. Otherwise, ``filename_or_fileobject`` should be a file-like object such as ``io.BytesIO`` or similar.
 
-    Note that using functions that read from the audio (such as ``recognizer_instance.record`` or ``recognizer_instance.listen``) will move ahead in the stream. For example, if you execute ``recognizer_instance.record(wavfile_instance, duration=10)`` twice, the first time it will return the first 10 seconds of audio, and the second time it will return the 10 seconds of audio right after that.
+    Note that functions that read from the audio (such as ``recognizer_instance.record`` or ``recognizer_instance.listen``) will move ahead in the stream. For example, if you execute ``recognizer_instance.record(audiofile_instance, duration=10)`` twice, the first time it will return the first 10 seconds of audio, and the second time it will return the 10 seconds of audio right after that. This is always reset to the beginning when entering an ``AudioFile`` context.
 
-    Note that the WAV file must be in PCM/LPCM format; WAVE_FORMAT_EXTENSIBLE and compressed WAV are not supported and may result in undefined behaviour.
+    WAV files must be in PCM/LPCM format; WAVE_FORMAT_EXTENSIBLE and compressed WAV are not supported and may result in undefined behaviour.
+
+    Both AIFF and AIFF-C (compressed AIFF) formats are supported.
+
+    FLAC files must be in native FLAC format; OGG-FLAC is not supported and may result in undefined behaviour.
     """
 
     def __init__(self, filename_or_fileobject):
-        if isinstance(filename_or_fileobject, str):
-            self.filename = filename_or_fileobject
-        else:
-            assert filename_or_fileobject.read, "Given WAV file must be a filename string or a file-like object"
-            self.filename = None
-            self.wav_file = filename_or_fileobject
+        assert isinstance(filename_or_fileobject, str) or filename_or_fileobject.read, "Given audio file must be a filename string or a file-like object"
+        self.filename_or_fileobject = filename_or_fileobject
         self.stream = None
         self.DURATION = None
 
     def __enter__(self):
         assert self.stream is None, "This audio source is already inside a context manager"
-        if self.filename is not None: self.wav_file = open(self.filename, "rb")
-        self.wav_reader = wave.open(self.wav_file, "rb")
-        assert 1 <= self.wav_reader.getnchannels() <= 2, "Audio must be mono or stereo"
-        self.SAMPLE_WIDTH = self.wav_reader.getsampwidth()
-        self.SAMPLE_RATE = self.wav_reader.getframerate()
+        try:
+            # attempt to read the file as WAV
+            self.audio_reader = wave.open(self.filename_or_fileobject, "rb")
+            self.little_endian = True # RIFF WAV is a little-endian format (most ``audioop`` operations assume that the frames are stored in little-endian form)
+        except wave.Error:
+            try:
+                # attempt to read the file as AIFF
+                self.audio_reader = aifc.open(self.filename_or_fileobject, "rb")
+                self.little_endian = False # AIFF is a big-endian format
+            except aifc.Error:
+                # attempt to read the file as FLAC
+                if isinstance(self.filename_or_fileobject, str):
+                    with open(self.filename_or_fileobject, "rb") as f: flac_data = f.read()
+                else:
+                    flac_data = self.filename_or_fileobject.read()
+
+                # run the FLAC converter with the FLAC data to get the AIFF data
+                flac_converter = get_flac_converter()
+                process = subprocess.Popen([flac_converter, "--stdout", "--totally-silent", "--decode", "--force-aiff-format", "-"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+                aiff_data, stderr = process.communicate(flac_data)
+                aiff_file = io.BytesIO(aiff_data)
+                self.audio_reader = aifc.open(aiff_file, "rb")
+                self.little_endian = False # AIFF is a big-endian format
+        assert 1 <= self.audio_reader.getnchannels() <= 2, "Audio must be mono or stereo"
+        self.SAMPLE_WIDTH = self.audio_reader.getsampwidth()
+        self.SAMPLE_RATE = self.audio_reader.getframerate()
         self.CHUNK = 4096
-        self.FRAME_COUNT = self.wav_reader.getnframes()
+        self.FRAME_COUNT = self.audio_reader.getnframes()
         self.DURATION = self.FRAME_COUNT / float(self.SAMPLE_RATE)
-        self.stream = WavFile.WavStream(self.wav_reader)
+        self.stream = AudioFile.AudioFileStream(self.audio_reader, self.little_endian)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        if self.filename: self.wav_file.close()
+        if isinstance(self.filename_or_fileobject, str): # only close the file if it was opened by this class in the first place
+            self.audio_reader.close()
         self.stream = None
         self.DURATION = None
 
-    class WavStream(object):
-        def __init__(self, wav_reader):
-            self.wav_reader = wav_reader
+    class AudioFileStream(object):
+        def __init__(self, audio_reader, little_endian):
+            self.audio_reader = audio_reader
+            self.little_endian = little_endian
 
         def read(self, size = -1):
-            buffer = self.wav_reader.readframes(self.wav_reader.getnframes() if size == -1 else size)
-            if isinstance(buffer, str) and str is not bytes: buffer = b"" # workaround for https://bugs.python.org/issue24608, unfortunately only fixes the issue for little-endian systems
-            if self.wav_reader.getnchannels() != 1: # stereo audio
-                buffer = audioop.tomono(buffer, self.wav_reader.getsampwidth(), 1, 1) # convert stereo audio data to mono
+            buffer = self.audio_reader.readframes(self.audio_reader.getnframes() if size == -1 else size)
+            if not isinstance(buffer, bytes): buffer = b"" # workaround for https://bugs.python.org/issue24608
+
+            sample_width = self.audio_reader.getsampwidth()
+            if not self.little_endian: # big endian format, convert to little endian on the fly
+                if hasattr(audioop, "byteswap"): # ``audioop.byteswap`` was only added in Python 3.4
+                    buffer = audioop.byteswap(buffer, sample_width)
+                else: # manually reverse the bytes of each sample, which is slower but works well enough as a fallback
+                    buffer = buffer[sample_width - 1::-1] + b"".join(buffer[i + sample_width:i:-1] for i in range(1, len(buffer), sample_width))
+            if self.audio_reader.getnchannels() != 1: # stereo audio
+                buffer = audioop.tomono(buffer, sample_width, 1, 1) # convert stereo audio data to mono
             return buffer
 
 class AudioData(object):
@@ -252,15 +282,48 @@ class AudioData(object):
         # generate the WAV file contents
         with io.BytesIO() as wav_file:
             wav_writer = wave.open(wav_file, "wb")
-            try: # note that we can't use context manager due to Python 2 not supporting it
+            try: # note that we can't use context manager, since that was only added in Python 3.4
                 wav_writer.setframerate(sample_rate)
                 wav_writer.setsampwidth(sample_width)
                 wav_writer.setnchannels(1)
                 wav_writer.writeframes(raw_data)
+                wav_data = wav_file.getvalue()
             finally:  # make sure resources are cleaned up
                 wav_writer.close()
-            wav_data = wav_file.getvalue()
         return wav_data
+
+    def get_aiff_data(self, convert_rate = None, convert_width = None):
+        """
+        Returns a byte string representing the contents of an AIFF-C file containing the audio represented by the ``AudioData`` instance.
+
+        If ``convert_width`` is specified and the audio samples are not ``convert_width`` bytes each, the resulting audio is converted to match.
+
+        If ``convert_rate`` is specified and the audio sample rate is not ``convert_rate`` Hz, the resulting audio is resampled to match.
+
+        Writing these bytes directly to a file results in a valid `AIFF-C file <https://en.wikipedia.org/wiki/Audio_Interchange_File_Format>`__.
+        """
+        raw_data = self.get_raw_data(convert_rate, convert_width)
+        sample_rate = self.sample_rate if convert_rate is None else convert_rate
+        sample_width = self.sample_width if convert_width is None else convert_width
+
+        # the AIFF format is big-endian, so we need to covnert the little-endian raw data to big-endian
+        if hasattr(audioop, "byteswap"): # ``audioop.byteswap`` was only added in Python 3.4
+            raw_data = audioop.byteswap(raw_data, sample_width)
+        else: # manually reverse the bytes of each sample, which is slower but works well enough as a fallback
+            raw_data = raw_data[sample_width - 1::-1] + b"".join(raw_data[i + sample_width:i:-1] for i in range(1, len(raw_data), sample_width))
+
+        # generate the AIFF-C file contents
+        with io.BytesIO() as aiff_file:
+            aiff_writer = aifc.open(aiff_file, "wb")
+            try: # note that we can't use context manager, since that was only added in Python 3.4
+                aiff_writer.setframerate(sample_rate)
+                aiff_writer.setsampwidth(sample_width)
+                aiff_writer.setnchannels(1)
+                aiff_writer.writeframes(raw_data)
+                aiff_data = aiff_file.getvalue()
+            finally:  # make sure resources are cleaned up
+                aiff_writer.close()
+        return aiff_data
 
     def get_flac_data(self, convert_rate = None, convert_width = None):
         """
@@ -272,30 +335,10 @@ class AudioData(object):
 
         Writing these bytes directly to a file results in a valid `FLAC file <https://en.wikipedia.org/wiki/FLAC>`__.
         """
-        wav_data = self.get_wav_data(convert_rate, convert_width)
-
-        # determine which converter executable to use
-        system = platform.system()
-        path = os.path.dirname(os.path.abspath(__file__)) # directory of the current module file, where all the FLAC bundled binaries are stored
-        flac_converter = shutil_which("flac") # check for installed version first
-        if flac_converter is None: # flac utility is not installed
-            if system == "Windows" and platform.machine() in ["i386", "x86", "x86_64", "AMD64"]: # Windows NT, use the bundled FLAC conversion utility
-                flac_converter = os.path.join(path, "flac-win32.exe")
-            elif system == "Linux" and platform.machine() in ["i386", "x86", "x86_64", "AMD64"]:
-                flac_converter = os.path.join(path, "flac-linux-x86")
-            elif system == "Darwin" and platform.machine() in ["i386", "x86", "x86_64", "AMD64"]:
-                flac_converter = os.path.join(path, "flac-mac")
-            else:
-                raise OSError("FLAC conversion utility not available - consider installing the FLAC command line application using `brew install flac` or your operating system's equivalent")
-
-        # mark FLAC converter as executable
-        try:
-            stat_info = os.stat(flac_converter)
-            os.chmod(flac_converter, stat_info.st_mode | stat.S_IEXEC)
-        except OSError: pass
-
         # run the FLAC converter with the WAV data to get the FLAC data
-        process = subprocess.Popen("\"{0}\" --stdout --totally-silent --best -".format(flac_converter), stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+        wav_data = self.get_wav_data(convert_rate, convert_width)
+        flac_converter = get_flac_converter()
+        process = subprocess.Popen([flac_converter, "--stdout", "--totally-silent", "--best", "-"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         flac_data, stderr = process.communicate(wav_data)
         return flac_data
 
@@ -816,12 +859,57 @@ class Recognizer(AudioSource):
                     transcription.append(hypothesis["transcript"])
         return "\n".join(transcription)
 
+def get_flac_converter():
+    # determine which converter executable to use
+    system = platform.system()
+    path = os.path.dirname(os.path.abspath(__file__)) # directory of the current module file, where all the FLAC bundled binaries are stored
+    flac_converter = shutil_which("flac") # check for installed version first
+    if flac_converter is None: # flac utility is not installed
+        if system == "Windows" and platform.machine() in ["i386", "x86", "x86_64", "AMD64"]: # Windows NT, use the bundled FLAC conversion utility
+            flac_converter = os.path.join(path, "flac-win32.exe")
+        elif system == "Linux" and platform.machine() in ["i386", "x86", "x86_64", "AMD64"]:
+            flac_converter = os.path.join(path, "flac-linux-x86")
+        elif system == "Darwin" and platform.machine() in ["i386", "x86", "x86_64", "AMD64"]:
+            flac_converter = os.path.join(path, "flac-mac")
+        else:
+            raise OSError("FLAC conversion utility not available - consider installing the FLAC command line application using `brew install flac` or your operating system's equivalent")
+
+    # mark FLAC converter as executable if possible
+    try:
+        stat_info = os.stat(flac_converter)
+        os.chmod(flac_converter, stat_info.st_mode | stat.S_IEXEC)
+    except OSError: pass
+
+    return flac_converter
+
 def shutil_which(pgm):
-    """
-    python2 backport of python3's shutil.which()
-    """
+    """Python 2 backport of ``shutil.which()`` from Python 3"""
     path = os.getenv('PATH')
     for p in path.split(os.path.pathsep):
         p = os.path.join(p, pgm)
         if os.path.exists(p) and os.access(p, os.X_OK):
             return p
+
+# backwards compatibility shims
+WavFile = AudioFile
+def recognize_att(self, audio_data, app_key, app_secret, language = "en-US", show_all = False):
+    authorization_url = "https://api.att.com/oauth/v4/token"
+    authorization_body = "client_id={0}&client_secret={1}&grant_type=client_credentials&scope=SPEECH".format(app_key, app_secret)
+    try: authorization_response = urlopen(authorization_url, data = authorization_body.encode("utf-8"))
+    except HTTPError as e: raise RequestError("credential request failed: {0}".format(getattr(e, "reason", "status {0}".format(e.code))))
+    except URLError as e: raise RequestError("credential connection failed: {0}".format(e.reason))
+    authorization_text = authorization_response.read().decode("utf-8")
+    authorization_bearer = json.loads(authorization_text).get("access_token")
+    if authorization_bearer is None: raise RequestError("missing OAuth access token in requested credentials")
+    wav_data = audio_data.get_wav_data(convert_rate = 8000 if audio_data.sample_rate < 16000 else 16000, convert_width = 2)
+    request = Request("https://api.att.com/speech/v3/speechToText", data = wav_data, headers = {"Authorization": "Bearer {0}".format(authorization_bearer), "Content-Language": language, "Content-Type": "audio/wav"})
+    try: response = urlopen(request)
+    except HTTPError as e: raise RequestError("recognition request failed: {0}".format(getattr(e, "reason", "status {0}".format(e.code))))
+    except URLError as e: raise RequestError("recognition connection failed: {0}".format(e.reason))
+    result = json.loads(response.read().decode("utf-8"))
+    if show_all: return result
+    if "Recognition" not in result or "NBest" not in result["Recognition"]: raise UnknownValueError()
+    for entry in result["Recognition"]["NBest"]:
+        if entry.get("Grade") == "accept" and "ResultText" in entry: return entry["ResultText"]
+        raise UnknownValueError() # no transcriptions available
+Recognizer.recognize_att = classmethod(recognize_att)

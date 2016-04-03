@@ -42,29 +42,33 @@ To create a ``Microphone`` instance by name:
         if microphone_name == "HDA Intel HDMI: 0 (hw:0,3)":
             m = Microphone(i)
 
-``WavFile(filename_or_fileobject)``
+``AudioFile(filename_or_fileobject)``
 -----------------------------------
 
-Creates a new ``WavFile`` instance given a WAV audio file ``filename_or_fileobject``. Subclass of ``AudioSource``.
+Creates a new ``AudioFile`` instance given a WAV/AIFF/FLAC audio file `filename_or_fileobject`. Subclass of ``AudioSource``.
 
-If ``filename_or_fileobject`` is a string, then it is interpreted as a path to a WAV audio file (mono or stereo) on the filesystem. Otherwise, ``filename_or_fileobject`` should be a file-like object such as ``io.BytesIO`` or similar.
+If ``filename_or_fileobject`` is a string, then it is interpreted as a path to an audio file on the filesystem. Otherwise, ``filename_or_fileobject`` should be a file-like object such as ``io.BytesIO`` or similar.
 
-Note that using functions that read from the audio (such as ``recognizer_instance.record`` or ``recognizer_instance.listen``) will move ahead in the stream. For example, if you execute ``recognizer_instance.record(wavfile_instance, duration=10)`` twice, the first time it will return the first 10 seconds of audio, and the second time it will return the 10 seconds of audio right after that.
+Note that functions that read from the audio (such as ``recognizer_instance.record`` or ``recognizer_instance.listen``) will move ahead in the stream. For example, if you execute ``recognizer_instance.record(audiofile_instance, duration=10)`` twice, the first time it will return the first 10 seconds of audio, and the second time it will return the 10 seconds of audio right after that. This is always reset when entering the context with a context manager.
 
-Note that the WAV file must be in PCM/LPCM format; WAVE_FORMAT_EXTENSIBLE and compressed WAV are not supported and may result in undefined behaviour.
+WAV files must be in PCM/LPCM format; WAVE_FORMAT_EXTENSIBLE and compressed WAV are not supported and may result in undefined behaviour.
+
+Both AIFF and AIFF-C (compressed AIFF) formats are supported.
+
+FLAC files must be in native FLAC format; OGG-FLAC is not supported and may result in undefined behaviour.
 
 Instances of this class are context managers, and are designed to be used with ``with`` statements:
 
 .. code:: python
 
     import speech_recognition as sr
-    with sr.WavFile("SOMETHING.wav") as source:    # open the WAV file for reading
-        pass                                       # do things here - ``source`` is the WavFile instance created above
+    with sr.AudioFile("SOME_AUDIO_FILE") as source:    # open the audio file for reading
+        pass                                           # do things here - ``source`` is the AudioFile instance created above
 
-``wavfile_instance.DURATION``
+``audiofile_instance.DURATION``
 -----------------------------
 
-Represents the length of the audio stored in the WAV file in seconds. This property is only available when inside a context - essentially, that means it should only be accessed inside a ``with wavfile_instance ...`` statement. Outside of contexts, this property is ``None``.
+Represents the length of the audio stored in the audio file in seconds. This property is only available when inside a context - essentially, that means it should only be accessed inside the body of a ``with audiofile_instance ...`` statement. Outside of contexts, this property is ``None``.
 
 This is useful when combined with the ``offset`` parameter of ``recognizer_instance.record``, since when together it is possible to perform speech recognition in chunks.
 
@@ -248,7 +252,7 @@ Raises a ``speech_recognition.UnknownValueError`` exception if the speech is uni
 
 Base class representing audio sources. Do not instantiate.
 
-Instances of subclasses of this class, such as ``Microphone`` and ``WavFile``, can be passed to things like ``recognizer_instance.record`` and ``recognizer_instance.listen``.
+Instances of subclasses of this class, such as ``Microphone`` and ``AudioFile``, can be passed to things like ``recognizer_instance.record`` and ``recognizer_instance.listen``.
 
 ``AudioData``
 -------------
@@ -278,6 +282,17 @@ If ``convert_width`` is specified and the audio samples are not ``convert_width`
 If ``convert_rate`` is specified and the audio sample rate is not ``convert_rate`` Hz, the resulting audio is resampled to match.
 
 Writing these bytes directly to a file results in a valid `WAV file <https://en.wikipedia.org/wiki/WAV>`__.
+
+``audiodata_instance.get_aiff_data(convert_rate = None, convert_width = None)``
+-------------------------------------------------------------------------------
+
+Returns a byte string representing the contents of an AIFF-C file containing the audio represented by the ``AudioData`` instance.
+
+If ``convert_width`` is specified and the audio samples are not ``convert_width`` bytes each, the resulting audio is converted to match.
+
+If ``convert_rate`` is specified and the audio sample rate is not ``convert_rate`` Hz, the resulting audio is resampled to match.
+
+Writing these bytes directly to a file results in a valid `AIFF-C file <https://en.wikipedia.org/wiki/Audio_Interchange_File_Format>`__.
 
 ``audiodata_instance.get_flac_data(convert_rate = None, convert_width = None)``
 -------------------------------------------------------------------------------
