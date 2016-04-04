@@ -46,7 +46,7 @@ For Linux and other POSIX systems (like OS X), you'll want to build from source.
     2. Install PocketSphinx-Python using Pip: ``pip install pocketsphinx``.
 * On Windows:
     1. Install `Python <https://www.python.org/downloads/>`__, `Pip <https://pip.pypa.io/en/stable/installing/>`__, `SWIG <http://www.swig.org/download.html>`__, and `Git <https://git-scm.com/downloads>`__, preferably using a package manager.
-    2. Install the necessary `compilers suite <http://blog.ionelmc.ro/2014/12/21/compiling-python-extensions-on-windows/>`__ (`here's a PDF version <third-party/Compiling Python extensions on Windows.pdf>`__ in case the link goes down) for compiling modules for your particular Python version:
+    2. Install the necessary `compilers suite <http://blog.ionelmc.ro/2014/12/21/compiling-python-extensions-on-windows/>`__ (`here's a PDF version <https://github.com/Uberi/speech_recognition/blob/master/third-party/Compiling%20Python%20extensions%20on%20Windows.pdf>`__ in case the link goes down) for compiling modules for your particular Python version:
         * `Microsoft Visual C++ Compiler for Python 2.7 <http://www.microsoft.com/en-us/download/details.aspx?id=44266>`__ for Python 2.7.
         * `Visual Studio 2015 Community Edition <https://www.visualstudio.com/downloads/download-visual-studio-vs>`__ for Python 3.5.
         * The installation process for Python 3.4 is outlined in the article above
