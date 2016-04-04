@@ -64,7 +64,7 @@ See the ``examples/`` directory for usage examples:
 Installing
 ----------
 
-First, make sure you have all the requirements listed in the "Requirements" section.
+First, make sure you have all the requirements listed in the "Requirements" section. 
 
 The easiest way to install this is using ``pip install SpeechRecognition``.
 
@@ -75,12 +75,19 @@ In the folder, run ``python setup.py install``.
 Requirements
 ------------
 
-In summary, this library requires:
+To use all of the functionality of the library, you should have:
 
-* **Python** 2.6, 2.7, or 3.3+
-* **PyAudio** 0.2.9+ (required only if you need to use microphone input)
-* **PocketSphinx** (required only if you need to use the Sphinx recognizer)
+* **Python** 2.6, 2.7, or 3.3+ (required)
+* **PyAudio** 0.2.9+ (required only if you need to use microphone input, ``Microphone``)
+* **PocketSphinx** (required only if you need to use the Sphinx recognizer, ``recognizer_instance.recognize_sphinx``)
 * **FLAC encoder** (required only if the system is not x86-based Windows/Linux/OS X)
+
+The following requirements are optional, but can improve or extend functionality in some situations:
+
+* On Python 2, and only on Python 2, some functions (like ``recognizer_instance.recognize_bing``) will run slower if you do not have **Monotonic for Python 2** installed.
+* If using CMU Sphinx, you may want to `install additional language packs <https://github.com/Uberi/speech_recognition/blob/master/reference/pocketsphinx.rst#installing-other-languages>`__ to support languages like International French or Mandarin Chinese.
+
+The following sections go over the details of each requirement.
 
 Python
 ~~~~~~
@@ -90,7 +97,7 @@ The first software requirement is `Python 2.6, 2.7, or Python 3.3+ <https://www.
 PyAudio (for microphone users)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you want to use audio input from microphones, `PyAudio <http://people.csail.mit.edu/hubert/pyaudio/#downloads>`__ is also necessary. Version 0.2.9+ is required in order to avoid overflow issues with recording on certain machines.
+`PyAudio <http://people.csail.mit.edu/hubert/pyaudio/#downloads>`__ is required if and only if you want to use microphone input (``Microphone``). PyAudio version 0.2.9+ is required, as earlier versions have overflow issues with recording on certain machines.
 
 If not installed, everything in the library will still work, except attempting to instantiate a ``Microphone`` object will throw an ``AttributeError``.
 
@@ -107,7 +114,7 @@ PyAudio `wheel packages <https://pypi.python.org/pypi/wheel>`__ for 64-bit Pytho
 PocketSphinx-Python (for Sphinx users)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-`PocketSphinx-Python <https://github.com/bambocher/pocketsphinx-python>`__ is required if and only if you want to use the Sphinx recognizer (``recognizer_instance.recognize_sphinx``).
+`PocketSphinx-Python <https://github.com/bambocher/pocketsphinx-python>`__ is **required if and only if you want to use the Sphinx recognizer** (``recognizer_instance.recognize_sphinx``).
 
 PocketSphinx-Python `wheel packages <https://pypi.python.org/pypi/wheel>`__ for 64-bit Python 2.7, 3.4, and 3.5 on Windows are included for convenience, under the ``third-party/`` directory. To install, simply run ``pip install wheel`` followed by ``pip install ./third-party/WHEEL_FILENAME`` (replace ``pip`` with ``pip3`` if using Python 3) in the SpeechRecognition folder.
 
@@ -120,7 +127,7 @@ See `Notes on using PocketSphinx <https://github.com/Uberi/speech_recognition/bl
 FLAC (for some systems)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-A `FLAC encoder <https://xiph.org/flac/>`__ is required to encode the audio data to send to the API. If using Windows (x86 or x86-64), OS X (Intel Macs only, OS X 10.6 or higher), or Linux (x86 or x86-64), the encoder is already bundled with this library - you do not need to install anything else.
+A `FLAC encoder <https://xiph.org/flac/>`__ is required to encode the audio data to send to the API. If using Windows (x86 or x86-64), OS X (Intel Macs only, OS X 10.6 or higher), or Linux (x86 or x86-64), this is **already bundled with this library - you do not need to install anything**.
 
 Otherwise, ensure that you have the ``flac`` command line tool, which is often available through the system package manager.
 
@@ -141,9 +148,20 @@ The included ``flac-linux-x86`` executable is built from the `FLAC 1.3.1 source 
     make
     exit # return to the original shell
 
-The resulting executable can then be found at ``flac-1.3.1/src/flac`` in the build directory. A copy of the source code can also be found at ``third-party/flac-1.3.1.tar.xz``.
+The resulting executable can then be found at ``./flac-1.3.1/src/flac`` relative to the working directory. A copy of the source code can also be found at ``third-party/flac-1.3.1.tar.xz``.
 
 The included ``flac-mac`` executable is extracted from `xACT 2.37 <http://xact.scottcbrown.org/>`__, which is a frontend for FLAC that conveniently includes binaries for all of its encoders. Specifically, it is a copy of ``xACT 2.37/xACT.app/Contents/Resources/flac`` in ``xACT2.37.zip``.
+
+Monotonic for Python 2 (for faster operations in some functions on Python 2)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+On Python 2, and only on Python 2, if you do not install the `Monotonic for Python 2 <https://github.com/atdt/monotonic>`__ library, some functions will run slower than they otherwise could (though everything will still work correctly).
+
+On Python 3, that library's functionality is built into the Python standard library, which makes it unnecessary.
+
+This is because monotonic time is necessary to handle cache expiry properly in the face of system time changes and other time-related issues. If monotonic time functionality is not available, then things like access token requests will not be cached.
+
+To install, use `Pip <https://pip.readthedocs.org/>`__: execute ``pip install monotonic`` in a terminal.
 
 Troubleshooting
 ---------------

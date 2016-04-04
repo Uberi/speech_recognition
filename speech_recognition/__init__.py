@@ -3,7 +3,7 @@
 """Library for performing speech recognition, with support for several engines and APIs, online and offline."""
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "3.4.1"
+__version__ = "3.4.2"
 __license__ = "BSD"
 
 import io, os, subprocess, wave, aifc, base64
@@ -184,7 +184,12 @@ class AudioFile(AudioSource):
 
                 # run the FLAC converter with the FLAC data to get the AIFF data
                 flac_converter = get_flac_converter()
-                process = subprocess.Popen([flac_converter, "--stdout", "--totally-silent", "--decode", "--force-aiff-format", "-"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+                process = subprocess.Popen([
+                    flac_converter,
+                    "--stdout", "--totally-silent", # put the resulting AIFF file in stdout, and make sure it's not mixed with any program output
+                    "--decode", "--force-aiff-format", # decode the FLAC file into an AIFF file
+                    "-", # the input FLAC file contents will be given in stdin
+                ], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
                 aiff_data, stderr = process.communicate(flac_data)
                 aiff_file = io.BytesIO(aiff_data)
                 self.audio_reader = aifc.open(aiff_file, "rb")
@@ -218,7 +223,7 @@ class AudioFile(AudioSource):
                 if hasattr(audioop, "byteswap"): # ``audioop.byteswap`` was only added in Python 3.4
                     buffer = audioop.byteswap(buffer, sample_width)
                 else: # manually reverse the bytes of each sample, which is slower but works well enough as a fallback
-                    buffer = buffer[sample_width - 1::-1] + b"".join(buffer[i + sample_width:i:-1] for i in range(1, len(buffer), sample_width))
+                    buffer = buffer[sample_width - 1::-1] + b"".join(buffer[i + sample_width:i:-1] for i in range(sample_width - 1, len(buffer), sample_width))
             if self.audio_reader.getnchannels() != 1: # stereo audio
                 buffer = audioop.tomono(buffer, sample_width, 1, 1) # convert stereo audio data to mono
             return buffer
@@ -310,7 +315,7 @@ class AudioData(object):
         if hasattr(audioop, "byteswap"): # ``audioop.byteswap`` was only added in Python 3.4
             raw_data = audioop.byteswap(raw_data, sample_width)
         else: # manually reverse the bytes of each sample, which is slower but works well enough as a fallback
-            raw_data = raw_data[sample_width - 1::-1] + b"".join(raw_data[i + sample_width:i:-1] for i in range(1, len(raw_data), sample_width))
+            raw_data = raw_data[sample_width - 1::-1] + b"".join(raw_data[i + sample_width:i:-1] for i in range(sample_width - 1, len(raw_data), sample_width))
 
         # generate the AIFF-C file contents
         with io.BytesIO() as aiff_file:
@@ -338,7 +343,12 @@ class AudioData(object):
         # run the FLAC converter with the WAV data to get the FLAC data
         wav_data = self.get_wav_data(convert_rate, convert_width)
         flac_converter = get_flac_converter()
-        process = subprocess.Popen([flac_converter, "--stdout", "--totally-silent", "--best", "-"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        process = subprocess.Popen([
+            flac_converter,
+            "--stdout", "--totally-silent", # put the resulting FLAC file in stdout, and make sure it's not mixed with any program output
+            "--best", # highest level of compression available
+            "-", # the input FLAC file contents will be given in stdin
+        ], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         flac_data, stderr = process.communicate(wav_data)
         return flac_data
 
@@ -688,7 +698,10 @@ class Recognizer(AudioSource):
         try:
             from time import monotonic # we need monotonic time to avoid being affected by system clock changes, but this is only available in Python 3.3+
         except ImportError:
-            expire_time = None # monotonic time not available, don't cache access tokens
+            try:
+                from monotonic import monotonic # use time.monotonic backport for Python 2 if available (from https://pypi.python.org/pypi/monotonic)
+            except (ImportError, RuntimeError):
+                expire_time = None # monotonic time not available, don't cache access tokens
         if expire_time is None or monotonic() > expire_time: # first credential request, or the access token from the previous one expired
             # get an access token using OAuth
             credential_url = "https://oxford-speech.cloudapp.net/token/issueToken"
@@ -891,7 +904,7 @@ def shutil_which(pgm):
             return p
 
 # backwards compatibility shims
-WavFile = AudioFile
+WavFile = AudioFile # WavFile was renamed to AudioFile in 3.4.1
 def recognize_att(self, audio_data, app_key, app_secret, language = "en-US", show_all = False):
     authorization_url = "https://api.att.com/oauth/v4/token"
     authorization_body = "client_id={0}&client_secret={1}&grant_type=client_credentials&scope=SPEECH".format(app_key, app_secret)
@@ -912,4 +925,4 @@ def recognize_att(self, audio_data, app_key, app_secret, language = "en-US", sho
     for entry in result["Recognition"]["NBest"]:
         if entry.get("Grade") == "accept" and "ResultText" in entry: return entry["ResultText"]
         raise UnknownValueError() # no transcriptions available
-Recognizer.recognize_att = classmethod(recognize_att)
+Recognizer.recognize_att = classmethod(recognize_att) # AT&T API is deprecated and shutting down as of 3.4.0
