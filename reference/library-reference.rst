@@ -43,7 +43,7 @@ To create a ``Microphone`` instance by name:
             m = Microphone(i)
 
 ``AudioFile(filename_or_fileobject)``
------------------------------------
+-------------------------------------
 
 Creates a new ``AudioFile`` instance given a WAV/AIFF/FLAC audio file `filename_or_fileobject`. Subclass of ``AudioSource``.
 
@@ -66,7 +66,7 @@ Instances of this class are context managers, and are designed to be used with `
         pass                                           # do things here - ``source`` is the AudioFile instance created above
 
 ``audiofile_instance.DURATION``
------------------------------
+-------------------------------
 
 Represents the length of the audio stored in the audio file in seconds. This property is only available when inside a context - essentially, that means it should only be accessed inside the body of a ``with audiofile_instance ...`` statement. Outside of contexts, this property is ``None``.
 
