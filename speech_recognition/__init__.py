@@ -759,7 +759,7 @@ class Recognizer(AudioSource):
         if "header" not in result or "lexical" not in result["header"]: raise UnknownValueError()
         return result["header"]["lexical"]
 
-    def recognize_api(self, audio_data, client_access_token, show_all = False):
+    def recognize_api(self, audio_data, client_access_token, language = "en", show_all = False):
         """
         Perform speech recognition on ``audio_data`` (an ``AudioData`` instance), using the api.ai Speech to Text API.
 
@@ -773,7 +773,8 @@ class Recognizer(AudioSource):
         """
         assert isinstance(audio_data, AudioData), "Data must be audio data"
         assert isinstance(client_access_token, str), "`username` must be a string"
-
+        assert isinstance(language, str), "`language` must be a language tag string, see https://docs.api.ai/v11/docs/languages"
+        
         wav_data = audio_data.get_wav_data(convert_rate = 16000, convert_width = 2) # audio must be 16-bit mono 16 kHz
         url = "https://api.api.ai/v1/query"
 
@@ -788,7 +789,7 @@ class Recognizer(AudioSource):
             b"Content-Disposition: form-data; name=\"request\"\r\n" +
             b"Content-Type: application/json\r\n" +
             b"\r\n" +
-            b"{\"v\": \"20150910\", \"timezone\": \"America/New_York\", \"lang\": \"en\"}\r\n" +
+            b"{\"v\": \"20150910\", \"timezone\": \"America/New_York\", \"lang\": \"" + language + "\"}\r\n" +
             b"--" + boundary.encode("utf-8") + b"\r\n" +
             b"Content-Disposition: form-data; name=\"voiceData\"; filename=\"audio.wav\"\r\n" +
             b"Content-Type: audio/wav\r\n" +
