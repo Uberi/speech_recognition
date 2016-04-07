@@ -221,7 +221,7 @@ Returns the most likely transcription if ``show_all`` is false (the default). Ot
 
 Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
 
-``recognizer_instance.recognize_api(audio_data, client_access_token, show_all = False)``
+``recognizer_instance.recognize_api(audio_data, client_access_token, language = "en", show_all = False)``
 ----------------------------------------------------------------------------------------
 
 Perform speech recognition on ``audio_data`` (an ``AudioData`` instance), using the api.ai Speech to Text API.
