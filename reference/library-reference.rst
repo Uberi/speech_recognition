@@ -221,14 +221,14 @@ Returns the most likely transcription if ``show_all`` is false (the default). Ot
 
 Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
 
-``recognizer_instance.recognize_api(audio_data, client_access_token, show_all = False)``
+``recognizer_instance.recognize_api(audio_data, client_access_token, language = "en", show_all = False)``
 ----------------------------------------------------------------------------------------
 
 Perform speech recognition on ``audio_data`` (an ``AudioData`` instance), using the api.ai Speech to Text API.
 
-The api.ai API client access token is specified by ``client_access_token``. Unfortunately, this is not available without `signing up for an account <https://console.api.ai/api-client/#/signup>`__ and creating an agent. To get the API client access token, go to the agent settings, go to the section titled "API keys", and look for "Client access token". API client access tokens are 32-character lowercase hexadecimal strings.
+The api.ai API client access token is specified by ``client_access_token``. Unfortunately, this is not available without `signing up for an account <https://console.api.ai/api-client/#/signup>`__ and creating an api.ai agent. To get the API client access token, go to the agent settings, go to the section titled "API keys", and look for "Client access token". API client access tokens are 32-character lowercase hexadecimal strings.
 
-The recognition language is set when creating an agent in the web console.
+Although the recognition language is specified when creating the api.ai agent in the web console, it must also be provided in the ``language`` parameter as an RFC5646 language tag like ``"en"`` (US English) or ``"fr"`` (International French), defaulting to US English. A list of supported language values can be found in the `API documentation <https://api.ai/docs/reference/#languages>`__.
 
 Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <https://api.ai/docs/reference/#a-namepost-multipost-query-multipart>`__ as a JSON dictionary.
 
@@ -252,7 +252,9 @@ Raises a ``speech_recognition.UnknownValueError`` exception if the speech is uni
 
 Base class representing audio sources. Do not instantiate.
 
-Instances of subclasses of this class, such as ``Microphone`` and ``AudioFile``, can be passed to things like ``recognizer_instance.record`` and ``recognizer_instance.listen``.
+Instances of subclasses of this class, such as ``Microphone`` and ``AudioFile``, can be passed to things like ``recognizer_instance.record`` and ``recognizer_instance.listen``. Those instances act like context managers, and are designed to be used with ``with`` statements.
+
+For more information, see the documentation for the individual subclasses.
 
 ``AudioData``
 -------------

@@ -372,7 +372,7 @@ class Recognizer(AudioSource):
         If ``duration`` is not specified, then it will record until there is no more audio input.
         """
         assert isinstance(source, AudioSource), "Source must be an audio source"
-        assert source.stream is not None, "Audio source must be opened before recording - see documentation for `AudioSource`"
+        assert source.stream is not None, "Audio source must be entered before recording, see documentation for `AudioSource`; are you using `source` outside of a `with` statement?"
 
         frames = io.BytesIO()
         seconds_per_buffer = (source.CHUNK + 0.0) / source.SAMPLE_RATE
@@ -407,7 +407,7 @@ class Recognizer(AudioSource):
         The ``duration`` parameter is the maximum number of seconds that it will dynamically adjust the threshold for before returning. This value should be at least 0.5 in order to get a representative sample of the ambient noise.
         """
         assert isinstance(source, AudioSource), "Source must be an audio source"
-        assert source.stream is not None, "Audio source must be opened before recording - see documentation for `AudioSource`"
+        assert source.stream is not None, "Audio source must be entered before adjusting, see documentation for `AudioSource`; are you using `source` outside of a `with` statement?"
         assert self.pause_threshold >= self.non_speaking_duration >= 0
 
         seconds_per_buffer = (source.CHUNK + 0.0) / source.SAMPLE_RATE
@@ -434,7 +434,7 @@ class Recognizer(AudioSource):
         The ``timeout`` parameter is the maximum number of seconds that it will wait for a phrase to start before giving up and throwing an ``speech_recognition.WaitTimeoutError`` exception. If ``timeout`` is ``None``, it will wait indefinitely.
         """
         assert isinstance(source, AudioSource), "Source must be an audio source"
-        assert source.stream is not None, "Audio source must be opened before recording - see documentation for `AudioSource`"
+        assert source.stream is not None, "Audio source must be entered before listening, see documentation for `AudioSource`; are you using `source` outside of a `with` statement?"
         assert self.pause_threshold >= self.non_speaking_duration >= 0
 
         seconds_per_buffer = (source.CHUNK + 0.0) / source.SAMPLE_RATE
@@ -546,6 +546,8 @@ class Recognizer(AudioSource):
             from sphinxbase import sphinxbase
         except ImportError:
             raise RequestError("missing PocketSphinx module: ensure that PocketSphinx is set up correctly.")
+        except ValueError:
+            raise RequestError("bad PocketSphinx installation detected; make sure you have PocketSphinx version 0.0.9 or better.")
 
         language_directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), "pocketsphinx-data", language)
         if not os.path.isdir(language_directory):
@@ -759,13 +761,13 @@ class Recognizer(AudioSource):
         if "header" not in result or "lexical" not in result["header"]: raise UnknownValueError()
         return result["header"]["lexical"]
 
-    def recognize_api(self, audio_data, client_access_token, show_all = False):
+    def recognize_api(self, audio_data, client_access_token, language = "en", show_all = False):
         """
         Perform speech recognition on ``audio_data`` (an ``AudioData`` instance), using the api.ai Speech to Text API.
 
-        The api.ai API client access token is specified by ``client_access_token``. Unfortunately, this is not available without `signing up for an account <https://console.api.ai/api-client/#/signup>`__ and creating an agent. To get the API client access token, go to the agent settings, go to the section titled "API keys", and look for "Client access token". API client access tokens are 32-character lowercase hexadecimal strings.
+        The api.ai API client access token is specified by ``client_access_token``. Unfortunately, this is not available without `signing up for an account <https://console.api.ai/api-client/#/signup>`__ and creating an api.ai agent. To get the API client access token, go to the agent settings, go to the section titled "API keys", and look for "Client access token". API client access tokens are 32-character lowercase hexadecimal strings.
 
-        The recognition language is set when creating an agent in the web console.
+        Although the recognition language is specified when creating the api.ai agent in the web console, it must also be provided in the ``language`` parameter as an RFC5646 language tag like ``"en"`` (US English) or ``"fr"`` (International French), defaulting to US English. A list of supported language values can be found in the `API documentation <https://api.ai/docs/reference/#languages>`__.
 
         Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <https://api.ai/docs/reference/#a-namepost-multipost-query-multipart>`__ as a JSON dictionary.
 
@@ -773,6 +775,7 @@ class Recognizer(AudioSource):
         """
         assert isinstance(audio_data, AudioData), "Data must be audio data"
         assert isinstance(client_access_token, str), "`username` must be a string"
+        assert isinstance(language, str), "`language` must be a string"
 
         wav_data = audio_data.get_wav_data(convert_rate = 16000, convert_width = 2) # audio must be 16-bit mono 16 kHz
         url = "https://api.api.ai/v1/query"
@@ -788,7 +791,7 @@ class Recognizer(AudioSource):
             b"Content-Disposition: form-data; name=\"request\"\r\n" +
             b"Content-Type: application/json\r\n" +
             b"\r\n" +
-            b"{\"v\": \"20150910\", \"timezone\": \"America/New_York\", \"lang\": \"en\"}\r\n" +
+            b"{\"v\": \"20150910\", \"lang\": \"" + language.encode("utf-8") + b"\"}\r\n" +
             b"--" + boundary.encode("utf-8") + b"\r\n" +
             b"Content-Disposition: form-data; name=\"voiceData\"; filename=\"audio.wav\"\r\n" +
             b"Content-Type: audio/wav\r\n" +
