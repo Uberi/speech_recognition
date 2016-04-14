@@ -49,15 +49,17 @@ For Linux and other POSIX systems (like OS X), you'll want to build from source.
     2. Install the necessary `compilers suite <http://blog.ionelmc.ro/2014/12/21/compiling-python-extensions-on-windows/>`__ (`here's a PDF version <https://github.com/Uberi/speech_recognition/blob/master/third-party/Compiling%20Python%20extensions%20on%20Windows.pdf>`__ in case the link goes down) for compiling modules for your particular Python version:
         * `Microsoft Visual C++ Compiler for Python 2.7 <http://www.microsoft.com/en-us/download/details.aspx?id=44266>`__ for Python 2.7.
         * `Visual Studio 2015 Community Edition <https://www.visualstudio.com/downloads/download-visual-studio-vs>`__ for Python 3.5.
-        * The installation process for Python 3.4 is outlined in the article above
+        * The installation process for Python 3.4 is outlined in the article above.
     3. Add the folders containing the Python, SWIG, and Git binaries to your ``PATH`` environment variable.
+        * My ``PATH`` environment variable looks something like: ``C:\Users\Anthony\Desktop\swigwin-3.0.8;C:\Program Files\Git\cmd;(A BUNCH OF OTHER PATHS)``.
     4. Reboot to apply changes.
-    5. If not using Python 2.7, install PocketSphinx using Pip: execute ``pip install pocketsphinx`` in a terminal. Otherwise:
-        1. Download the full PocketSphinx-Python source code by running ``git clone --recursive https://github.com/bambocher/pocketsphinx-python``.
-        2. Download `msinttypes <https://code.google.com/archive/p/msinttypes/>`__ and copy ``inttypes.h`` and ``stdint.h`` from it into the ``sphinxbase/include/sphinxbase`` folder under the project root folder. This is necessary because the MSVC compiler version used for Python 2.7 is missing a lot of C99 features; msinttypes implements the important ones that Sphinx needs.
-        3. Run ``python setup.py install`` to compile and install PocketSphinx.
-
-To build an installable `wheel package <https://pypi.python.org/pypi/wheel>`__ (like the ones included with this project) instead of just installing, run ``git clone --recursive https://github.com/bambocher/pocketsphinx-python && cd pocketsphinx-python && python setup.py bdist_wheel`` instead of ``pip install pocketsphinx``/``python setup.py install``. The resulting Wheel will be found in the ``dist`` folder of the PocketSphinx-Python project directory.
+    5. Download the full PocketSphinx-Python source code by running ``git clone --recursive --depth 1 https://github.com/cmusphinx/pocketsphinx-python`` (downloading the ZIP archive from GitHub will not work).
+    6. Run ``python setup.py install`` in the PocketSphinx-Python source code folder to compile and install PocketSphinx.
+    7. Side note: when I build the precompiled Wheel packages, I skip steps 5 and 6 and do the following instead:
+        * For Python 2.7: ``C:\Python27\python.exe setup.py bdist_wheel``.
+        * For Python 3.4: ``C:\Python34\python.exe setup.py bdist_wheel``.
+        * For Python 3.5: ``C:\Users\Anthony\AppData\Local\Programs\Python\Python35\python.exe setup.py bdist_wheel``.
+        * The resulting packages are located in the ``dist`` folder of the PocketSphinx-Python project directory.
 
 Notes on the structure of the language data
 -------------------------------------------

@@ -140,7 +140,8 @@ The included ``flac-linux-x86`` executable is built from the `FLAC 1.3.1 source 
     # download and extract the FLAC source code
     wget http://downloads.xiph.org/releases/flac/flac-1.3.1.tar.xz
     tar xf flac-1.3.1.tar.xz
-    sudo docker run --tty --interactive --volume "$(pwd):/root" --rm phusion/holy-build-box-32:latest /hbb_exe/activate-exec bash # download an start a shell inside the Holy Build Box
+    sudo apt-get install docker.io
+    sudo docker run --tty --interactive --volume "$(pwd):/root" --rm phusion/holy-build-box-32:latest /hbb_exe/activate-exec bash # download and start a shell inside the Holy Build Box
 
     # we're now in a Bash shell inside the Docker image
     cd /root/flac-1.3.1
