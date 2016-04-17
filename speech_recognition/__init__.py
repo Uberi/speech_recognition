@@ -881,11 +881,12 @@ def get_flac_converter():
     path = os.path.dirname(os.path.abspath(__file__)) # directory of the current module file, where all the FLAC bundled binaries are stored
     flac_converter = shutil_which("flac") # check for installed version first
     if flac_converter is None: # flac utility is not installed
-        if system == "Windows" and platform.machine() in ["i386", "x86", "x86_64", "AMD64"]: # Windows NT, use the bundled FLAC conversion utility
+        compatible_machine_types = ["i386", "i486", "i586", "i686", "i786", "x86", "x86_64", "AMD64"] # whitelist of machine types our bundled binaries are compatible with
+        if system == "Windows" and platform.machine() in compatible_machine_types:
             flac_converter = os.path.join(path, "flac-win32.exe")
-        elif system == "Linux" and platform.machine() in ["i386", "x86", "x86_64", "AMD64"]:
+        elif system == "Linux" and platform.machine() in compatible_machine_types:
             flac_converter = os.path.join(path, "flac-linux-x86")
-        elif system == "Darwin" and platform.machine() in ["i386", "x86", "x86_64", "AMD64"]:
+        elif system == "Darwin" and platform.machine() in compatible_machine_types:
             flac_converter = os.path.join(path, "flac-mac")
         else:
             raise OSError("FLAC conversion utility not available - consider installing the FLAC command line application using `brew install flac` or your operating system's equivalent")
