@@ -26,7 +26,7 @@ Library for performing speech recognition, with support for several engines and 
 Speech recognition engine/API support:
 
 * `CMU Sphinx <http://cmusphinx.sourceforge.net/wiki/>`__ (works offline)
-* Google Speech Recognition
+* `Google Speech Recognition <https://cloud.google.com/speech/>`__
 * `Wit.ai <https://wit.ai/>`__
 * `Microsoft Bing Voice Recognition <https://www.microsoft.com/cognitive-services/en-us/speech-api>`__
 * `api.ai <https://api.ai/>`__
