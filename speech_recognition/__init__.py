@@ -159,7 +159,10 @@ class AudioFile(AudioSource):
     """
 
     def __init__(self, filename_or_fileobject):
-        assert isinstance(filename_or_fileobject, str) or filename_or_fileobject.read, "Given audio file must be a filename string or a file-like object"
+        if str is bytes: # Python 2 - if a file path is specified, it must either be a `str` instance or a `unicode` instance
+            assert isinstance(filename_or_fileobject, (str, unicode)) or hasattr(filename_or_fileobject, "read"), "Given audio file must be a filename string or a file-like object"
+        else: # Python 3 - if a file path is specified, it must be a `str` instance
+            assert isinstance(filename_or_fileobject, str) or hasattr(filename_or_fileobject, "read"), "Given audio file must be a filename string or a file-like object"
         self.filename_or_fileobject = filename_or_fileobject
         self.stream = None
         self.DURATION = None
@@ -177,10 +180,10 @@ class AudioFile(AudioSource):
                 self.little_endian = False # AIFF is a big-endian format
             except aifc.Error:
                 # attempt to read the file as FLAC
-                if isinstance(self.filename_or_fileobject, str):
-                    with open(self.filename_or_fileobject, "rb") as f: flac_data = f.read()
-                else:
+                if hasattr(self.filename_or_fileobject, "read"):
                     flac_data = self.filename_or_fileobject.read()
+                else:
+                    with open(self.filename_or_fileobject, "rb") as f: flac_data = f.read()
 
                 # run the FLAC converter with the FLAC data to get the AIFF data
                 flac_converter = get_flac_converter()
@@ -204,7 +207,7 @@ class AudioFile(AudioSource):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        if isinstance(self.filename_or_fileobject, str): # only close the file if it was opened by this class in the first place
+        if not hasattr(self.filename_or_fileobject, "read"): # only close the file if it was opened by this class in the first place (if the file was originally given as a path)
             self.audio_reader.close()
         self.stream = None
         self.DURATION = None
@@ -697,6 +700,7 @@ class Recognizer(AudioSource):
         assert isinstance(language, str), "`language` must be a string"
 
         access_token, expire_time = getattr(self, "bing_cached_access_token", None), getattr(self, "bing_cached_access_token_expiry", None)
+        allow_caching = True
         try:
             from time import monotonic # we need monotonic time to avoid being affected by system clock changes, but this is only available in Python 3.3+
         except ImportError:
@@ -704,7 +708,8 @@ class Recognizer(AudioSource):
                 from monotonic import monotonic # use time.monotonic backport for Python 2 if available (from https://pypi.python.org/pypi/monotonic)
             except (ImportError, RuntimeError):
                 expire_time = None # monotonic time not available, don't cache access tokens
-        if expire_time is None or monotonic() > expire_time: # first credential request, or the access token from the previous one expired
+                allow_caching = False # don't allow caching, since monotonic time isn't available
+        if expire_time is None or monotonic() > expire_time: # caching not enabled, first credential request, or the access token from the previous one expired
             # get an access token using OAuth
             credential_url = "https://oxford-speech.cloudapp.net/token/issueToken"
             credential_request = Request(credential_url, data = urlencode({
@@ -713,7 +718,8 @@ class Recognizer(AudioSource):
               "client_secret": key,
               "scope": "https://speech.platform.bing.com"
             }).encode("utf-8"))
-            start_time = monotonic()
+            if allow_caching:
+                start_time = monotonic()
             try:
                 credential_response = urlopen(credential_request)
             except HTTPError as e:
@@ -724,9 +730,10 @@ class Recognizer(AudioSource):
             credentials = json.loads(credential_text)
             access_token, expiry_seconds = credentials["access_token"], float(credentials["expires_in"])
 
-            # save the token for the duration it is valid for
-            self.bing_cached_access_token = access_token
-            self.bing_cached_access_token_expiry = start_time + expiry_seconds
+            if allow_caching:
+                # save the token for the duration it is valid for
+                self.bing_cached_access_token = access_token
+                self.bing_cached_access_token_expiry = start_time + expiry_seconds
 
         wav_data = audio_data.get_wav_data(
             convert_rate = 16000, # audio samples must be 8kHz or 16 kHz
