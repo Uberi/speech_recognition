@@ -133,23 +133,23 @@ Otherwise, ensure that you have the ``flac`` command line tool, which is often a
 
 The included ``flac-win32`` executable is the `official FLAC 1.3.1 32-bit Windows binary <http://downloads.xiph.org/releases/flac/flac-1.3.1-win.zip>`__.
 
-The included ``flac-linux-x86`` executable is built from the `FLAC 1.3.1 source code <http://downloads.xiph.org/releases/flac/flac-1.3.1.tar.xz>`__ with `Holy Build Box <http://phusion.github.io/holy-build-box/>`__ to ensure that it's compatible with a wide variety of distributions. The exact commands used are:
+The included ``flac-linux-x86`` executable is built from the `FLAC 1.3.1 source code <http://downloads.xiph.org/releases/flac/flac-1.3.1.tar.xz>`__ with `Manylinux <https://github.com/pypa/manylinux>`__ to ensure that it's compatible with a wide variety of distributions. The exact commands used are:
 
 .. code:: bash
 
     # download and extract the FLAC source code
     wget http://downloads.xiph.org/releases/flac/flac-1.3.1.tar.xz
     tar xf flac-1.3.1.tar.xz
-    sudo apt-get install docker.io
-    sudo docker run --tty --interactive --volume "$(pwd):/root" --rm phusion/holy-build-box-32:latest /hbb_exe/activate-exec bash # download and start a shell inside the Holy Build Box
+    sudo apt-get install --yes docker.io
+    sudo docker run --tty --interactive --rm --volume "$(pwd):/root" quay.io/pypa/manylinux1_i686:latest bash # download and start a shell inside the Manylinux environment
 
-    # we're now in a Bash shell inside the Docker image
+    # we're now in a Bash shell inside the Manylinux Docker image
     cd /root/flac-1.3.1
     ./configure LDFLAGS=-static # compiler flags to make a static build
     make
     exit # return to the original shell
 
-The resulting executable can then be found at ``./flac-1.3.1/src/flac`` relative to the working directory. A copy of the source code can also be found at ``third-party/flac-1.3.1.tar.xz``.
+The resulting executable can then be found at ``./flac-1.3.1/src/flac`` relative to the working directory. A copy of the source code can also be found at ``third-party/flac-1.3.1.tar.xz``. The build should be bit-for-bit reproducible.
 
 The included ``flac-mac`` executable is extracted from `xACT 2.37 <http://xact.scottcbrown.org/>`__, which is a frontend for FLAC that conveniently includes binaries for all of its encoders. Specifically, it is a copy of ``xACT 2.37/xACT.app/Contents/Resources/flac`` in ``xACT2.37.zip``.
 
