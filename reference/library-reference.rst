@@ -301,6 +301,8 @@ Writing these bytes directly to a file results in a valid `AIFF-C file <https://
 
 Returns a byte string representing the contents of a FLAC file containing the audio represented by the ``AudioData`` instance.
 
+Note that 32-bit FLAC is not supported. If the audio data is 32-bit and ``convert_width`` is not specified, then the resulting FLAC will be a 24-bit FLAC.
+
 If ``convert_rate`` is specified and the audio sample rate is not ``convert_rate`` Hz, the resulting audio is resampled to match.
 
 If ``convert_width`` is specified and the audio samples are not ``convert_width`` bytes each, the resulting audio is converted to match.

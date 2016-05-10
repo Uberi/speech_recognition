@@ -195,15 +195,26 @@ class AudioFile(AudioSource):
                 ], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
                 aiff_data, stderr = process.communicate(flac_data)
                 aiff_file = io.BytesIO(aiff_data)
-                self.audio_reader = aifc.open(aiff_file, "rb")
+                try:
+                    self.audio_reader = aifc.open(aiff_file, "rb")
+                except aifc.Error:
+                    assert False, "Audio file could not be read as WAV, AIFF, or FLAC; check if file is corrupted"
                 self.little_endian = False # AIFF is a big-endian format
         assert 1 <= self.audio_reader.getnchannels() <= 2, "Audio must be mono or stereo"
         self.SAMPLE_WIDTH = self.audio_reader.getsampwidth()
+
+        # 24-bit audio needs some special handling for old Python versions (workaround for https://bugs.python.org/issue12866)
+        samples_24_bit_pretending_to_be_32_bit = False
+        try: audioop.bias(b"", 3, 0) # test whether this sample width is supported (for example, ``audioop`` in Python 3.3 and below don't support sample width 3, while Python 3.4+ do)
+        except audioop.error: # this version of audioop doesn't support 24-bit audio (probably Python 3.3 or less)
+            samples_24_bit_pretending_to_be_32_bit = True # while the ``AudioFile`` instance will outwardly appear to be 32-bit, it will actually internally be 24-bit
+            self.SAMPLE_WIDTH = 4 # the ``AudioFile`` instance should present itself as a 32-bit stream now, since we'll be converting into 32-bit on the fly when reading
+
         self.SAMPLE_RATE = self.audio_reader.getframerate()
         self.CHUNK = 4096
         self.FRAME_COUNT = self.audio_reader.getnframes()
         self.DURATION = self.FRAME_COUNT / float(self.SAMPLE_RATE)
-        self.stream = AudioFile.AudioFileStream(self.audio_reader, self.little_endian)
+        self.stream = AudioFile.AudioFileStream(self.audio_reader, self.little_endian, samples_24_bit_pretending_to_be_32_bit)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -213,9 +224,10 @@ class AudioFile(AudioSource):
         self.DURATION = None
 
     class AudioFileStream(object):
-        def __init__(self, audio_reader, little_endian):
-            self.audio_reader = audio_reader
-            self.little_endian = little_endian
+        def __init__(self, audio_reader, little_endian, samples_24_bit_pretending_to_be_32_bit):
+            self.audio_reader = audio_reader # an audio file object (e.g., a `wave.Wave_read` instance)
+            self.little_endian = little_endian # whether the audio data is little-endian (when working with big-endian things, we'll have to convert it to little-endian before we process it)
+            self.samples_24_bit_pretending_to_be_32_bit = samples_24_bit_pretending_to_be_32_bit # this is true if the audio is 24-bit audio, but 24-bit audio isn't supported, so we have to pretend that this is 32-bit audio and convert it on the fly
 
         def read(self, size = -1):
             buffer = self.audio_reader.readframes(self.audio_reader.getnframes() if size == -1 else size)
@@ -223,10 +235,14 @@ class AudioFile(AudioSource):
 
             sample_width = self.audio_reader.getsampwidth()
             if not self.little_endian: # big endian format, convert to little endian on the fly
-                if hasattr(audioop, "byteswap"): # ``audioop.byteswap`` was only added in Python 3.4
+                if hasattr(audioop, "byteswap"): # ``audioop.byteswap`` was only added in Python 3.4 (incidentally, that also means that we don't need to worry about 24-bit audio being unsupported, since Python 3.4+ always has that functionality)
                     buffer = audioop.byteswap(buffer, sample_width)
                 else: # manually reverse the bytes of each sample, which is slower but works well enough as a fallback
                     buffer = buffer[sample_width - 1::-1] + b"".join(buffer[i + sample_width:i:-1] for i in range(sample_width - 1, len(buffer), sample_width))
+
+            # workaround for https://bugs.python.org/issue12866
+            if self.samples_24_bit_pretending_to_be_32_bit: # we need to convert samples from 24-bit to 32-bit before we can process them with ``audioop`` functions
+                buffer = b"".join("\x00" + buffer[i:i + sample_width] for i in range(0, len(buffer), sample_width)) # since we're in little endian, we prepend a zero byte to each 24-bit sample to get a 32-bit sample
             if self.audio_reader.getnchannels() != 1: # stereo audio
                 buffer = audioop.tomono(buffer, sample_width, 1, 1) # convert stereo audio data to mono
             return buffer
@@ -261,11 +277,18 @@ class AudioData(object):
         # resample audio at the desired rate if specified
         if convert_rate is not None and self.sample_rate != convert_rate:
             raw_data, _ = audioop.ratecv(raw_data, self.sample_width, 1, self.sample_rate, convert_rate, None)
-            pass
 
-        # convert samples to desired byte format if specified
+        # convert samples to desired sample width if specified
         if convert_width is not None and self.sample_width != convert_width:
-            raw_data = audioop.lin2lin(raw_data, self.sample_width, convert_width)
+            if convert_width == 3: # we're converting the audio into 24-bit (workaround for https://bugs.python.org/issue12866)
+                raw_data = audioop.lin2lin(raw_data, self.sample_width, 4) # convert audio into 32-bit first, which is always supported
+                try: audioop.bias(b"", 3, 0) # test whether 24-bit audio is supported (for example, ``audioop`` in Python 3.3 and below don't support sample width 3, while Python 3.4+ do)
+                except audioop.error: # this version of audioop doesn't support 24-bit audio (probably Python 3.3 or less)
+                    raw_data = b"".join(raw_data[i + 1:i + 4] for i in range(0, len(raw_data), 4)) # since we're in little endian, we discard the first byte from each 32-bit sample to get a 24-bit sample
+                else: # 24-bit audio fully supported, we don't need to shim anything
+                    raw_data = audioop.lin2lin(raw_data, self.sample_width, convert_width)
+            else:
+                raw_data = audioop.lin2lin(raw_data, self.sample_width, convert_width)
 
         # if the output is 8-bit audio with unsigned samples, convert the samples we've been treating as signed to unsigned again
         if convert_width == 1:
@@ -337,12 +360,19 @@ class AudioData(object):
         """
         Returns a byte string representing the contents of a FLAC file containing the audio represented by the ``AudioData`` instance.
 
+        Note that 32-bit FLAC is not supported. If the audio data is 32-bit and ``convert_width`` is not specified, then the resulting FLAC will be a 24-bit FLAC.
+
         If ``convert_rate`` is specified and the audio sample rate is not ``convert_rate`` Hz, the resulting audio is resampled to match.
 
         If ``convert_width`` is specified and the audio samples are not ``convert_width`` bytes each, the resulting audio is converted to match.
 
         Writing these bytes directly to a file results in a valid `FLAC file <https://en.wikipedia.org/wiki/FLAC>`__.
         """
+        assert convert_width is None or (convert_width % 1 == 0 and 1 <= convert_width <= 3), "Sample width to convert to must be between 1 and 3 inclusive"
+
+        if self.sample_width > 3 and convert_width is None: # resulting WAV data would be 32-bit, which is not convertable to FLAC using our encoder
+            convert_width = 3 # the largest supported sample width is 24-bit, so we'll limit the sample width to that
+
         # run the FLAC converter with the WAV data to get the FLAC data
         wav_data = self.get_wav_data(convert_rate, convert_width)
         flac_converter = get_flac_converter()
@@ -888,7 +918,7 @@ def get_flac_converter():
     path = os.path.dirname(os.path.abspath(__file__)) # directory of the current module file, where all the FLAC bundled binaries are stored
     flac_converter = shutil_which("flac") # check for installed version first
     if flac_converter is None: # flac utility is not installed
-        compatible_machine_types = ["i386", "i486", "i586", "i686", "i786", "x86", "x86_64", "AMD64"] # whitelist of machine types our bundled binaries are compatible with
+        compatible_machine_types = ["i686", "i786", "x86", "x86_64", "AMD64"] # whitelist of machine types our bundled binaries are compatible with
         if system == "Windows" and platform.machine() in compatible_machine_types:
             flac_converter = os.path.join(path, "flac-win32.exe")
         elif system == "Linux" and platform.machine() in compatible_machine_types:
