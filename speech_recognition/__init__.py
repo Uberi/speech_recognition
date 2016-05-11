@@ -3,7 +3,7 @@
 """Library for performing speech recognition, with support for several engines and APIs, online and offline."""
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "3.4.4"
+__version__ = "3.4.5"
 __license__ = "BSD"
 
 import io, os, subprocess, wave, aifc, base64
@@ -205,10 +205,11 @@ class AudioFile(AudioSource):
 
         # 24-bit audio needs some special handling for old Python versions (workaround for https://bugs.python.org/issue12866)
         samples_24_bit_pretending_to_be_32_bit = False
-        try: audioop.bias(b"", 3, 0) # test whether this sample width is supported (for example, ``audioop`` in Python 3.3 and below don't support sample width 3, while Python 3.4+ do)
-        except audioop.error: # this version of audioop doesn't support 24-bit audio (probably Python 3.3 or less)
-            samples_24_bit_pretending_to_be_32_bit = True # while the ``AudioFile`` instance will outwardly appear to be 32-bit, it will actually internally be 24-bit
-            self.SAMPLE_WIDTH = 4 # the ``AudioFile`` instance should present itself as a 32-bit stream now, since we'll be converting into 32-bit on the fly when reading
+        if self.SAMPLE_WIDTH == 3: # 24-bit audio
+            try: audioop.bias(b"", self.SAMPLE_WIDTH, 0) # test whether this sample width is supported (for example, ``audioop`` in Python 3.3 and below don't support sample width 3, while Python 3.4+ do)
+            except audioop.error: # this version of audioop doesn't support 24-bit audio (probably Python 3.3 or less)
+                samples_24_bit_pretending_to_be_32_bit = True # while the ``AudioFile`` instance will outwardly appear to be 32-bit, it will actually internally be 24-bit
+                self.SAMPLE_WIDTH = 4 # the ``AudioFile`` instance should present itself as a 32-bit stream now, since we'll be converting into 32-bit on the fly when reading
 
         self.SAMPLE_RATE = self.audio_reader.getframerate()
         self.CHUNK = 4096
@@ -638,7 +639,7 @@ class Recognizer(AudioSource):
 
         flac_data = audio_data.get_flac_data(
             convert_rate = None if audio_data.sample_rate >= 8000 else 8000, # audio samples must be at least 8 kHz
-            convert_width = None if audio_data.sample_width >= 2 else 2 # audio samples must be at least 16-bit
+            convert_width = 2 # audio samples must be 16-bit
         )
         if key is None: key = "AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw"
         url = "http://www.google.com/speech-api/v2/recognize?{0}".format(urlencode({
