@@ -839,9 +839,7 @@ class Recognizer(AudioSource):
         request = Request(url, data=wav_data, headers=header)
 
         try:
-	    print("Start Nuance1")
             response = urlopen(request)
-	    print("Start Nuance2")	
         except HTTPError as e:
             raise RequestError("recognition request failed: {0}".format(getattr(e, "reason", "status {0}".format(e.code)))) # use getattr to be compatible with Python 2.6
         except URLError as e:
