@@ -1,25 +1,41 @@
 SpeechRecognition
 =================
 
-.. image:: https://img.shields.io/pypi/dm/SpeechRecognition.svg
-    :target: https://pypi.python.org/pypi/SpeechRecognition/
-    :alt: Downloads
+.. image:: http://badge.kloud51.com/pypi/v/SpeechRecognition.svg
+    :target: https://pypi.python.org/pypi/SpeechRecognition
+    :alt: PyPI Version
 
-.. image:: https://img.shields.io/pypi/v/SpeechRecognition.svg
-    :target: https://pypi.python.org/pypi/SpeechRecognition/
-    :alt: Latest Version
+.. image:: http://badge.kloud51.com/pypi/s/SpeechRecognition.svg
+    :target: https://pypi.python.org/pypi/SpeechRecognition
+    :alt: PyPI Status
 
-.. image:: https://img.shields.io/pypi/status/SpeechRecognition.svg
-    :target: https://pypi.python.org/pypi/SpeechRecognition/
-    :alt: Development Status
+.. image:: http://badge.kloud51.com/pypi/w/SpeechRecognition.svg
+    :target: https://pypi.python.org/pypi/SpeechRecognition
+    :alt: PyPI Wheel
 
-.. image:: https://img.shields.io/pypi/pyversions/SpeechRecognition.svg
-    :target: https://pypi.python.org/pypi/SpeechRecognition/
-    :alt: Supported Python Versions
+.. image:: http://badge.kloud51.com/pypi/l/SpeechRecognition.svg
+    :target: https://pypi.python.org/pypi/SpeechRecognition
+    :alt: PyPI License
 
-.. image:: https://img.shields.io/pypi/l/SpeechRecognition.svg
-    :target: https://pypi.python.org/pypi/SpeechRecognition/
-    :alt: License
+.. image:: http://badge.kloud51.com/pypi/f/SpeechRecognition.svg
+    :target: https://pypi.python.org/pypi/SpeechRecognition
+    :alt: PyPI Format
+
+.. image:: http://badge.kloud51.com/pypi/p/SpeechRecognition.svg
+    :target: https://pypi.python.org/pypi/SpeechRecognition
+    :alt: PyPI Py_versions
+
+.. image:: http://badge.kloud51.com/pypi/d/SpeechRecognition.svg
+    :target: https://pypi.python.org/pypi/SpeechRecognition
+    :alt: PyPI Downloads
+
+.. image:: http://badge.kloud51.com/pypi/i/SpeechRecognition.svg
+    :target: https://pypi.python.org/pypi/SpeechRecognition
+    :alt: PyPI Implementation
+
+.. image:: http://badge.kloud51.com/pypi/e/SpeechRecognition.svg
+    :target: https://pypi.python.org/pypi/SpeechRecognition
+    :alt: PyPI Egg
 
 Library for performing speech recognition, with support for several engines and APIs, online and offline.
 
