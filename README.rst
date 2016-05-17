@@ -1,10 +1,6 @@
 SpeechRecognition
 =================
 
-.. image:: https://img.shields.io/pypi/dm/SpeechRecognition.svg
-    :target: https://pypi.python.org/pypi/SpeechRecognition/
-    :alt: Downloads
-
 .. image:: https://img.shields.io/pypi/v/SpeechRecognition.svg
     :target: https://pypi.python.org/pypi/SpeechRecognition/
     :alt: Latest Version
