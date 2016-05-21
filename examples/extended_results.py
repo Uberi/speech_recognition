@@ -76,3 +76,12 @@ except sr.UnknownValueError:
     print("IBM Speech to Text could not understand audio")
 except sr.RequestError as e:
     print("Could not request results from IBM Speech to Text service; {0}".format(e))
+
+# recognize speech using kaldi-gstreamer-server at localhost                                 
+KALDI_HOST = "localhost:8888"
+try:
+    print("Kaldi thinks you said " + str(r.recognize_kaldi(audio, host=KALDI_HOST, show_all=True)))
+except sr.UnknownValueError:
+    print("Kaldi could not understand audio")
+except sr.RequestError as e:
+    print("Could not request results from Kaldi; {0}".format(e))
