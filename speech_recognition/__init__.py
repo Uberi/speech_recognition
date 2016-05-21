@@ -798,7 +798,62 @@ class Recognizer(AudioSource):
         if show_all: return result
         if "header" not in result or "lexical" not in result["header"]: raise UnknownValueError()
         return result["header"]["lexical"]
+    def recognize_nuance(self, audio_data, appId, appKey, reqId, language = "en_US", show_all = False):
+        """
+        Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Nuance API.
 
+        The Nuance appId and appKey is specified by ``appId`` and ``appKey``. Unfortunately, these are not available without `signing up for an account <https://developer.nuance.com/>`__ and creating an app. You will find your credentials in your Nuance account > Sandbox Credentials.
+
+	Requestor Id is specified by ``reqId`` and should be a unique custom ID for your device or person. ASR improves performance over time when using this requestor key.
+
+        Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <https://wit.ai/docs/http/20141022#get-intent-via-text-link>`__ as a JSON dictionary.
+
+        Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
+        """
+
+        assert isinstance(audio_data, AudioData), "Data must be audio data"
+        assert isinstance(appId, str), "`appId` must be a string"
+	assert isinstance(appKey, str), "`appKey` must be a string"
+	assert isinstance(reqId, str), "`reqId` must be a string"
+
+        wav_data = audio_data.get_wav_data(
+            convert_rate = None if audio_data.sample_rate >= 8000 else 8000, # audio samples must be at least 8 kHz
+            convert_width = 2 # audio samples should be 16-bit
+        )
+	
+	url = "https://dictation.nuancemobility.net/NMDPAsrCmdServlet/dictation?{0}".format(urlencode({
+            "appKey": appKey,
+	    "appId": appId,	
+            "id": reqId,
+        }))
+	print("URL: " + url)
+	header = {
+			"Content-Type": "audio/x-wav;bit=16;codec=pcm;rate={0}".format(audio_data.sample_rate),			
+			"Transfer-Encoding": "chunked", 
+			"Accept": "text/plain",
+			"Accept-Topic": "Dictation",
+			"Accept-Language": language,
+		}	
+	
+
+        request = Request(url, data=wav_data, headers=header)
+
+        try:
+            response = urlopen(request)
+        except HTTPError as e:
+            raise RequestError("recognition request failed: {0}".format(getattr(e, "reason", "status {0}".format(e.code)))) # use getattr to be compatible with Python 2.6
+        except URLError as e:
+            raise RequestError("recognition connection failed: {0}".format(e.reason))
+	except Exception as e:
+	    print(e)
+        response_text = response.read().decode("utf-8")
+        result = json.loads(response_text)
+
+        # return results
+        if show_all: return result
+        if "_text" not in result or result["_text"] is None: raise UnknownValueError()
+        return result["_text"]
+        
     def recognize_api(self, audio_data, client_access_token, language = "en", show_all = False):
         """
         Perform speech recognition on ``audio_data`` (an ``AudioData`` instance), using the api.ai Speech to Text API.
