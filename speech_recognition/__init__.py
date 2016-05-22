@@ -3,7 +3,7 @@
 """Library for performing speech recognition, with support for several engines and APIs, online and offline."""
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "3.4.5"
+__version__ = "3.4.6"
 __license__ = "BSD"
 
 import io, os, subprocess, wave, aifc, base64
@@ -823,7 +823,7 @@ class Recognizer(AudioSource):
 
         # pick a good multipart boundary; one that is guaranteed not to be in the text
         while True:
-            boundary = "{0:>016x}".format(random.randrange(0x10000000000000000)) # generate a random boundary
+            boundary = uuid.uuid4().hex # generate a random boundary
             if boundary.encode("utf-8") not in wav_data:
                 break
 
