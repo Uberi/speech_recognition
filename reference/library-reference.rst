@@ -221,8 +221,8 @@ Returns the most likely transcription if ``show_all`` is false (the default). Ot
 
 Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
 
-``recognizer_instance.recognize_api(audio_data, client_access_token, language = "en", session_id=None, show_all = False)``
-----------------------------------------------------------------------------------------
+``recognizer_instance.recognize_api(audio_data, client_access_token, language = "en", session_id = "session", show_all = False)``
+---------------------------------------------------------------------------------------------------------------------------------
 
 Perform speech recognition on ``audio_data`` (an ``AudioData`` instance), using the api.ai Speech to Text API.
 
@@ -230,7 +230,7 @@ The api.ai API client access token is specified by ``client_access_token``. Unfo
 
 Although the recognition language is specified when creating the api.ai agent in the web console, it must also be provided in the ``language`` parameter as an RFC5646 language tag like ``"en"`` (US English) or ``"fr"`` (International French), defaulting to US English. A list of supported language values can be found in the `API documentation <https://api.ai/docs/reference/#languages>`__.
 
-The session_id is a string token up to 36 symbols long, used to identify the client and to manage sessions parameters (including contexts) per client.
+The ``session_id`` is a string of up to 36 characters used to identify the client making the requests; api.ai can make use of previous requests that used the same session ID to give more accurate results for future requests.
 
 Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <https://api.ai/docs/reference/#a-namepost-multipost-query-multipart>`__ as a JSON dictionary.
 
