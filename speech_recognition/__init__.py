@@ -799,7 +799,7 @@ class Recognizer(AudioSource):
         if "header" not in result or "lexical" not in result["header"]: raise UnknownValueError()
         return result["header"]["lexical"]
 
-    def recognize_api(self, audio_data, client_access_token, language = "en", session_id = "session", show_all = False):
+    def recognize_api(self, audio_data, client_access_token, language = "en", session_id = None, show_all = False):
         """
         Perform speech recognition on ``audio_data`` (an ``AudioData`` instance), using the api.ai Speech to Text API.
 
@@ -807,7 +807,7 @@ class Recognizer(AudioSource):
 
         Although the recognition language is specified when creating the api.ai agent in the web console, it must also be provided in the ``language`` parameter as an RFC5646 language tag like ``"en"`` (US English) or ``"fr"`` (International French), defaulting to US English. A list of supported language values can be found in the `API documentation <https://api.ai/docs/reference/#languages>`__.
 
-        The ``session_id`` is a string of up to 36 characters used to identify the client making the requests; api.ai can make use of previous requests that used the same session ID to give more accurate results for future requests.
+        The ``session_id`` is an optional string of up to 36 characters used to identify the client making the requests; api.ai can make use of previous requests that used the same session ID to give more accurate results for future requests. If ``None``, sessions are not used; every query is interpreted as if it is the first one.
 
         Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <https://api.ai/docs/reference/#a-namepost-multipost-query-multipart>`__ as a JSON dictionary.
 
@@ -816,7 +816,7 @@ class Recognizer(AudioSource):
         assert isinstance(audio_data, AudioData), "Data must be audio data"
         assert isinstance(client_access_token, str), "`username` must be a string"
         assert isinstance(language, str), "`language` must be a string"
-        assert isinstance(session_id, str) and len(session_id) <= 36, "`session_id` must be a string of up to 36 characters"
+        assert session_id is None or (isinstance(session_id, str) and len(session_id) <= 36), "`session_id` must be a string of up to 36 characters"
 
         wav_data = audio_data.get_wav_data(convert_rate = 16000, convert_width = 2) # audio must be 16-bit mono 16 kHz
         url = "https://api.api.ai/v1/query"
@@ -827,6 +827,7 @@ class Recognizer(AudioSource):
             if boundary.encode("utf-8") not in wav_data:
                 break
 
+        if session_id is None: session_id = uuid.uuid4().hex
         data = (
             b"--" + boundary.encode("utf-8") + b"\r\n" +
             b"Content-Disposition: form-data; name=\"request\"\r\n" +
