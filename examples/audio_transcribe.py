@@ -39,8 +39,11 @@ except sr.RequestError as e:
     text = "Sphinx error; {0}".format(e)
 except Error as e:
     text = e
-with open(main_path[3:] + write_path + '__sphinx.txt', 'wb') as f:
+
+full_write_path = main_path[3:] + write_path + '__sphinx.txt'
+with open(full_write_path, 'wb') as f:
     f.write(text)
+print "transcribed to: {}".format(full_write_path)
 
 # # recognize speech using Google Speech Recognition
 # try:
