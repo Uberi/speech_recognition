@@ -10,6 +10,7 @@ import io, os, subprocess, wave, aifc, base64
 import math, audioop, collections, threading
 import platform, stat, random, uuid
 import json
+import hashlib, hmac, time
 
 try: # attempt to use the Python 2 modules
     from urllib import urlencode
@@ -18,6 +19,8 @@ except ImportError: # use the Python 3 modules
     from urllib.parse import urlencode
     from urllib.request import Request, urlopen
     from urllib.error import URLError, HTTPError
+
+from base64 import urlsafe_b64encode as b64e, urlsafe_b64decode as b64d
 
 # define exceptions
 class WaitTimeoutError(Exception): pass
@@ -711,6 +714,55 @@ class Recognizer(AudioSource):
         if show_all: return result
         if "_text" not in result or result["_text"] is None: raise UnknownValueError()
         return result["_text"]
+
+    def recognize_houndify(self, audio_data, client_id, key, show_all = False):
+        """
+        Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Houndify API.
+
+        The Houndify API key is specified by ``key``, client id by ``client_id`` respectively.
+        Unfortunately, these are not available without `signing up for an account <https://houndify.com/>`__ and creating an app. 
+
+        The recognition language is configured in the Houndify app settings.
+
+        Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns a JSON dictionary.
+
+        Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
+        """
+        assert isinstance(audio_data, AudioData), "Data must be audio data"
+        assert isinstance(client_id, str), "`client_id` must be a string"
+        assert isinstance(key, str), "`key` must be a string"
+
+        wav_data = audio_data.get_wav_data(
+            convert_rate = None if audio_data.sample_rate >= 8000 else 8000, # audio samples must be at least 8 kHz
+            convert_width = 2 # audio samples should be 16-bit
+        )
+        url = "https://api.houndify.com/v1/audio"
+        key = b64d(key)
+        user_id = str(uuid.uuid4())
+        headers = {'Hound-Request-Info': json.dumps({'ClientID': client_id,
+                                                          'UserID': user_id})}
+        ts = str(int(time.time()))
+        hr = '%s;%s' % (user_id, str(uuid.uuid4()))
+        headers['Hound-Request-Authentication'] = hr
+        headers['Hound-Client-Authentication'] = '%s;%s;%s' % (client_id, ts,
+                                                               b64e(hmac.new(key,
+                                                                             hr + ts,
+                                                                             hashlib.sha256).digest()))
+        request = Request(url, data = wav_data, headers = headers)
+        try:
+            response = urlopen(request)
+        except HTTPError as e:
+            raise RequestError("recognition request failed: {0}".format(getattr(e, "reason", "status {0}".format(e.code)))) # use getattr to be compatible with Python 2.6
+        except URLError as e:
+            raise RequestError("recognition connection failed: {0}".format(e.reason))
+        response_text = response.read().decode("utf-8")
+        result = json.loads(response_text)
+
+        # return results
+        if show_all: return result
+        if "Disambiguation" not in result or result["Disambiguation"] is None: raise UnknownValueError()
+        return result['Disambiguation']['ChoiceData'][0]['Transcription']
+
 
     def recognize_bing(self, audio_data, key, language = "en-US", show_all = False):
         """

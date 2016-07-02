@@ -27,6 +27,7 @@ Speech recognition engine/API support:
 * `Microsoft Bing Voice Recognition <https://www.microsoft.com/cognitive-services/en-us/speech-api>`__
 * `api.ai <https://api.ai/>`__
 * `IBM Speech to Text <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text.html>`__
+* `Houndify API <https://houndify.com/>` __
 
 **Quickstart:** ``pip install SpeechRecognition``. See the "Installing" section for more details.
 
