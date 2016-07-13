@@ -31,7 +31,7 @@ AUDIO_FILE = path.join(path.dirname(path.realpath(__file__)), path.join(read_pat
 # use the audio file as the audio source
 r = sr.Recognizer()
 with sr.AudioFile(AUDIO_FILE) as source:
-    audio = r.record(source) # read the entire audio file
+    audio = r.listen(source) # read the entire audio file
 
 # recognize speech using Sphinx
 try:
