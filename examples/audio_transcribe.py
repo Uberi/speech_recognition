@@ -3,24 +3,28 @@
 import speech_recognition as sr
 
 import sys
+
+# NB: long_interview_example.aif was too large; download https://db.tt/OTBQaC8o
+
+# NB: intended to run from terminal and works for short interview, but not long
+# (speech)[502] examples% python audio_transcribe.py short_interview_example.aif
+# transcribed to: short_interview_example__sphinx.txt
+# (speech)[503] examples%
+# (speech)[503] examples% python audio_transcribe.py long_interview_example.aif
+
 args = sys.argv[1:]
 
 if not args:
     print 'usage: <file.aif> (to transcribe)'
     sys.exit(1)
 
-path = args[0]
+read_path = args[0]
 
-main_directory = 'Interviews/'
-split = path.split(main_directory)
-main_path = split[0] + main_directory
-specific_path = split[1]
-
-write_path = specific_path.replace(r'.band/Media/', '__').replace(r'.aif', '').replace(r' ', '_')
+write_path = read_path.replace(r'.aif', '')
 
 # obtain path to "english.wav" in the same folder as this script
 from os import path
-AUDIO_FILE = path.join(path.dirname(path.realpath(__file__)), path.join(main_path,specific_path))
+AUDIO_FILE = path.join(path.dirname(path.realpath(__file__)), path.join(read_path))
 #AUDIO_FILE = path.join(path.dirname(path.realpath(__file__)), "french.aiff")
 #AUDIO_FILE = path.join(path.dirname(path.realpath(__file__)), "chinese.flac")
 
@@ -40,7 +44,7 @@ except sr.RequestError as e:
 except Error as e:
     text = e
 
-full_write_path = main_path[3:] + write_path + '__sphinx.txt'
+full_write_path = write_path + '__sphinx.txt'
 with open(full_write_path, 'wb') as f:
     f.write(text)
 print "transcribed to: {}".format(full_write_path)
