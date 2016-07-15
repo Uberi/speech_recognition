@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+from pprint import pprint
+
 import speech_recognition as sr
 
 # obtain path to "english.wav" in the same folder as this script
@@ -26,7 +28,6 @@ try:
     # for testing purposes, we're just using the default API key
     # to use another API key, use `r.recognize_google(audio, key="GOOGLE_SPEECH_RECOGNITION_API_KEY", show_all=True)`
     # instead of `r.recognize_google(audio, show_all=True)`
-    from pprint import pprint
     print("Google Speech Recognition results:")
     pprint(r.recognize_google(audio, show_all=True)) # pretty-print the recognition result
 except sr.UnknownValueError:
@@ -37,7 +38,6 @@ except sr.RequestError as e:
 # recognize speech using Wit.ai
 WIT_AI_KEY = "INSERT WIT.AI API KEY HERE" # Wit.ai keys are 32-character uppercase alphanumeric strings
 try:
-    from pprint import pprint
     print("Wit.ai recognition results:")
     pprint(r.recognize_wit(audio, key=WIT_AI_KEY, show_all=True)) # pretty-print the recognition result
 except sr.UnknownValueError:
@@ -48,7 +48,8 @@ except sr.RequestError as e:
 # recognize speech using Microsoft Bing Voice Recognition
 BING_KEY = "INSERT BING API KEY HERE" # Microsoft Bing Voice Recognition API keys 32-character lowercase hexadecimal strings
 try:
-    print("Microsoft Bing Voice Recognition thinks you said " + r.recognize_bing(audio, key=BING_KEY, show_all=True))
+    print("Bing recognition results:")
+    pprint(r.recognize_bing(audio, key=BING_KEY, show_all=True))
 except sr.UnknownValueError:
     print("Microsoft Bing Voice Recognition could not understand audio")
 except sr.RequestError as e:
@@ -57,7 +58,6 @@ except sr.RequestError as e:
 # recognize speech using api.ai
 API_AI_CLIENT_ACCESS_TOKEN = "INSERT API.AI API KEY HERE" # api.ai keys are 32-character lowercase hexadecimal strings
 try:
-    from pprint import pprint
     print("api.ai recognition results:")
     pprint(r.recognize_api(audio, client_access_token=API_AI_CLIENT_ACCESS_TOKEN, show_all=True)) # pretty-print the recognition result
 except sr.UnknownValueError:
@@ -65,11 +65,21 @@ except sr.UnknownValueError:
 except sr.RequestError as e:
     print("Could not request results from api.ai service; {0}".format(e))
 
+# recognize speech using Houndify
+HOUNDIFY_CLIENT_ID = "INSERT HOUNDIFY CLIENT ID HERE" # Houndify client IDs are Base64-encoded strings
+HOUNDIFY_CLIENT_KEY = "INSERT HOUNDIFY CLIENT KEY HERE" # Houndify client keys are Base64-encoded strings
+try:
+    print("Houndify recognition results:")
+    pprint(r.recognize_houndify(audio, client_id=HOUNDIFY_CLIENT_ID, client_key=HOUNDIFY_CLIENT_KEY, show_all=True))
+except sr.UnknownValueError:
+    print("Houndify could not understand audio")
+except sr.RequestError as e:
+    print("Could not request results from Houndify service; {0}".format(e))
+
 # recognize speech using IBM Speech to Text
 IBM_USERNAME = "INSERT IBM SPEECH TO TEXT USERNAME HERE" # IBM Speech to Text usernames are strings of the form XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
 IBM_PASSWORD = "INSERT IBM SPEECH TO TEXT PASSWORD HERE" # IBM Speech to Text passwords are mixed-case alphanumeric strings
 try:
-    from pprint import pprint
     print("IBM Speech to Text results:")
     pprint(r.recognize_ibm(audio, username=IBM_USERNAME, password=IBM_PASSWORD, show_all=True)) # pretty-print the recognition result
 except sr.UnknownValueError:
