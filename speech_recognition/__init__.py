@@ -481,10 +481,12 @@ class Recognizer(AudioSource):
 
         # read audio input for phrases until there is a phrase that is long enough
         elapsed_time = 0 # number of seconds of audio read
+        buffer = b"" # an empty buffer means that the stream has ended and there is no data left to read
         while True:
             frames = collections.deque()
 
             # store audio input until the phrase starts
+
             while True:
                 elapsed_time += seconds_per_buffer
                 if timeout and elapsed_time > timeout: # handle timeout if specified
@@ -526,8 +528,8 @@ class Recognizer(AudioSource):
                     break
 
             # check how long the detected phrase is, and retry listening if the phrase is too short
-            phrase_count -= pause_count
-            if phrase_count >= phrase_buffer_count: break # phrase is long enough, stop listening
+            phrase_count -= pause_count # exclude the buffers for the pause before the phrase
+            if phrase_count >= phrase_buffer_count or len(buffer) == 0: break # phrase is long enough or we've reached the end of the stream, so stop listening
 
         # obtain frame data
         for i in range(pause_count - non_speaking_buffer_count): frames.pop() # remove extra non-speaking frames at the end
