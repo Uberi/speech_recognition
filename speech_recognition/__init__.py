@@ -925,7 +925,7 @@ def get_flac_converter():
         flac_converters = {"Windows": "flac-win32.exe",
                            "Linux": "flac-linux-x86",
                            "Darwin": "flac-mac"}
-        flac_converter = flac_convertera.get(platform.system(), None)
+        flac_converter = flac_converters.get(platform.system(), None)
         if flac_converter and platform.machine() in compatible_machine_types:
             path = os.path.dirname(os.path.abspath(__file__)) # directory of the current module file, where all the FLAC bundled binaries are stored
             flac_converter = os.path.join(path, flac_converter)
