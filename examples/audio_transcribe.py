@@ -33,22 +33,22 @@ r = sr.Recognizer()
 
 with sr.AudioFile(AUDIO_FILE) as source:
     for i in range(10):
-    audio = r.listen(source) # read the entire audio file
+        audio = r.listen(source) # read the entire audio file
 
-# recognize speech using Sphinx
-try:
-    text = r.recognize_sphinx(audio)
-    # print("Sphinx thinks you said " + r.recognize_sphinx(audio))
-except sr.UnknownValueError:
-    text = "Sphinx could not understand audio"
-except sr.RequestError as e:
-    text = "Sphinx error; {0}".format(e)
-except Error as e:
-    text = e
+        # recognize speech using Sphinx
+        try:
+            text = r.recognize_sphinx(audio)
+            # print("Sphinx thinks you said " + r.recognize_sphinx(audio))
+        except sr.UnknownValueError:
+            text = "Sphinx could not understand audio"
+        except sr.RequestError as e:
+            text = "Sphinx error; {0}".format(e)
+        except Error as e:
+            text = e
 
-full_write_path = write_path + '__sphinx.txt'
-with open(full_write_path, 'wb') as f:
-    f.write(text)
+        full_write_path = write_path + '__sphinx.txt'
+        with open(full_write_path, 'wb') as f:
+            f.write(text)
 print "transcribed to: {}".format(full_write_path)
 
 # # recognize speech using Google Speech Recognition
