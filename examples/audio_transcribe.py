@@ -4,6 +4,8 @@ import speech_recognition as sr
 
 import sys
 
+from time import strftime
+
 # NB: long_interview_example.aif was too large; download https://db.tt/OTBQaC8o
 
 # NB: intended to run from terminal and works for short interview, but not long
@@ -32,9 +34,16 @@ AUDIO_FILE = path.join(path.dirname(path.realpath(__file__)), path.join(read_pat
 r = sr.Recognizer()
 
 with sr.AudioFile(AUDIO_FILE) as source:
-    for i in range(2):
-        audio = r.listen(source, timeout=10) # read the entire audio file
+    timed_out = False
+    loop_count = 0
+    while not timed_out:
+        try:
+            audio = r.listen(source, timeout=3) # read the entire audio file
+        except sr.WaitTimeoutError:
+            timed_out = True
 
+        loop_count = loop_count + 1
+        print "time: {}, loop_count: {}".format(strftime('%H:%M.%S'), loop_count)
         # recognize speech using Sphinx
         try:
             text = r.recognize_sphinx(audio)
@@ -43,10 +52,11 @@ with sr.AudioFile(AUDIO_FILE) as source:
             text = "Sphinx could not understand audio"
         except sr.RequestError as e:
             text = "Sphinx error; {0}".format(e)
-        except Error as e:
+        except BaseException as e:
             text = e
 
         full_write_path = write_path + '__sphinx.txt'
+        print text
         with open(full_write_path, 'wb') as f:
             f.write(text)
 print "transcribed to: {}".format(full_write_path)
