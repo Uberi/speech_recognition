@@ -35,28 +35,28 @@ r = sr.Recognizer()
 
 full_write_path = write_path + '__sphinx.txt'
 with open(full_write_path, 'wb') as f:
-with sr.AudioFile(AUDIO_FILE) as source:
-    timed_out = False
-    loop_count = 0
-    while not timed_out:
-        try:
-            audio = r.listen(source, timeout=3) # read the entire audio file
-        except sr.WaitTimeoutError:
-            timed_out = True
+    with sr.AudioFile(AUDIO_FILE) as source:
+        timed_out = False
+        loop_count = 0
+        while not timed_out:
+            try:
+                audio = r.listen(source, timeout=3) # read the entire audio file
+            except sr.WaitTimeoutError:
+                timed_out = True
 
-        loop_count = loop_count + 1
-        print "time: {}, loop_count: {}".format(strftime('%H:%M.%S'), loop_count)
-        # recognize speech using Sphinx
-        try:
-            text = r.recognize_sphinx(audio)
-            # print("Sphinx thinks you said " + r.recognize_sphinx(audio))
-        except sr.UnknownValueError:
-            text = "Sphinx could not understand audio"
-        except sr.RequestError as e:
-            text = "Sphinx error; {0}".format(e)
-        except BaseException as e:
-            text = e
-        print text
+            loop_count = loop_count + 1
+            print "time: {}, loop_count: {}".format(strftime('%H:%M.%S'), loop_count)
+            # recognize speech using Sphinx
+            try:
+                text = r.recognize_sphinx(audio)
+                # print("Sphinx thinks you said " + r.recognize_sphinx(audio))
+            except sr.UnknownValueError:
+                text = "Sphinx could not understand audio"
+            except sr.RequestError as e:
+                text = "Sphinx error; {0}".format(e)
+            except BaseException as e:
+                text = e
+            print text
             f.write(text)
 
 print "transcribed to: {}".format(full_write_path)
