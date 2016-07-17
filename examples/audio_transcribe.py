@@ -57,7 +57,7 @@ with open(full_write_path, 'wb') as f:
             except BaseException as e:
                 text = e
             print text
-            f.write(text)
+            f.write(' ' + text)
 
 print "transcribed to: {}".format(full_write_path)
 
