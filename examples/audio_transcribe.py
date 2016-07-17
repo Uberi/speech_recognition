@@ -33,6 +33,8 @@ AUDIO_FILE = path.join(path.dirname(path.realpath(__file__)), path.join(read_pat
 # use the audio file as the audio source
 r = sr.Recognizer()
 
+full_write_path = write_path + '__sphinx.txt'
+with open(full_write_path, 'wb') as f:
 with sr.AudioFile(AUDIO_FILE) as source:
     timed_out = False
     loop_count = 0
@@ -54,11 +56,9 @@ with sr.AudioFile(AUDIO_FILE) as source:
             text = "Sphinx error; {0}".format(e)
         except BaseException as e:
             text = e
-
-        full_write_path = write_path + '__sphinx.txt'
         print text
-        with open(full_write_path, 'wb') as f:
             f.write(text)
+
 print "transcribed to: {}".format(full_write_path)
 
 # # recognize speech using Google Speech Recognition
