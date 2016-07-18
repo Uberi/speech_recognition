@@ -945,8 +945,11 @@ class Recognizer(AudioSource):
             "continuous": "true",
             "model": model,
         }))
-        request = Request(url, data = flac_data, headers = {"Content-Type": "audio/x-flac"})
-        if hasattr("", "encode"):
+        request = Request(url, data = flac_data, headers = {
+            "Content-Type": "audio/x-flac",
+            "X-Watson-Learning-Opt-Out": "true", # prevent requests from being logged, for improved privacy
+        })
+        if hasattr("", "encode"): # Python 2.6 compatibility: only encode/decode from unicode where applicable
             authorization_value = base64.standard_b64encode("{0}:{1}".format(username, password).encode("utf-8")).decode("utf-8")
         else:
             authorization_value = base64.standard_b64encode("{0}:{1}".format(username, password))
