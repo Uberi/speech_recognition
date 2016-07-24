@@ -40,7 +40,7 @@ To create a ``Microphone`` instance by name:
     m = None
     for microphone_name in Microphone.list_microphone_names():
         if microphone_name == "HDA Intel HDMI: 0 (hw:0,3)":
-            m = Microphone(i)
+            m = Microphone(Microphone.list_microphone_names().index(microphone_name))
 
 ``AudioFile(filename_or_fileobject)``
 -------------------------------------
