@@ -38,9 +38,9 @@ To create a ``Microphone`` instance by name:
 .. code:: python
 
     m = None
-    for microphone_name in Microphone.list_microphone_names():
+    for i, microphone_name in enumerate(Microphone.list_microphone_names()):
         if microphone_name == "HDA Intel HDMI: 0 (hw:0,3)":
-            m = Microphone(i)
+            m = Microphone(device_index=i)
 
 ``AudioFile(filename_or_fileobject)``
 -------------------------------------
