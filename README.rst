@@ -273,6 +273,7 @@ Authors
     maverickagm
     kamushadenes <kamushadenes@hyadesinc.com> (Kamus Hadenes)
     sbraden <braden.sarah@gmail.com> (Sarah Braden)
+    tb0hdan (Bohdan Turkynewych)
 
 Please report bugs and suggestions at the `issue tracker <https://github.com/Uberi/speech_recognition/issues>`__!
 

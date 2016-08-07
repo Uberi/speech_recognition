@@ -6,11 +6,11 @@ __author__ = "Anthony Zhang (Uberi)"
 __version__ = "3.4.6"
 __license__ = "BSD"
 
-import io, os, subprocess, wave, aifc, base64
-import math, audioop, collections, threading
-import platform, stat, random, uuid
-import json
-import hashlib, hmac, time
+import io, os, subprocess, wave, aifc, math, audioop
+import collections, threading
+import platform, stat
+import json, hashlib, hmac, time, base64, random, uuid
+import tempfile, shutil
 
 try: # attempt to use the Python 2 modules
     from urllib import urlencode
@@ -564,7 +564,7 @@ class Recognizer(AudioSource):
         listener_thread.start()
         return stopper
 
-    def recognize_sphinx(self, audio_data, language = "en-US", show_all = False):
+    def recognize_sphinx(self, audio_data, language = "en-US", keyword_entries = [], show_all = False):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using CMU Sphinx.
 
@@ -576,7 +576,8 @@ class Recognizer(AudioSource):
         """
         assert isinstance(audio_data, AudioData), "`audio_data` must be audio data"
         assert isinstance(language, str), "`language` must be a string"
-        
+        assert all(isinstance(keyword, str) and 0 <= sensitivity <= 1 for keyword, sensitivity in keyword_entries), "`keyword_entries` must be a list of pairs of strings and numbers between 0 and 1"
+
         # import the PocketSphinx speech recognition module
         try:
             from pocketsphinx import pocketsphinx
@@ -611,9 +612,23 @@ class Recognizer(AudioSource):
         raw_data = audio_data.get_raw_data(convert_rate = 16000, convert_width = 2) # the included language models require audio to be 16-bit mono 16 kHz in little-endian format
 
         # obtain recognition results
-        decoder.start_utt() # begin utterance processing
-        decoder.process_raw(raw_data, False, True) # process audio data with recognition enabled (no_search = False), as a full utterance (full_utt = True)
-        decoder.end_utt() # stop utterance processing
+        if keyword_entries: # explicitly specified set of keywords
+            with tempfile_TemporaryDirectory() as temp_directory:
+                # generate a keywords file - Sphinx documentation recommendeds sensitivities between 1e-50 and 1e-5
+                keywords_path = os.path.join(temp_directory, "keyphrases.txt")
+                with open(keywords_path, "w") as f:
+                    f.writelines("{} /1e{}/\n".format(keyword, 45 * sensitivity - 50) for keyword, sensitivity in keyword_entries)
+
+                # perform the speech recognition with the keywords file (this is inside the context manager so the file isn;t deleted until we're done)
+                decoder.set_kws("keywords", keywords_path)
+                decoder.set_search("keywords")
+                decoder.start_utt() # begin utterance processing
+                decoder.process_raw(raw_data, False, True) # process audio data with recognition enabled (no_search = False), as a full utterance (full_utt = True)
+                decoder.end_utt() # stop utterance processing
+        else: # no keywords, perform freeform recognition
+            decoder.start_utt() # begin utterance processing
+            decoder.process_raw(raw_data, False, True) # process audio data with recognition enabled (no_search = False), as a full utterance (full_utt = True)
+            decoder.end_utt() # stop utterance processing
 
         if show_all: return decoder
 
@@ -1001,12 +1016,21 @@ def get_flac_converter():
     return flac_converter
 
 def shutil_which(pgm):
-    """Python 2 backport of ``shutil.which()`` from Python 3"""
+    """Python 2 compatibility: backport of ``shutil.which()`` from Python 3"""
     path = os.getenv('PATH')
     for p in path.split(os.path.pathsep):
         p = os.path.join(p, pgm)
         if os.path.exists(p) and os.access(p, os.X_OK):
             return p
+
+class tempfile_TemporaryDirectory(object):
+    """Python 2 compatibility: backport of ``tempfile.TemporaryDirectory`` from Python 3"""
+    def __enter__(self):
+        self.name = tempfile.mkdtemp()
+        return self.name
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        shutil.rmtree(self.name)
 
 # backwards compatibility shims
 WavFile = AudioFile # WavFile was renamed to AudioFile in 3.4.1
