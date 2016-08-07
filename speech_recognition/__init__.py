@@ -714,7 +714,7 @@ class Recognizer(AudioSource):
             convert_rate = None if audio_data.sample_rate >= 8000 else 8000, # audio samples must be at least 8 kHz
             convert_width = 2 # audio samples should be 16-bit
         )
-        url = "https://api.wit.ai/speech?v=20141022"
+        url = "https://api.wit.ai/speech?v=20160526"
         request = Request(url, data = wav_data, headers = {"Authorization": "Bearer {0}".format(key), "Content-Type": "audio/wav"})
         try:
             response = urlopen(request)
