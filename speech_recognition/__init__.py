@@ -455,7 +455,7 @@ class Recognizer(AudioSource):
             buffer = source.stream.read(source.CHUNK)
             energy = audioop.rms(buffer, source.SAMPLE_WIDTH) # energy of the audio signal
 
-            # dynamically adjust the energy threshold using assymmetric weighted average
+            # dynamically adjust the energy threshold using asymmetric weighted average
             damping = self.dynamic_energy_adjustment_damping ** seconds_per_buffer # account for different chunk sizes and rates
             target_energy = energy * self.dynamic_energy_ratio
             self.energy_threshold = self.energy_threshold * damping + target_energy * (1 - damping)
@@ -500,7 +500,7 @@ class Recognizer(AudioSource):
                 energy = audioop.rms(buffer, source.SAMPLE_WIDTH) # energy of the audio signal
                 if energy > self.energy_threshold: break
 
-                # dynamically adjust the energy threshold using assymmetric weighted average
+                # dynamically adjust the energy threshold using asymmetric weighted average
                 if self.dynamic_energy_threshold:
                     damping = self.dynamic_energy_adjustment_damping ** seconds_per_buffer # account for different chunk sizes and rates
                     target_energy = energy * self.dynamic_energy_ratio
