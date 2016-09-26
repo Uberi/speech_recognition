@@ -507,7 +507,7 @@ class Recognizer(AudioSource):
                     self.energy_threshold = self.energy_threshold * damping + target_energy * (1 - damping)
 
             # read audio input until the phrase ends
-            pause_count, phrase_count = 0, 0
+            pause_count, phrase_count = 0, 1
             while True:
                 elapsed_time += seconds_per_buffer
 
