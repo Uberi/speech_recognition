@@ -26,6 +26,7 @@ Speech recognition engine/API support:
 * `Wit.ai <https://wit.ai/>`__
 * `Microsoft Bing Voice Recognition <https://www.microsoft.com/cognitive-services/en-us/speech-api>`__
 * `api.ai <https://api.ai/>`__
+* `Houndify API <https://houndify.com/>`__
 * `IBM Speech to Text <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text.html>`__
 
 **Quickstart:** ``pip install SpeechRecognition``. See the "Installing" section for more details.
@@ -180,7 +181,7 @@ The solution is to decrease this threshold, or call ``recognizer_instance.adjust
 The recognizer doesn't understand my particular language/dialect.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Try setting the recognition language to your language/dialect. To do this, see the documentation for ``recognizer_instance.recognize_sphinx``, ``recognizer_instance.recognize_google``, ``recognizer_instance.recognize_wit``, ``recognizer_instance.recognize_bing``, ``recognizer_instance.recognize_api``, and ``recognizer_instance.recognize_ibm``.
+Try setting the recognition language to your language/dialect. To do this, see the documentation for ``recognizer_instance.recognize_sphinx``, ``recognizer_instance.recognize_google``, ``recognizer_instance.recognize_wit``, ``recognizer_instance.recognize_bing``, ``recognizer_instance.recognize_api``, ``recognizer_instance.recognize_houndify``, and ``recognizer_instance.recognize_ibm``.
 
 For example, if your language/dialect is British English, it is better to use ``"en-GB"`` as the language rather than ``"en-US"``.
 
@@ -189,7 +190,7 @@ The code examples throw ``UnicodeEncodeError: 'ascii' codec can't encode charact
 
 When you're using Python 2, and your language uses non-ASCII characters, and the terminal or file-like object you're printing to only supports ASCII, an error is thrown when trying to write non-ASCII characters.
 
-This is because in Python 2, ``recognizer_instance.recognize_sphinx``, ``recognizer_instance.recognize_google``, ``recognizer_instance.recognize_wit``, ``recognizer_instance.recognize_bing``, ``recognizer_instance.recognize_api``, and ``recognizer_instance.recognize_ibm`` return unicode strings (``u"something"``) rather than byte strings (``"something"``). In Python 3, all strings are unicode strings.
+This is because in Python 2, ``recognizer_instance.recognize_sphinx``, ``recognizer_instance.recognize_google``, ``recognizer_instance.recognize_wit``, ``recognizer_instance.recognize_bing``, ``recognizer_instance.recognize_api``, ``recognizer_instance.recognize_houndify``, and ``recognizer_instance.recognize_ibm`` return unicode strings (``u"something"``) rather than byte strings (``"something"``). In Python 3, all strings are unicode strings.
 
 To make printing of unicode strings work in Python 2 as well, replace all print statements in your code of the following form:
 
@@ -272,6 +273,7 @@ Authors
     maverickagm
     kamushadenes <kamushadenes@hyadesinc.com> (Kamus Hadenes)
     sbraden <braden.sarah@gmail.com> (Sarah Braden)
+    tb0hdan (Bohdan Turkynewych)
 
 Please report bugs and suggestions at the `issue tracker <https://github.com/Uberi/speech_recognition/issues>`__!
 

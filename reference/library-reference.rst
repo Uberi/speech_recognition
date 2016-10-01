@@ -38,9 +38,9 @@ To create a ``Microphone`` instance by name:
 .. code:: python
 
     m = None
-    for microphone_name in Microphone.list_microphone_names():
+    for i, microphone_name in enumerate(Microphone.list_microphone_names()):
         if microphone_name == "HDA Intel HDMI: 0 (hw:0,3)":
-            m = Microphone(i)
+            m = Microphone(device_index=i)
 
 ``AudioFile(filename_or_fileobject)``
 -------------------------------------
@@ -233,6 +233,21 @@ Although the recognition language is specified when creating the api.ai agent in
 The ``session_id`` is an optional string of up to 36 characters used to identify the client making the requests; api.ai can make use of previous requests that used the same session ID to give more accurate results for future requests. If ``None``, sessions are not used; every query is interpreted as if it is the first one.
 
 Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <https://api.ai/docs/reference/#a-namepost-multipost-query-multipart>`__ as a JSON dictionary.
+
+Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
+
+``recognizer_instance.recognize_houndify(audio_data, client_id, client_key, show_all = False)``
+-----------------------------------------------------------------------------------------------
+
+Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Houndify API.
+
+The Houndify client ID and client key are specified by ``client_id`` and ``client_key``, respectively. Unfortunately, these are not available without `signing up for an account <https://www.houndify.com/signup>`__. Once logged into the `dashboard <https://www.houndify.com/dashboard>`__, you will want to select "Register a new client", and fill in the form as necessary. When at the "Enable Domains" page, enable the "Speech To Text Only" domain, and then select "Save & Continue".
+
+To get the client ID and client key for a Houndify client, go to the `dashboard <https://www.houndify.com/dashboard>`__ and select the client's "View Details" link. On the resulting page, the client ID and client key will be visible. Client IDs and client keys are both Base64-encoded strings.
+
+Currently, only English is supported as a recognition language.
+
+Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns a JSON dictionary.
 
 Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
 

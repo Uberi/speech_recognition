@@ -6,10 +6,11 @@ __author__ = "Anthony Zhang (Uberi)"
 __version__ = "3.4.6"
 __license__ = "BSD"
 
-import io, os, subprocess, wave, aifc, base64
-import math, audioop, collections, threading
-import platform, stat, random, uuid
-import json
+import io, os, subprocess, wave, aifc, math, audioop
+import collections, threading
+import platform, stat
+import json, hashlib, hmac, time, base64, random, uuid
+import tempfile, shutil
 
 try: # attempt to use the Python 2 modules
     from urllib import urlencode
@@ -478,10 +479,12 @@ class Recognizer(AudioSource):
 
         # read audio input for phrases until there is a phrase that is long enough
         elapsed_time = 0 # number of seconds of audio read
+        buffer = b"" # an empty buffer means that the stream has ended and there is no data left to read
         while True:
             frames = collections.deque()
 
             # store audio input until the phrase starts
+
             while True:
                 elapsed_time += seconds_per_buffer
                 if timeout and elapsed_time > timeout: # handle timeout if specified
@@ -523,8 +526,8 @@ class Recognizer(AudioSource):
                     break
 
             # check how long the detected phrase is, and retry listening if the phrase is too short
-            phrase_count -= pause_count
-            if phrase_count >= phrase_buffer_count: break # phrase is long enough, stop listening
+            phrase_count -= pause_count # exclude the buffers for the pause before the phrase
+            if phrase_count >= phrase_buffer_count or len(buffer) == 0: break # phrase is long enough or we've reached the end of the stream, so stop listening
 
         # obtain frame data
         for i in range(pause_count - non_speaking_buffer_count): frames.pop() # remove extra non-speaking frames at the end
@@ -561,7 +564,7 @@ class Recognizer(AudioSource):
         listener_thread.start()
         return stopper
 
-    def recognize_sphinx(self, audio_data, language = "en-US", show_all = False):
+    def recognize_sphinx(self, audio_data, language = "en-US", keyword_entries = [], show_all = False):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using CMU Sphinx.
 
@@ -573,7 +576,8 @@ class Recognizer(AudioSource):
         """
         assert isinstance(audio_data, AudioData), "`audio_data` must be audio data"
         assert isinstance(language, str), "`language` must be a string"
-        
+        assert all(isinstance(keyword, str) and 0 <= sensitivity <= 1 for keyword, sensitivity in keyword_entries), "`keyword_entries` must be a list of pairs of strings and numbers between 0 and 1"
+
         # import the PocketSphinx speech recognition module
         try:
             from pocketsphinx import pocketsphinx
@@ -608,9 +612,23 @@ class Recognizer(AudioSource):
         raw_data = audio_data.get_raw_data(convert_rate = 16000, convert_width = 2) # the included language models require audio to be 16-bit mono 16 kHz in little-endian format
 
         # obtain recognition results
-        decoder.start_utt() # begin utterance processing
-        decoder.process_raw(raw_data, False, True) # process audio data with recognition enabled (no_search = False), as a full utterance (full_utt = True)
-        decoder.end_utt() # stop utterance processing
+        if keyword_entries: # explicitly specified set of keywords
+            with tempfile_TemporaryDirectory() as temp_directory:
+                # generate a keywords file - Sphinx documentation recommendeds sensitivities between 1e-50 and 1e-5
+                keywords_path = os.path.join(temp_directory, "keyphrases.txt")
+                with open(keywords_path, "w") as f:
+                    f.writelines("{} /1e{}/\n".format(keyword, 45 * sensitivity - 50) for keyword, sensitivity in keyword_entries)
+
+                # perform the speech recognition with the keywords file (this is inside the context manager so the file isn;t deleted until we're done)
+                decoder.set_kws("keywords", keywords_path)
+                decoder.set_search("keywords")
+                decoder.start_utt() # begin utterance processing
+                decoder.process_raw(raw_data, False, True) # process audio data with recognition enabled (no_search = False), as a full utterance (full_utt = True)
+                decoder.end_utt() # stop utterance processing
+        else: # no keywords, perform freeform recognition
+            decoder.start_utt() # begin utterance processing
+            decoder.process_raw(raw_data, False, True) # process audio data with recognition enabled (no_search = False), as a full utterance (full_utt = True)
+            decoder.end_utt() # stop utterance processing
 
         if show_all: return decoder
 
@@ -696,7 +714,7 @@ class Recognizer(AudioSource):
             convert_rate = None if audio_data.sample_rate >= 8000 else 8000, # audio samples must be at least 8 kHz
             convert_width = 2 # audio samples should be 16-bit
         )
-        url = "https://api.wit.ai/speech?v=20141022"
+        url = "https://api.wit.ai/speech?v=20160526"
         request = Request(url, data = wav_data, headers = {"Authorization": "Bearer {0}".format(key), "Content-Type": "audio/wav"})
         try:
             response = urlopen(request)
@@ -863,6 +881,59 @@ class Recognizer(AudioSource):
             raise UnknownValueError()
         return result["result"]["resolvedQuery"]
 
+    def recognize_houndify(self, audio_data, client_id, client_key, show_all = False):
+        """
+        Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Houndify API.
+
+        The Houndify client ID and client key are specified by ``client_id`` and ``client_key``, respectively. Unfortunately, these are not available without `signing up for an account <https://www.houndify.com/signup>`__. Once logged into the `dashboard <https://www.houndify.com/dashboard>`__, you will want to select "Register a new client", and fill in the form as necessary. When at the "Enable Domains" page, enable the "Speech To Text Only" domain, and then select "Save & Continue".
+
+        To get the client ID and client key for a Houndify client, go to the `dashboard <https://www.houndify.com/dashboard>`__ and select the client's "View Details" link. On the resulting page, the client ID and client key will be visible. Client IDs and client keys are both Base64-encoded strings.
+
+        Currently, only English is supported as a recognition language.
+
+        Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns a JSON dictionary.
+
+        Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
+        """
+        assert isinstance(audio_data, AudioData), "Data must be audio data"
+        assert isinstance(client_id, str), "`client_id` must be a string"
+        assert isinstance(client_key, str), "`client_key` must be a string"
+
+        wav_data = audio_data.get_wav_data(
+            convert_rate = None if audio_data.sample_rate in [8000, 16000] else 16000, # audio samples must be 8 kHz or 16 kHz
+            convert_width = 2 # audio samples should be 16-bit
+        )
+        url = "https://api.houndify.com/v1/audio"
+        user_id, request_id = str(uuid.uuid4()), str(uuid.uuid4())
+        request_time = str(int(time.time()))
+        request_signature = base64.urlsafe_b64encode(
+            hmac.new(
+                base64.urlsafe_b64decode(client_key),
+                user_id.encode("utf-8") + b";" + request_id.encode("utf-8") + request_time.encode("utf-8"),
+                hashlib.sha256
+            ).digest() # get the HMAC digest as bytes
+        ).decode("utf-8")
+        request = Request(url, data = wav_data, headers = {
+            "Content-Type": "application/json",
+            "Hound-Request-Info": json.dumps({"ClientID": client_id, "UserID": user_id}),
+            "Hound-Request-Authentication": "{0};{1}".format(user_id, request_id),
+            "Hound-Client-Authentication": "{0};{1};{2}".format(client_id, request_time, request_signature)
+        })
+        try:
+            response = urlopen(request)
+        except HTTPError as e:
+            raise RequestError("recognition request failed: {0}".format(getattr(e, "reason", "status {0}".format(e.code)))) # use getattr to be compatible with Python 2.6
+        except URLError as e:
+            raise RequestError("recognition connection failed: {0}".format(e.reason))
+        response_text = response.read().decode("utf-8")
+        result = json.loads(response_text)
+
+        # return results
+        if show_all: return result
+        if "Disambiguation" not in result or result["Disambiguation"] is None:
+            raise UnknownValueError()
+        return result['Disambiguation']['ChoiceData'][0]['Transcription']
+
     def recognize_ibm(self, audio_data, username, password, language = "en-US", show_all = False):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the IBM Speech to Text API.
@@ -889,8 +960,11 @@ class Recognizer(AudioSource):
             "continuous": "true",
             "model": model,
         }))
-        request = Request(url, data = flac_data, headers = {"Content-Type": "audio/x-flac"})
-        if hasattr("", "encode"):
+        request = Request(url, data = flac_data, headers = {
+            "Content-Type": "audio/x-flac",
+            "X-Watson-Learning-Opt-Out": "true", # prevent requests from being logged, for improved privacy
+        })
+        if hasattr("", "encode"): # Python 2.6 compatibility: only encode/decode from unicode where applicable
             authorization_value = base64.standard_b64encode("{0}:{1}".format(username, password).encode("utf-8")).decode("utf-8")
         else:
             authorization_value = base64.standard_b64encode("{0}:{1}".format(username, password))
@@ -942,12 +1016,21 @@ def get_flac_converter():
     return flac_converter
 
 def shutil_which(pgm):
-    """Python 2 backport of ``shutil.which()`` from Python 3"""
+    """Python 2 compatibility: backport of ``shutil.which()`` from Python 3"""
     path = os.getenv('PATH')
     for p in path.split(os.path.pathsep):
         p = os.path.join(p, pgm)
         if os.path.exists(p) and os.access(p, os.X_OK):
             return p
+
+class tempfile_TemporaryDirectory(object):
+    """Python 2 compatibility: backport of ``tempfile.TemporaryDirectory`` from Python 3"""
+    def __enter__(self):
+        self.name = tempfile.mkdtemp()
+        return self.name
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        shutil.rmtree(self.name)
 
 # backwards compatibility shims
 WavFile = AudioFile # WavFile was renamed to AudioFile in 3.4.1
