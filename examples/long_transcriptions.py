@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
 import speech_recognition as sr
-
 import sys
-
 from time import strftime
 
 # NB: long_interview_example.aif was too large; download https://db.tt/OTBQaC8o
@@ -17,10 +15,12 @@ from time import strftime
 args = sys.argv[1:]
 
 if not args:
-    print 'usage: <file.aif> (to transcribe)'
+    print 'usage: <file.aif> (to transcribe) <phrase_timeout> (in seconds)'
     sys.exit(1)
 
 read_path = args[0]
+phrase_timeout = float(args[1])
+print type(phrase_timeout)
 
 write_path = read_path.replace(r'.aif', '')
 
@@ -33,6 +33,7 @@ AUDIO_FILE = path.join(path.dirname(path.realpath(__file__)), path.join(read_pat
 # use the audio file as the audio source
 r = sr.Recognizer()
 
+
 full_write_path = write_path + '__google.txt'
 with open(full_write_path, 'wb') as f:
     with sr.AudioFile(AUDIO_FILE) as source:
@@ -40,7 +41,7 @@ with open(full_write_path, 'wb') as f:
         loop_count = 0
         while not timed_out:
             try:
-                audio = r.listen(source, timeout=3) # read the entire audio file
+                audio = r.listen(source, phrase_timeout) # read the entire audio file
             except sr.WaitTimeoutError:
                 timed_out = True
 
@@ -60,6 +61,6 @@ with open(full_write_path, 'wb') as f:
             except BaseException as e:
                 text = e
             print text
-            f.write(' ' + text)
+            f.write(' ' + str(text))
 
 print "transcribed to: {}".format(full_write_path)
