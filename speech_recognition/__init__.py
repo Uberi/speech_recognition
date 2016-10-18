@@ -887,7 +887,7 @@ class Recognizer(AudioSource):
 
         # return results
         if show_all: return result
-        if "asr" not in result or result["asr"] is None:
+        if result['status']['errorType'] != 'success':
             raise UnknownValueError()
         return result["result"]["resolvedQuery"]
 
