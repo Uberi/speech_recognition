@@ -129,6 +129,13 @@ Represents the minimum length of silence (in seconds) that will register as the 
 
 Smaller values result in the recognition completing more quickly, but might result in slower speakers being cut off.
 
+``recognizer_instance.operation_timeout = None``
+------------------------------------------------
+
+Represents the timeout (in seconds) for internal operations, such as API requests. Can be changed.
+
+Setting this to a reasonable value ensures that these operations will never block indefinitely, though good values depend on your network speed and the expected length of the audio to recognize.
+
 ``recognizer_instance.record(source, duration = None, offset = None)``
 ----------------------------------------------------------------------
 
@@ -152,7 +159,11 @@ Records a single phrase from ``source`` (an ``AudioSource`` instance) into an ``
 
 This is done by waiting until the audio has an energy above ``recognizer_instance.energy_threshold`` (the user has started speaking), and then recording until it encounters ``recognizer_instance.pause_threshold`` seconds of non-speaking or there is no more audio input. The ending silence is not included.
 
-The ``timeout`` parameter is the maximum number of seconds that it will wait for a phrase to start before giving up and throwing an ``speech_recognition.WaitTimeoutError`` exception. If ``timeout`` is ``None``, it will wait indefinitely.
+The ``timeout`` parameter is the maximum number of seconds that this will wait for a phrase to start before giving up and throwing an ``speech_recognition.WaitTimeoutError`` exception. If ``timeout`` is ``None``, there will be no wait timeout.
+
+The ``phrase_time_limit`` parameter is the maximum number of seconds that this will allow a phrase to continue before stopping and returning the part of the phrase processed before the time limit was reached. The resulting audio will be the phrase cut off at the time limit. If ``phrase_timeout`` is ``None``, there will be no phrase time limit.
+
+This operation will always complete within ``timeout + phrase_timeout`` seconds if both are numbers, either by returning the audio data, or by raising an exception.
 
 ``recognizer_instance.listen_in_background(source, callback)``
 --------------------------------------------------------------
@@ -161,7 +172,7 @@ Spawns a thread to repeatedly record phrases from ``source`` (an ``AudioSource``
 
 Returns a function object that, when called, requests that the background listener thread stop, and waits until it does before returning. The background thread is a daemon and will not stop the program from exiting if there are no other non-daemon threads.
 
-Phrase recognition uses the exact same mechanism as ``recognizer_instance.listen(source)``.
+Phrase recognition uses the exact same mechanism as ``recognizer_instance.listen(source)``. The ``phrase_time_limit`` parameter works in the same way as the ``phrase_time_limit`` parameter for ``recognizer_instance.listen(source)``, as well.
 
 The ``callback`` parameter is a function that should accept two parameters - the ``recognizer_instance``, and an ``AudioData`` instance representing the captured audio. Note that ``callback`` function will be called from a non-main thread.
 

@@ -1,8 +1,8 @@
 Steps to reproduce
 ------------------
 
-1. (How do you make the issue happen?)
-2. (Make sure to go into as much detail as needed to reproduce the issue!)
+1. (How do you make the issue happen? Does it happen every time you try it?)
+2. (Make sure to go into as much detail as needed to reproduce the issue. Posting your code here can help us resolve the problem much faster!)
 3. (If there are any files, like audio recordings, don't forget to include them.)
 
 Expected behaviour
@@ -14,6 +14,10 @@ Actual behaviour
 ----------------
 
 (What happened instead? How is it different from what you expected?)
+
+```
+(If the library threw an exception, paste the full stack trace here)
+```
 
 System information
 ------------------
