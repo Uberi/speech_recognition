@@ -250,6 +250,17 @@ class AudioFile(AudioSource):
             return buffer
 
 class AudioData(object):
+    """
+    Creates a new ``AudioData`` instance, which represents mono audio data.
+
+    The raw audio data is specified by ``frame_data``, which is a sequence of bytes representing audio samples. This is the frame data structure used by the PCM WAV format.
+
+    The width of each sample, in bytes, is specified by ``sample_width``. Each group of ``sample_width`` bytes represents a single audio sample.
+
+    The audio data is assumed to have a sample rate of ``sample_rate`` samples per second (Hertz).
+
+    Usually, instances of this class are obtained from ``recognizer_instance.record`` or ``recognizer_instance.listen``, or in the callback for ``recognizer_instance.listen_in_background``, rather than instantiating them directly.
+    """
     def __init__(self, frame_data, sample_rate, sample_width):
         assert sample_rate > 0, "Sample rate must be a positive integer"
         assert sample_width % 1 == 0 and 1 <= sample_width <= 4, "Sample width must be between 1 and 4 inclusive"
@@ -887,7 +898,7 @@ class Recognizer(AudioSource):
 
         # return results
         if show_all: return result
-        if result['status']['errorType'] != 'success':
+        if "status" not in result or "errorType" not in result["status"] or result["status"]["errorType"] != "success":
             raise UnknownValueError()
         return result["result"]["resolvedQuery"]
 

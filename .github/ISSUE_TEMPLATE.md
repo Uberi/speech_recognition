@@ -24,6 +24,8 @@ System information
 
 (Delete all the statements that don't apply.)
 
+My **system** is <INSERT SYSTEM HERE>. (For example, "Ubuntu 16.04 LTS x64", "Windows 10 x64", or "macOS Sierra".)
+
 My **Python version** is <INSERT VERSION HERE>. (You can check this by running `python -V`.)
 
 My **SpeechRecognition library version** is <INSERT VERSION HERE>. (You can check this by running `python -c "import speech_recognition as sr;print(sr.__version__)"`.)

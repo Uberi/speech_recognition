@@ -284,12 +284,18 @@ Instances of subclasses of this class, such as ``Microphone`` and ``AudioFile``,
 
 For more information, see the documentation for the individual subclasses.
 
-``AudioData``
--------------
+``AudioData(frame_data, sample_rate, sample_width)``
+----------------------------------------------------
 
-Storage class for audio data. Do not instantiate.
+Creates a new ``AudioData`` instance, which represents mono audio data.
 
-Instances of this class are returned from ``recognizer_instance.record`` and ``recognizer_instance.listen``, and are passed to callbacks of ``recognizer_instance.listen_in_background``.
+The raw audio data is specified by ``frame_data``, which is a sequence of bytes representing audio samples. This is the frame data structure used by the PCM WAV format.
+
+The width of each sample, in bytes, is specified by ``sample_width``. Each group of ``sample_width`` bytes represents a single audio sample.
+
+The audio data is assumed to have a sample rate of ``sample_rate`` samples per second (Hertz).
+
+Usually, instances of this class are obtained from ``recognizer_instance.record`` or ``recognizer_instance.listen``, or in the callback for ``recognizer_instance.listen_in_background``, rather than instantiating them directly.
 
 ``audiodata_instance.get_raw_data(convert_rate = None, convert_width = None)``
 ------------------------------------------------------------------------------
