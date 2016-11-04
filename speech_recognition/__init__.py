@@ -781,13 +781,10 @@ class Recognizer(AudioSource):
                 allow_caching = False # don't allow caching, since monotonic time isn't available
         if expire_time is None or monotonic() > expire_time: # caching not enabled, first credential request, or the access token from the previous one expired
             # get an access token using OAuth
-            credential_url = "https://oxford-speech.cloudapp.net/token/issueToken"
-            credential_request = Request(credential_url, data = urlencode({
-              "grant_type": "client_credentials",
-              "client_id": "python",
-              "client_secret": key,
-              "scope": "https://speech.platform.bing.com"
-            }).encode("utf-8"))
+            credential_url = "https://api.cognitive.microsoft.com/sts/v1.0/issueToken"
+	    credention_data=""
+	    credention_headers={"Ocp-Apim-Subscription-Key": key }
+	    credential_request = Request(credential_url, credention_data, credention_headers)
             if allow_caching:
                 start_time = monotonic()
             try:
@@ -796,19 +793,19 @@ class Recognizer(AudioSource):
                 raise RequestError("recognition request failed: {0}".format(getattr(e, "reason", "status {0}".format(e.code)))) # use getattr to be compatible with Python 2.6
             except URLError as e:
                 raise RequestError("recognition connection failed: {0}".format(e.reason))
-            credential_text = credential_response.read().decode("utf-8")
-            credentials = json.loads(credential_text)
-            access_token, expiry_seconds = credentials["access_token"], float(credentials["expires_in"])
+            access_token = credential_response.read().decode("utf-8")
 
             if allow_caching:
                 # save the token for the duration it is valid for
                 self.bing_cached_access_token = access_token
-                self.bing_cached_access_token_expiry = start_time + expiry_seconds
+                self.bing_cached_access_token_expiry = start_time + 600 #10 minuts
 
         wav_data = audio_data.get_wav_data(
             convert_rate = 16000, # audio samples must be 8kHz or 16 kHz
             convert_width = 2 # audio samples should be 16-bit
         )
+
+
         url = "https://speech.platform.bing.com/recognize/query?{0}".format(urlencode({
             "version": "3.0",
             "requestid": uuid.uuid4(),
