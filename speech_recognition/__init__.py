@@ -784,11 +784,15 @@ class Recognizer(AudioSource):
         if expire_time is None or monotonic() > expire_time: # caching not enabled, first credential request, or the access token from the previous one expired
             # get an access token using OAuth
             credential_url = "https://api.cognitive.microsoft.com/sts/v1.0/issueToken"
-	    credention_data=""
-	    credention_headers={"Ocp-Apim-Subscription-Key": key }
-	    credential_request = Request(credential_url, credention_data, credention_headers)
+            credential_request = Request(credential_url, data = b"", headers = {
+                "Content-type": "application/x-www-form-urlencoded",
+                "Content-Length": "0",
+                "Ocp-Apim-Subscription-Key": key,
+            })
+
             if allow_caching:
                 start_time = monotonic()
+
             try:
                 credential_response = urlopen(credential_request, timeout=self.operation_timeout)
             except HTTPError as e:
@@ -800,7 +804,7 @@ class Recognizer(AudioSource):
             if allow_caching:
                 # save the token for the duration it is valid for
                 self.bing_cached_access_token = access_token
-                self.bing_cached_access_token_expiry = start_time + 600 #10 minuts
+                self.bing_cached_access_token_expiry = start_time + 600 # according to https://www.microsoft.com/cognitive-services/en-us/Speech-api/documentation/API-Reference-REST/BingVoiceRecognition, the token expires in exactly 10 minutes
 
         wav_data = audio_data.get_wav_data(
             convert_rate = 16000, # audio samples must be 8kHz or 16 kHz
