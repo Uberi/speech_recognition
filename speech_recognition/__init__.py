@@ -19,6 +19,8 @@ except ImportError: # use the Python 3 modules
     from urllib.parse import urlencode
     from urllib.request import Request, urlopen
     from urllib.error import URLError, HTTPError
+	# 您好！用了您的语音识别库效果很不错，最近使用了百度语音识别的API，请您审查看能否加入，谢谢！——Decalogue(Rain)
+    import requests # use the Python 3 module
 
 # define exceptions
 class WaitTimeoutError(Exception): pass
@@ -1013,8 +1015,77 @@ class Recognizer(AudioSource):
             for hypothesis in utterance["alternatives"]:
                 if "transcript" in hypothesis:
                     transcription.append(hypothesis["transcript"])
-        return "\n".join(transcription)
+        return "\n".join(transcription
+		
+	# Baidu Speech Recognition API-Decalogue	
+    def recognize_baidu(self, audio_data, *, language = "zh", key = None, secret_key = None, show_all = False):
+        """
+        Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Baidu Speech Recognition API.
 
+        The Baidu Speech Recognition API key is specified by ``key``. If not specified, it uses a generic key that works out of the box. This should generally be used for personal or testing purposes only, as it **may be revoked by Baidu at any time**.
+
+        百度语音识别接口支持 POST 方式
+        目前 API 仅支持整段语音识别的模式，即需要上传整段语音进行识别
+        语音数据上传方式有两种：隐示发送和显示发送
+        原始语音的录音格式目前只支持评测 8k/16k 采样率 16bit 位深的单声道语音
+        压缩格式支持：pcm（不压缩）、wav、opus、speex、amr、x-flac
+        系统支持语言种类：中文（zh）、粤语（ct）、英文（en）
+        正式地址：http://vop.baidu.com/server_api
+
+        Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the raw API response as a JSON dictionary.
+
+        Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the key isn't valid, the quota for the key is maxed out, or there is no internet connection.
+        """
+        assert isinstance(audio_data, AudioData), "`audio_data` must be audio data"
+        assert key is None or isinstance(key, str), "`key` must be `None` or a string"
+        assert secret_key is None or isinstance(secret_key, str), "`secret_key` must be `None` or a string"
+        # Using Rain's default keys of baidu asr api
+        if key is None: key = "QrhsINLcc3Io6w048Ia8kcjS"
+        if secret_key is None: secret_key = "e414b3ccb7d51fef12f297ffea9ec41d"
+        access_token = get_token_baidu(key, secret_key)
+        mac_address = uuid.UUID(int=uuid.getnode()).hex[-12:]
+		
+        flac_data, sample_rate = audio_data.get_flac_data(), audio_data.sample_rate
+
+        url_post_base = "http://vop.baidu.com/server_api"
+        data = {
+                "format": "x-flac",
+                "lan": language,
+                "token": access_token,
+                "len": len(flac_data),
+                "rate": sample_rate,
+                "speech": base64.b64encode(flac_data).decode('UTF-8'),
+                "cuid": mac_address,
+                "channel": 1,
+                }
+        json_data = json.dumps(data).encode('UTF-8')
+        headers = {"Content-Type": "application/json", "Content-Length": len(json_data)}
+        # Obtain audio transcription results
+        try:
+            response = requests.post(url_post_base, data=json.dumps(data), headers=headers)
+        except HTTPError as e:
+            raise RequestError("recognition request failed: {0}".format(getattr(e, "reason", "status {0}".format(e.code)))) 
+        except URLError as e:
+            raise RequestError("recognition connection failed: {0}".format(getattr(e, "reason", "status {0}".format(e.code))))
+			
+        if int(response.json()['err_no']) != 0:
+            return 'err_msg'
+        else:
+            results = response.json()['result'][0].split("，")
+            for item in results:
+                if item != "":
+                    return item
+            return 'err_msg'			
+
+# Get token from baidu
+def get_token_baidu(app_key, secret_key):
+	url_get_base = "https://openapi.baidu.com/oauth/2.0/token"
+	url = url_get_base + "?grant_type=client_credentials" + "&client_id=" + app_key + "&client_secret=" + secret_key
+	response = urlopen(url)
+	response_text = response.read().decode('UTF-8')
+	json_result = json.loads(response_text)
+	return json_result['access_token']
+	
 def get_flac_converter():
     # determine which converter executable to use
     system = platform.system()
