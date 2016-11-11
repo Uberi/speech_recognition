@@ -1015,7 +1015,7 @@ class Recognizer(AudioSource):
             for hypothesis in utterance["alternatives"]:
                 if "transcript" in hypothesis:
                     transcription.append(hypothesis["transcript"])
-        return "\n".join(transcription
+        return "\n".join(transcription)
 		
 	# Baidu Speech Recognition API-Decalogue	
     def recognize_baidu(self, audio_data, *, language = "zh", key = None, secret_key = None, show_all = False):
