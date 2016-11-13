@@ -23,6 +23,7 @@ Speech recognition engine/API support:
 
 * `CMU Sphinx <http://cmusphinx.sourceforge.net/wiki/>`__ (works offline)
 * Google Speech Recognition
+* `Google Cloud Speech API <https://cloud.google.com/speech/>`__
 * `Wit.ai <https://wit.ai/>`__
 * `Microsoft Bing Voice Recognition <https://www.microsoft.com/cognitive-services/en-us/speech-api>`__
 * `api.ai <https://api.ai/>`__
@@ -76,6 +77,7 @@ To use all of the functionality of the library, you should have:
 
 * **Python** 2.6, 2.7, or 3.3+ (required)
 * **PyAudio** 0.2.9+ (required only if you need to use microphone input, ``Microphone``)
+* **google-api-python-client** (required only if you need to use the Google Cloud Speech API)
 * **PocketSphinx** (required only if you need to use the Sphinx recognizer, ``recognizer_instance.recognize_sphinx``)
 * **FLAC encoder** (required only if the system is not x86-based Windows/Linux/OS X)
 
@@ -107,6 +109,13 @@ The installation instructions are quite good as of PyAudio v0.2.9. For convenien
 * On other POSIX-based systems, install the ``portaudio19-dev`` and ``python-all-dev`` (or ``python3-all-dev`` if using Python 3) packages (or their closest equivalents) using a package manager of your choice, and then install PyAudio using `Pip <https://pip.readthedocs.org/>`__: ``pip install pyaudio`` (replace ``pip`` with ``pip3`` if using Python 3).
 
 PyAudio `wheel packages <https://pypi.python.org/pypi/wheel>`__ for 64-bit Python 2.7, 3.4, and 3.5 on Windows and Linux are included for convenience, under the ``third-party/`` `directory <https://github.com/Uberi/speech_recognition/tree/master/third-party>`__ in the repository root. To install, simply run ``pip install wheel`` followed by ``pip install ./third-party/WHEEL_FILENAME`` (replace ``pip`` with ``pip3`` if using Python 3) in the repository `root directory <https://github.com/Uberi/speech_recognition>`__.
+
+google-api-python-client (for Google Cloud Speech API users)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+`google-api-python-client <https://developers.google.com/api-client-library/python/>`__ is required if and only if you want to use the Google Cloud Speech API.
+
+If it is not installed, ``recognize_google_cloud()`` will raise ``ImportError.``
 
 PocketSphinx-Python (for Sphinx users)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
