@@ -160,9 +160,9 @@ class AudioFile(AudioSource):
     """
 
     def __init__(self, filename_or_fileobject):
-        if str is bytes: # Python 2 - if a file path is specified, it must either be a `str` instance or a `unicode` instance
+        if str is bytes: # Python 2 - if a file path is specified, it must either be a ``str`` instance or a ``unicode`` instance
             assert isinstance(filename_or_fileobject, (str, unicode)) or hasattr(filename_or_fileobject, "read"), "Given audio file must be a filename string or a file-like object"
-        else: # Python 3 - if a file path is specified, it must be a `str` instance
+        else: # Python 3 - if a file path is specified, it must be a ``str`` instance
             assert isinstance(filename_or_fileobject, str) or hasattr(filename_or_fileobject, "read"), "Given audio file must be a filename string or a file-like object"
         self.filename_or_fileobject = filename_or_fileobject
         self.stream = None
@@ -420,7 +420,7 @@ class Recognizer(AudioSource):
         If ``duration`` is not specified, then it will record until there is no more audio input.
         """
         assert isinstance(source, AudioSource), "Source must be an audio source"
-        assert source.stream is not None, "Audio source must be entered before recording, see documentation for `AudioSource`; are you using `source` outside of a `with` statement?"
+        assert source.stream is not None, "Audio source must be entered before recording, see documentation for ``AudioSource``; are you using ``source`` outside of a ``with`` statement?"
 
         frames = io.BytesIO()
         seconds_per_buffer = (source.CHUNK + 0.0) / source.SAMPLE_RATE
@@ -455,7 +455,7 @@ class Recognizer(AudioSource):
         The ``duration`` parameter is the maximum number of seconds that it will dynamically adjust the threshold for before returning. This value should be at least 0.5 in order to get a representative sample of the ambient noise.
         """
         assert isinstance(source, AudioSource), "Source must be an audio source"
-        assert source.stream is not None, "Audio source must be entered before adjusting, see documentation for `AudioSource`; are you using `source` outside of a `with` statement?"
+        assert source.stream is not None, "Audio source must be entered before adjusting, see documentation for ``AudioSource``; are you using ``source`` outside of a ``with`` statement?"
         assert self.pause_threshold >= self.non_speaking_duration >= 0
 
         seconds_per_buffer = (source.CHUNK + 0.0) / source.SAMPLE_RATE
@@ -486,7 +486,7 @@ class Recognizer(AudioSource):
         This operation will always complete within ``timeout + phrase_timeout`` seconds if both are numbers, either by returning the audio data, or by raising an exception.
         """
         assert isinstance(source, AudioSource), "Source must be an audio source"
-        assert source.stream is not None, "Audio source must be entered before listening, see documentation for `AudioSource`; are you using `source` outside of a `with` statement?"
+        assert source.stream is not None, "Audio source must be entered before listening, see documentation for ``AudioSource``; are you using ``source`` outside of a ``with`` statement?"
         assert self.pause_threshold >= self.non_speaking_duration >= 0
 
         seconds_per_buffer = (source.CHUNK + 0.0) / source.SAMPLE_RATE
@@ -597,9 +597,9 @@ class Recognizer(AudioSource):
 
         Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if there are any issues with the Sphinx installation.
         """
-        assert isinstance(audio_data, AudioData), "`audio_data` must be audio data"
-        assert isinstance(language, str), "`language` must be a string"
-        assert keyword_entries is None or all(isinstance(keyword, str) and 0 <= sensitivity <= 1 for keyword, sensitivity in keyword_entries), "`keyword_entries` must be `None` or a list of pairs of strings and numbers between 0 and 1"
+        assert isinstance(audio_data, AudioData), "``audio_data`` must be audio data"
+        assert isinstance(language, str), "``language`` must be a string"
+        assert keyword_entries is None or all(isinstance(keyword, str) and 0 <= sensitivity <= 1 for keyword, sensitivity in keyword_entries), "``keyword_entries`` must be ``None`` or a list of pairs of strings and numbers between 0 and 1"
 
         # import the PocketSphinx speech recognition module
         try:
@@ -674,9 +674,9 @@ class Recognizer(AudioSource):
 
         Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
         """
-        assert isinstance(audio_data, AudioData), "`audio_data` must be audio data"
-        assert key is None or isinstance(key, str), "`key` must be `None` or a string"
-        assert isinstance(language, str), "`language` must be a string"
+        assert isinstance(audio_data, AudioData), "``audio_data`` must be audio data"
+        assert key is None or isinstance(key, str), "``key`` must be ``None`` or a string"
+        assert isinstance(language, str), "``language`` must be a string"
 
         flac_data = audio_data.get_flac_data(
             convert_rate = None if audio_data.sample_rate >= 8000 else 8000, # audio samples must be at least 8 kHz
@@ -731,7 +731,7 @@ class Recognizer(AudioSource):
         Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
         """
         assert isinstance(audio_data, AudioData), "Data must be audio data"
-        assert isinstance(key, str), "`key` must be a string"
+        assert isinstance(key, str), "``key`` must be a string"
 
         wav_data = audio_data.get_wav_data(
             convert_rate = None if audio_data.sample_rate >= 8000 else 8000, # audio samples must be at least 8 kHz
@@ -768,8 +768,8 @@ class Recognizer(AudioSource):
         Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
         """
         assert isinstance(audio_data, AudioData), "Data must be audio data"
-        assert isinstance(key, str), "`key` must be a string"
-        assert isinstance(language, str), "`language` must be a string"
+        assert isinstance(key, str), "``key`` must be a string"
+        assert isinstance(language, str), "``language`` must be a string"
 
         access_token, expire_time = getattr(self, "bing_cached_access_token", None), getattr(self, "bing_cached_access_token_expiry", None)
         allow_caching = True
@@ -856,8 +856,8 @@ class Recognizer(AudioSource):
         Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
         """
         assert isinstance(audio_data, AudioData), "Data must be audio data"
-        assert isinstance(client_id, str), "`client_id` must be a string"
-        assert isinstance(client_key, str), "`client_key` must be a string"
+        assert isinstance(client_id, str), "``client_id`` must be a string"
+        assert isinstance(client_key, str), "``client_key`` must be a string"
 
         wav_data = audio_data.get_wav_data(
             convert_rate = None if audio_data.sample_rate in [8000, 16000] else 16000, # audio samples must be 8 kHz or 16 kHz
@@ -907,8 +907,8 @@ class Recognizer(AudioSource):
         Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
         """
         assert isinstance(audio_data, AudioData), "Data must be audio data"
-        assert isinstance(username, str), "`username` must be a string"
-        assert isinstance(password, str), "`password` must be a string"
+        assert isinstance(username, str), "``username`` must be a string"
+        assert isinstance(password, str), "``password`` must be a string"
 
         flac_data = audio_data.get_flac_data(
             convert_rate = None if audio_data.sample_rate >= 16000 else 16000, # audio samples should be at least 16 kHz
