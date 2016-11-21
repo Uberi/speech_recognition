@@ -50,15 +50,6 @@ except sr.UnknownValueError:
 except sr.RequestError as e:
     print("Could not request results from Microsoft Bing Voice Recognition service; {0}".format(e))
 
-# recognize speech using api.ai
-API_AI_CLIENT_ACCESS_TOKEN = "INSERT API.AI API KEY HERE" # api.ai keys are 32-character lowercase hexadecimal strings
-try:
-    print("api.ai thinks you said " + r.recognize_api(audio, client_access_token=API_AI_CLIENT_ACCESS_TOKEN))
-except sr.UnknownValueError:
-    print("api.ai could not understand audio")
-except sr.RequestError as e:
-    print("Could not request results from api.ai service; {0}".format(e))
-
 # recognize speech using Houndify
 HOUNDIFY_CLIENT_ID = "INSERT HOUNDIFY CLIENT ID HERE" # Houndify client IDs are Base64-encoded strings
 HOUNDIFY_CLIENT_KEY = "INSERT HOUNDIFY CLIENT KEY HERE" # Houndify client keys are Base64-encoded strings

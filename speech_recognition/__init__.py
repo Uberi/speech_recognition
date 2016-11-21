@@ -146,7 +146,7 @@ class Microphone(AudioSource):
 
 class AudioFile(AudioSource):
     """
-    Creates a new ``AudioFile`` instance given a WAV/AIFF/FLAC audio file `filename_or_fileobject`. Subclass of ``AudioSource``.
+    Creates a new ``AudioFile`` instance given a WAV/AIFF/FLAC audio file ``filename_or_fileobject``. Subclass of ``AudioSource``.
 
     If ``filename_or_fileobject`` is a string, then it is interpreted as a path to an audio file on the filesystem. Otherwise, ``filename_or_fileobject`` should be a file-like object such as ``io.BytesIO`` or similar.
 
@@ -841,70 +841,6 @@ class Recognizer(AudioSource):
         if "header" not in result or "lexical" not in result["header"]: raise UnknownValueError()
         return result["header"]["lexical"]
 
-    def recognize_api(self, audio_data, client_access_token, language = "en", session_id = None, show_all = False):
-        """
-        Perform speech recognition on ``audio_data`` (an ``AudioData`` instance), using the api.ai Speech to Text API.
-
-        The api.ai API client access token is specified by ``client_access_token``. Unfortunately, this is not available without `signing up for an account <https://console.api.ai/api-client/#/signup>`__ and creating an api.ai agent. To get the API client access token, go to the agent settings, go to the section titled "API keys", and look for "Client access token". API client access tokens are 32-character lowercase hexadecimal strings.
-
-        Although the recognition language is specified when creating the api.ai agent in the web console, it must also be provided in the ``language`` parameter as an RFC5646 language tag like ``"en"`` (US English) or ``"fr"`` (International French), defaulting to US English. A list of supported language values can be found in the `API documentation <https://api.ai/docs/reference/#languages>`__.
-
-        The ``session_id`` is an optional string of up to 36 characters used to identify the client making the requests; api.ai can make use of previous requests that used the same session ID to give more accurate results for future requests. If ``None``, sessions are not used; every query is interpreted as if it is the first one.
-
-        Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <https://api.ai/docs/reference/#a-namepost-multipost-query-multipart>`__ as a JSON dictionary.
-
-        Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
-        """
-        assert isinstance(audio_data, AudioData), "Data must be audio data"
-        assert isinstance(client_access_token, str), "`username` must be a string"
-        assert isinstance(language, str), "`language` must be a string"
-        assert session_id is None or (isinstance(session_id, str) and len(session_id) <= 36), "`session_id` must be a string of up to 36 characters"
-
-        wav_data = audio_data.get_wav_data(convert_rate = 16000, convert_width = 2) # audio must be 16-bit mono 16 kHz
-        url = "https://api.api.ai/v1/query"
-
-        # pick a good multipart boundary; one that is guaranteed not to be in the text
-        while True:
-            boundary = uuid.uuid4().hex # generate a random boundary
-            if boundary.encode("utf-8") not in wav_data:
-                break
-
-        if session_id is None: session_id = uuid.uuid4().hex
-        data = (
-            b"--" + boundary.encode("utf-8") + b"\r\n" +
-            b"Content-Disposition: form-data; name=\"request\"\r\n" +
-            b"Content-Type: application/json\r\n" +
-            b"\r\n" +
-            b"{\"v\": \"20150910\", \"sessionId\": \"" + session_id.encode("utf-8") + b"\", \"lang\": \"" + language.encode("utf-8") + b"\"}\r\n" +
-            b"--" + boundary.encode("utf-8") + b"\r\n" +
-            b"Content-Disposition: form-data; name=\"voiceData\"; filename=\"audio.wav\"\r\n" +
-            b"Content-Type: audio/wav\r\n" +
-            b"\r\n" +
-            wav_data + b"\r\n" +
-            b"--" + boundary.encode("utf-8") + b"--\r\n"
-        )
-
-        request = Request(url, data = data, headers = {
-            "Authorization": "Bearer {0}".format(client_access_token),
-            "Content-Length": str(len(data)),
-            "Expect": "100-continue",
-            "Content-Type": "multipart/form-data; boundary={0}".format(boundary)
-        })
-        try:
-            response = urlopen(request, timeout=self.operation_timeout)
-        except HTTPError as e:
-            raise RequestError("recognition request failed: {0}".format(getattr(e, "reason", "status {0}".format(e.code)))) # use getattr to be compatible with Python 2.6
-        except URLError as e:
-            raise RequestError("recognition connection failed: {0}".format(e.reason))
-        response_text = response.read().decode("utf-8")
-        result = json.loads(response_text)
-
-        # return results
-        if show_all: return result
-        if "status" not in result or "errorType" not in result["status"] or result["status"]["errorType"] != "success":
-            raise UnknownValueError()
-        return result["result"]["resolvedQuery"]
-
     def recognize_houndify(self, audio_data, client_id, client_key, show_all = False):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Houndify API.
@@ -962,11 +898,11 @@ class Recognizer(AudioSource):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the IBM Speech to Text API.
 
-        The IBM Speech to Text username and password are specified by ``username`` and ``password``, respectively. Unfortunately, these are not available without `signing up for an account <https://console.ng.bluemix.net/registration/>`__. Once logged into the Bluemix console, follow the instructions for `creating an IBM Watson service instance <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/doc/getting_started/gs-credentials.shtml>`__, where the Watson service is "Speech To Text". IBM Speech to Text usernames are strings of the form XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX, while passwords are mixed-case alphanumeric strings.
+        The IBM Speech to Text username and password are specified by ``username`` and ``password``, respectively. Unfortunately, these are not available without `signing up for an account <https://console.ng.bluemix.net/registration/>`__. Once logged into the Bluemix console, follow the instructions for `creating an IBM Watson service instance <https://www.ibm.com/watson/developercloud/doc/getting_started/gs-credentials.shtml>`__, where the Watson service is "Speech To Text". IBM Speech to Text usernames are strings of the form XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX, while passwords are mixed-case alphanumeric strings.
 
-        The recognition language is determined by ``language``, an RFC5646 language tag with a dialect like ``"en-US"`` (US English) or ``"zh-CN"`` (Mandarin Chinese), defaulting to US English. The supported language values are listed under the ``model`` parameter of the `audio recognition API documentation <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text/api/v1/#recognize_audio_sessionless12>`__, in the form ``LANGUAGE_BroadbandModel``, where ``LANGUAGE`` is the language value.
+        The recognition language is determined by ``language``, an RFC5646 language tag with a dialect like ``"en-US"`` (US English) or ``"zh-CN"`` (Mandarin Chinese), defaulting to US English. The supported language values are listed under the ``model`` parameter of the `audio recognition API documentation <https://www.ibm.com/watson/developercloud/speech-to-text/api/v1/#sessionless_methods>`__, in the form ``LANGUAGE_BroadbandModel``, where ``LANGUAGE`` is the language value.
 
-        Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text/api/v1/#recognize_audio_sessionless12>`__ as a JSON dictionary.
+        Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <https://www.ibm.com/watson/developercloud/speech-to-text/api/v1/#sessionless_methods>`__ as a JSON dictionary.
 
         Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
         """
@@ -1016,19 +952,17 @@ class Recognizer(AudioSource):
         return "\n".join(transcription)
 
 def get_flac_converter():
-    """determine which FLAC converter executable to use"""
+    """Returns the absolute path of a FLAC converter executable, or raises an OSError if none can be found."""
     flac_converter = shutil_which("flac") # check for installed version first
     if flac_converter is None: # flac utility is not installed
-        compatible_machine_types = "i686 i786 x86 x86_64 AMD64".split() # whitelist of machine types our bundled binaries are compatible with
-        flac_converters = {"Windows": "flac-win32.exe",
-                           "Linux": "flac-linux-x86",
-                           "Darwin": "flac-mac"}
+        compatible_machine_types = ["i686", "i786", "x86", "x86_64", "AMD64"] # whitelist of machine types our bundled binaries are compatible with
+        flac_converters = {"Windows": "flac-win32.exe", "Linux": "flac-linux-x86", "Darwin": "flac-mac"}
         flac_converter = flac_converters.get(platform.system(), None)
-        if flac_converter and platform.machine() in compatible_machine_types:
-            path = os.path.dirname(os.path.abspath(__file__)) # directory of the current module file, where all the FLAC bundled binaries are stored
-            flac_converter = os.path.join(path, flac_converter)
+        if flac_converter is not None and platform.machine() in compatible_machine_types:
+            base_path = os.path.dirname(os.path.abspath(__file__)) # directory of the current module file, where all the FLAC bundled binaries are stored
+            flac_converter = os.path.join(base_path, flac_converter)
         else:
-            raise OSError("FLAC conversion utility not available - consider installing the FLAC command line application using `brew install flac` or your operating system's equivalent")
+            raise OSError("FLAC conversion utility not available - consider installing the FLAC command line application by running `apt-get install flac` or your operating system's equivalent")
 
     # mark FLAC converter as executable if possible
     try:
@@ -1078,3 +1012,22 @@ def recognize_att(self, audio_data, app_key, app_secret, language = "en-US", sho
         if entry.get("Grade") == "accept" and "ResultText" in entry: return entry["ResultText"]
         raise UnknownValueError() # no transcriptions available
 Recognizer.recognize_att = classmethod(recognize_att) # AT&T API is deprecated and shutting down as of 3.4.0
+def recognize_api(self, audio_data, client_access_token, language = "en", session_id = None, show_all = False):
+    wav_data = audio_data.get_wav_data(convert_rate = 16000, convert_width = 2) # audio must be 16-bit mono 16 kHz
+    url = "https://api.api.ai/v1/query"
+    while True:
+        boundary = uuid.uuid4().hex # generate a random boundary
+        if boundary.encode("utf-8") not in wav_data: break
+    if session_id is None: session_id = uuid.uuid4().hex
+    data = b"--" + boundary.encode("utf-8") + b"\r\n" + b"Content-Disposition: form-data; name=\"request\"\r\n" + b"Content-Type: application/json\r\n" + b"\r\n" + b"{\"v\": \"20150910\", \"sessionId\": \"" + session_id.encode("utf-8") + b"\", \"lang\": \"" + language.encode("utf-8") + b"\"}\r\n" + b"--" + boundary.encode("utf-8") + b"\r\n" + b"Content-Disposition: form-data; name=\"voiceData\"; filename=\"audio.wav\"\r\n" + b"Content-Type: audio/wav\r\n" + b"\r\n" + wav_data + b"\r\n" + b"--" + boundary.encode("utf-8") + b"--\r\n"
+    request = Request(url, data = data, headers = {"Authorization": "Bearer {0}".format(client_access_token), "Content-Length": str(len(data)), "Expect": "100-continue", "Content-Type": "multipart/form-data; boundary={0}".format(boundary)})
+    try: response = urlopen(request, timeout=10)
+    except HTTPError as e: raise RequestError("recognition request failed: {0}".format(getattr(e, "reason", "status {0}".format(e.code))))
+    except URLError as e: raise RequestError("recognition connection failed: {0}".format(e.reason))
+    response_text = response.read().decode("utf-8")
+    result = json.loads(response_text)
+    if show_all: return result
+    if "status" not in result or "errorType" not in result["status"] or result["status"]["errorType"] != "success":
+        raise UnknownValueError()
+    return result["result"]["resolvedQuery"]
+Recognizer.recognize_api = classmethod(recognize_api) # API.AI Speech Recognition is deprecated/not recommended as of 3.5.0, and currently is only optionally available for paid plans
