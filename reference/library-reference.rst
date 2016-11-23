@@ -177,7 +177,7 @@ Phrase recognition uses the exact same mechanism as ``recognizer_instance.listen
 The ``callback`` parameter is a function that should accept two parameters - the ``recognizer_instance``, and an ``AudioData`` instance representing the captured audio. Note that ``callback`` function will be called from a non-main thread.
 
 ``recognizer_instance.recognize_sphinx(audio_data, language = "en-US", keyword_entries = None, show_all = False)``
-------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------
 
 Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using CMU Sphinx.
 
