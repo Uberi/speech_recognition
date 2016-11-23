@@ -665,7 +665,7 @@ class Recognizer(AudioSource):
                 # generate a keywords file - Sphinx documentation recommendeds sensitivities between 1e-50 and 1e-5
                 keywords_path = os.path.join(temp_directory, "keyphrases.txt")
                 with open(keywords_path, "w") as f:
-                    f.writelines("{} /1e{}/\n".format(keyword, 45 * sensitivity - 50) for keyword, sensitivity in keyword_entries)
+                    f.writelines("{} /1e{}/\n".format(keyword, 100 * sensitivity - 110) for keyword, sensitivity in keyword_entries)
 
                 # perform the speech recognition with the keywords file (this is inside the context manager so the file isn;t deleted until we're done)
                 decoder.set_kws("keywords", keywords_path)
@@ -741,7 +741,7 @@ class Recognizer(AudioSource):
                 return entry["transcript"]
         raise UnknownValueError()  # no transcriptions available
 
-    def recognize_google_cloud(self, audio_data, language="en-US", filter_profanity=False, speech_context=None, show_all=False):
+    def recognize_google_cloud(self, audio_data, language="en-US", preferred_phrases=None, show_all=False):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Google Cloud Speech API.
 
@@ -749,47 +749,28 @@ class Recognizer(AudioSource):
 
         The recognition language is determined by ``language``, which is a BCP-47 language tag like ``"en-US"`` (US English). For more information see the `RecognitionConfig documentation <https://cloud.google.com/speech/reference/rest/v1beta1/RecognitionConfig>`__.
 
-        By default profanity will not be filtered. To filter it set ``filter_profanity`` to True.
-
-        To provide words and phrases likely to be used in the context specify a list of those words and phrases as ``speech_context``. See `Usage Limits <https://cloud.google.com/speech/limits#content>`__ for limitations.
+        If ``preferred_phrases`` is a list of phrase strings, those given phrases will be more likely to be recognized over similar-sounding alternatives. This is useful for things like keyword/command recognition or adding new phrases that aren't in Google's vocabulary. Note that the API imposes certain `restrictions on the list of phrase strings <https://cloud.google.com/speech/limits#content>`__.
 
         Returns the most likely transcription if ``show_all`` is False (the default). Otherwise, returns the raw API response as a JSON dictionary.
 
         Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the credentials aren't valid, or if there is no Internet connection.
         """
-        if speech_context is None:
-            speech_context = []
-
         assert isinstance(audio_data, AudioData), "`audio_data` must be audio data"
         assert isinstance(language, str), "`language` must be a string"
-        assert isinstance(filter_profanity, bool), "`filter_profanity` must be a bool"
-        assert isinstance(speech_context, list), "`speech_context` must be a list"
+        assert preferred_phrases is None or all(isinstance(preferred_phrases, str) for preferred_phrases in preferred_phrases), "`preferred_phrases` must be a list of strings"
 
         # See https://cloud.google.com/speech/reference/rest/v1beta1/RecognitionConfig
         flac_data = audio_data.get_flac_data(
-            # Audio samples must be at least 8 kHz and at most 48 kHz. Do not
-            # convert if in the range; if outside of it convert to clamped to
-            # that range.
-            convert_rate=None if 8000 <= audio_data.sample_rate <= 48000
-            else max(8000, min(audio_data.sample_rate, 48000)),
+            convert_rate=None if 8000 <= audio_data.sample_rate <= 48000 else max(8000, min(audio_data.sample_rate, 48000)),  # audio sample rate must be between 8 kHz and 48 kHz inclusive - clamp sample rate into this range
             convert_width=2  # audio samples must be 16-bit
         )
 
         speech_service = self.get_speech_service()
-        request = speech_service.speech().syncrecognize(body={
-            "audio": {
-                "content": base64.b64encode(flac_data).decode("utf8"),
-            },
-            "config": {
-                "encoding": "FLAC",
-                "sampleRate": audio_data.sample_rate,
-                "languageCode": language,
-                "profanityFilter": filter_profanity,
-                "speechContext": {
-                    "phrases": speech_context,
-                },
-            },
-        })
+        if preferred_phrases is None:
+            speech_config = {"encoding": "FLAC", "sampleRate": audio_data.sample_rate, "languageCode": language}
+        else:
+            speech_config = {"encoding": "FLAC", "sampleRate": audio_data.sample_rate, "languageCode": language, "speechContext": {"phrases": preferred_phrases}}
+        request = speech_service.speech().syncrecognize(body={"audio": {"content": base64.b64encode(flac_data).decode("utf8")}, "config": speech_config})
 
         import googleapiclient.errors
         try:
@@ -799,15 +780,11 @@ class Recognizer(AudioSource):
         except URLError as e:
             raise RequestError("recognition connection failed: {0}".format(e.reason))
 
-        if show_all:
-            return response
-
-        if "results" not in response or len(response["results"]) == 0:
-            raise UnknownValueError()
-
+        if show_all: return response
+        if "results" not in response or len(response["results"]) == 0: raise UnknownValueError()
         transcript = ""
         for result in response["results"]:
-            transcript += result['alternatives'][0]["transcript"].strip() + " "
+            transcript += result["alternatives"][0]["transcript"].strip() + " "
 
         return transcript
 
@@ -1059,7 +1036,7 @@ def get_flac_converter():
     """Returns the absolute path of a FLAC converter executable, or raises an OSError if none can be found."""
     flac_converter = shutil_which("flac")  # check for installed version first
     if flac_converter is None:  # flac utility is not installed
-        compatible_machine_types = ["i686", "i786", "x86", "x86_64", "AMD64"]  # whitelist of machine types our bundled binaries are compatible with
+        compatible_machine_types = {"i686", "i786", "x86", "x86_64", "AMD64"}  # whitelist of machine types our bundled binaries are compatible with
         flac_converters = {"Windows": "flac-win32.exe", "Linux": "flac-linux-x86", "Darwin": "flac-mac"}
         flac_converter = flac_converters.get(platform.system(), None)
         if flac_converter is not None and platform.machine() in compatible_machine_types:
