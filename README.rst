@@ -156,7 +156,7 @@ The included ``flac-linux-x86`` executable is built from the `FLAC 1.3.1 source 
 
 The resulting executable can then be found at ``./flac-1.3.1/src/flac`` relative to the working directory. A copy of the source code can also be found at ``third-party/flac-1.3.1.tar.xz``. The build should be bit-for-bit reproducible.
 
-The included ``flac-mac`` executable is extracted from `xACT 2.37 <http://xact.scottcbrown.org/>`__, which is a frontend for FLAC that conveniently includes binaries for all of its encoders. Specifically, it is a copy of ``xACT 2.37/xACT.app/Contents/Resources/flac`` in ``xACT2.37.zip``.
+The included ``flac-mac`` executable is extracted from `xACT 2.38 <http://xact.scottcbrown.org/>`__, which is a frontend for FLAC that conveniently includes binaries for all of its encoders. Specifically, it is a copy of ``xACT 2.38/xACT.app/Contents/Resources/flac`` in ``xACT2.38.zip``.
 
 Monotonic for Python 2 (for faster operations in some functions on Python 2)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -263,6 +263,8 @@ To hack on this library, first make sure you have all the requirements listed in
 
 To install/reinstall the library locally, run ``python setup.py install`` in the project `root directory <https://github.com/Uberi/speech_recognition>`__.
 
+Before a release, version tags are created using ``git config --global user.signingkey DB45F6C431DE7C2DCD99FF7904882258A4063489 && git tag -s VERSION_GOES_HERE -m VERSION_GOES_HERE``.
+
 Releases are done by running either ``build.sh`` or ``build.bat``. These are bash and batch scripts, respectively, that automatically build Python source packages and `Python Wheels <http://pythonwheels.com/>`__, then upload them to PyPI.
 
 Features and bugfixes should be tested, at minimum, on Python 2.7 and a recent version of Python 3. It is highly recommended to test new features on Python 2.6, 2.7, 3.3, and the latest version of Python 3.
@@ -287,11 +289,11 @@ Please report bugs and suggestions at the `issue tracker <https://github.com/Ube
 
 How to cite this library (APA style):
 
-    Zhang, A. (2016). Speech Recognition (Version 3.4) [Software]. Available from https://github.com/Uberi/speech_recognition#readme.
+    Zhang, A. (2016). Speech Recognition (Version 3.5) [Software]. Available from https://github.com/Uberi/speech_recognition#readme.
 
 How to cite this library (Chicago style):
 
-    Zhang, Anthony. 2016. *Speech Recognition* (version 3.4).
+    Zhang, Anthony. 2016. *Speech Recognition* (version 3.5).
 
 Also check out the `Python Baidu Yuyin API <https://github.com/DelightRun/PyBaiduYuyin>`__, which is based on an older version of this project, and adds support for `Baidu Yuyin <http://yuyin.baidu.com/>`__. Note that Baidu Yuyin is only available inside China.
 
