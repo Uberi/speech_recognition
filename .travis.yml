@@ -8,6 +8,7 @@ addons:
   apt:
     packages:
     - swig
+    - libpulse-dev
 install:
   - pip install pocketsphinx monotonic
   - pip install flake8 rstcheck
