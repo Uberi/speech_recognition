@@ -19,6 +19,7 @@ except ImportError: # use the Python 3 modules
     from urllib.parse import urlencode
     from urllib.request import Request, urlopen
     from urllib.error import URLError, HTTPError
+    import requests # use the Python 3 module
 
 # define exceptions
 class WaitTimeoutError(Exception): pass
@@ -1035,7 +1036,76 @@ class Recognizer(AudioSource):
                 if "transcript" in hypothesis:
                     transcription.append(hypothesis["transcript"])
         return "\n".join(transcription)
+		
+		
+    def recognize_baidu(self, audio_data, *, language = "zh", key = None, secret_key = None, show_all = False):
+        """
+        Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Baidu Speech Recognition API.
 
+        The Baidu Speech Recognition API key is specified by ``key``. If not specified, it uses a generic key that works out of the box. This should generally be used for personal or testing purposes only, as it **may be revoked by Baidu at any time**.
+
+        Baidu speech recognition interface supports POST mode. 
+		1.The API only supports speech recognition of entire segment of voice, you need to upload the entire segment of speech recognition.
+		2.There are two ways of voice data uploading: implicit and display. 
+		3.The original voice recording format only supports the evaluation of 8k/16k sampling rate, 16bit bit deep and single channel voice currently.
+        4.Compressed format support: PCM (no compression), WAV, opus, Speex, AMR, x-flac
+        5.System support languages: Chinese (zh), Cantonese (ct), English (en)
+        6.Address: http://vop.baidu.com/server_api
+
+        Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the raw API response as a JSON dictionary.
+
+        Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the key isn't valid, the quota for the key is maxed out, or there is no internet connection.
+        """
+        assert isinstance(audio_data, AudioData), "`audio_data` must be audio data"
+        assert key is None or isinstance(key, str), "`key` must be `None` or a string"
+        assert secret_key is None or isinstance(secret_key, str), "`secret_key` must be `None` or a string"
+        # Using personal default keys of baidu asr api
+        if key is None: key = "QrhsINLcc3Io6w048Ia8kcjS"
+        if secret_key is None: secret_key = "e414b3ccb7d51fef12f297ffea9ec41d"
+        access_token = get_token_baidu(key, secret_key)
+        mac_address = uuid.UUID(int=uuid.getnode()).hex[-12:]
+		
+        flac_data, sample_rate = audio_data.get_flac_data(), audio_data.sample_rate
+
+        url_post_base = "http://vop.baidu.com/server_api"
+        data = {
+                "format": "x-flac",
+                "lan": language,
+                "token": access_token,
+                "len": len(flac_data),
+                "rate": sample_rate,
+                "speech": base64.b64encode(flac_data).decode('UTF-8'),
+                "cuid": mac_address,
+                "channel": 1,
+                }
+        json_data = json.dumps(data).encode('UTF-8')
+        headers = {"Content-Type": "application/json", "Content-Length": len(json_data)}
+        # Obtain audio transcription results
+        try:
+            response = requests.post(url_post_base, data=json.dumps(data), headers=headers)
+        except HTTPError as e:
+            raise RequestError("recognition request failed: {0}".format(getattr(e, "reason", "status {0}".format(e.code)))) 
+        except URLError as e:
+            raise RequestError("recognition connection failed: {0}".format(getattr(e, "reason", "status {0}".format(e.code))))
+			
+        if int(response.json()['err_no']) != 0:
+            return 'err_msg'
+        else:
+            results = response.json()['result'][0].split("，")
+            for item in results:
+                if item != "":
+                    return item
+            return 'err_msg'			
+
+# Get token from baidu
+def get_token_baidu(app_key, secret_key):
+	url_get_base = "https://openapi.baidu.com/oauth/2.0/token"
+	url = url_get_base + "?grant_type=client_credentials" + "&client_id=" + app_key + "&client_secret=" + secret_key
+	response = urlopen(url)
+	response_text = response.read().decode('UTF-8')
+	json_result = json.loads(response_text)
+	return json_result['access_token']
+	
 def get_flac_converter():
     """Returns the absolute path of a FLAC converter executable, or raises an OSError if none can be found."""
     flac_converter = shutil_which("flac") # check for installed version first
