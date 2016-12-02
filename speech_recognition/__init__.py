@@ -737,9 +737,11 @@ class Recognizer(AudioSource):
         # return results
         if show_all: return actual_result
         if "alternative" not in actual_result: raise UnknownValueError()
-        alternatives = actual_result["alternative"]
         # return alternative with highest confidence score
-        return sorted(alternatives, key=itemgetter("confidence"))[-1]
+        ordered_alternatives = sorted(
+            actual_result["alternative"], key=itemgetter("confidence")
+        )
+        return ordered_alternatives[-1]["transcript"]
 
     def recognize_google_cloud(self, audio_data, language="en-US", preferred_phrases=None, show_all=False):
         """
