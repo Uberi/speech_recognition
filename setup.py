@@ -35,6 +35,7 @@ class InstallWithExtraSteps(install):
                     stat.S_IROTH | stat.S_IXOTH  # everyone else can read/execute
                 )
 
+
 setup(
     name="SpeechRecognition",
     version=speech_recognition.__version__,
