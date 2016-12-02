@@ -17,7 +17,7 @@ class TestRecognition(unittest.TestCase):
     def test_google(self):
         r = sr.Recognizer()
         with sr.AudioFile(self.AUDIO_FILE_EN) as source: audio = r.record(source)
-        self.assertEqual(r.recognize_google(audio), "one two three")
+        self.assertEqual(r.recognize_google(audio), "one-two-three")
 
     @unittest.skipUnless("WIT_AI_KEY" in os.environ, "requires Wit.ai key to be specified in WIT_AI_KEY environment variable")
     def test_wit(self):

@@ -21,7 +21,6 @@ import time
 import uuid
 import tempfile
 import shutil
-from operator import itemgetter
 
 __author__ = "Anthony Zhang (Uberi)"
 __version__ = "3.5.0"
@@ -736,12 +735,12 @@ class Recognizer(AudioSource):
 
         # return results
         if show_all: return actual_result
-        if "alternative" not in actual_result: raise UnknownValueError()
+        if len(actual_result.get("alternative", [])) == 0: raise UnknownValueError()
+
         # return alternative with highest confidence score
-        ordered_alternatives = sorted(
-            actual_result["alternative"], key=itemgetter("confidence")
-        )
-        return ordered_alternatives[-1]["transcript"]
+        best_hypothesis = max(actual_result["alternative"], key=lambda alternative: alternative["confidence"])
+        if "transcript" not in best_hypothesis: raise UnknownValueError()
+        return best_hypothesis["transcript"]
 
     def recognize_google_cloud(self, audio_data, language="en-US", preferred_phrases=None, show_all=False):
         """
