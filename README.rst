@@ -138,39 +138,7 @@ FLAC (for some systems)
 
 A `FLAC encoder <https://xiph.org/flac/>`__ is required to encode the audio data to send to the API. If using Windows (x86 or x86-64), OS X (Intel Macs only, OS X 10.6 or higher), or Linux (x86 or x86-64), this is **already bundled with this library - you do not need to install anything**.
 
-Otherwise, ensure that you have the ``flac`` command line tool, which is often available through the system package manager.
-
-The included ``flac-win32`` executable is the `official FLAC 1.3.1 32-bit Windows binary <http://downloads.xiph.org/releases/flac/flac-1.3.1-win.zip>`__.
-
-The included ``flac-linux-x86`` and ``flac-linux-x86_64`` executables are built from the `FLAC 1.3.1 source code <http://downloads.xiph.org/releases/flac/flac-1.3.1.tar.xz>`__ with `Manylinux <https://github.com/pypa/manylinux>`__ to ensure that it's compatible with a wide variety of distributions. The exact commands used inside the project directory are:
-
-.. code:: bash
-
-    # download and extract the FLAC source code
-    cd third-party
-    sudo apt-get install --yes docker.io
-
-    # build FLAC inside the Manylinux i686 Docker image
-    tar xf flac-1.3.1.tar.xz
-    sudo docker run --tty --interactive --rm --volume "$(pwd):/root" quay.io/pypa/manylinux1_i686:latest bash
-        cd /root/flac-1.3.1
-        ./configure LDFLAGS=-static # compiler flags to make a static build
-        make
-    exit
-    cp flac-1.3.1/src/flac/flac flac-linux-x86 && sudo rm -rf flac-1.3.1/
-
-    # build FLAC inside the Manylinux x86_64 Docker image
-    tar xf flac-1.3.1.tar.xz
-    sudo docker run --tty --interactive --rm --volume "$(pwd):/root" quay.io/pypa/manylinux1_x86_64:latest bash
-        cd /root/flac-1.3.1
-        ./configure LDFLAGS=-static # compiler flags to make a static build
-        make
-    exit
-    cp flac-1.3.1/src/flac/flac flac-linux-x86_64 && sudo rm -r flac-1.3.1/
-
-The resulting executable can then be found at ``./flac-1.3.1/src/flac`` relative to the working directory. A copy of the source code can also be found at ``third-party/flac-1.3.1.tar.xz``. The build should be bit-for-bit reproducible.
-
-The included ``flac-mac`` executable is extracted from `xACT 2.38 <http://xact.scottcbrown.org/>`__, which is a frontend for FLAC that conveniently includes binaries for all of its encoders. Specifically, it is a copy of ``xACT 2.38/xACT.app/Contents/Resources/flac`` in ``xACT2.38.zip``.
+Otherwise, ensure that you have the ``flac`` command line tool, which is often available through the system package manager. For example, this would usually be ``sudo apt-get install flac`` on Debian-derivatives, or ``brew install flac`` on OS X with Homebrew.
 
 Monotonic for Python 2 (for faster operations in some functions on Python 2)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -281,9 +249,15 @@ Before a release, version tags are created using ``git config --global user.sign
 
 Releases are done by running either ``build.sh`` or ``build.bat``. These are bash and batch scripts, respectively, that automatically build Python source packages and `Python Wheels <http://pythonwheels.com/>`__, then upload them to PyPI.
 
-Features and bugfixes should be tested, at minimum, on Python 2.7 and a recent version of Python 3. It is highly recommended to test new features on Python 2.6, 2.7, 3.3, and the latest version of Python 3.
+### Testing
 
-Testing in the official repository is done using TravisCI. To set up the environment for offline/local Travis-like testing:
+To run all the tests:
+
+.. code:: bash
+
+    python -m unittest discover
+
+Testing is also done automatically by TravisCI. To set up the environment for offline/local Travis-like testing on a Debian-like system:
 
 .. code:: bash
 
@@ -294,6 +268,40 @@ Testing in the official repository is done using TravisCI. To set up the environ
     python -m unittest discover --verbose # run unit tests
     flake8 --ignore=E501,E701 speech_recognition # ignore errors for long lines and multi-statement lines
     rstcheck README.rst reference/*.rst # ensure RST is well-formed
+
+### FLAC Executables
+
+The included ``flac-win32`` executable is the `official FLAC 1.3.1 32-bit Windows binary <http://downloads.xiph.org/releases/flac/flac-1.3.1-win.zip>`__.
+
+The included ``flac-linux-x86`` and ``flac-linux-x86_64`` executables are built from the `FLAC 1.3.1 source code <http://downloads.xiph.org/releases/flac/flac-1.3.1.tar.xz>`__ with `Manylinux <https://github.com/pypa/manylinux>`__ to ensure that it's compatible with a wide variety of distributions.
+
+The built FLAC executables should be bit-for-bit reproducible. To rebuild them, run the following inside the project directory on a Debian-like system:
+
+.. code:: bash
+
+    # download and extract the FLAC source code
+    cd third-party
+    sudo apt-get install --yes docker.io
+
+    # build FLAC inside the Manylinux i686 Docker image
+    tar xf flac-1.3.1.tar.xz
+    sudo docker run --tty --interactive --rm --volume "$(pwd):/root" quay.io/pypa/manylinux1_i686:latest bash
+        cd /root/flac-1.3.1
+        ./configure LDFLAGS=-static # compiler flags to make a static build
+        make
+    exit
+    cp flac-1.3.1/src/flac/flac ../speech_recognition/flac-linux-x86 && sudo rm -rf flac-1.3.1/
+
+    # build FLAC inside the Manylinux x86_64 Docker image
+    tar xf flac-1.3.1.tar.xz
+    sudo docker run --tty --interactive --rm --volume "$(pwd):/root" quay.io/pypa/manylinux1_x86_64:latest bash
+        cd /root/flac-1.3.1
+        ./configure LDFLAGS=-static # compiler flags to make a static build
+        make
+    exit
+    cp flac-1.3.1/src/flac/flac ../speech_recognition/flac-linux-x86_64 && sudo rm -r flac-1.3.1/
+
+The included ``flac-mac`` executable is extracted from `xACT 2.38 <http://xact.scottcbrown.org/>`__, which is a frontend for FLAC that conveniently includes binaries for all of its encoders. Specifically, it is a copy of ``xACT 2.38/xACT.app/Contents/Resources/flac`` in ``xACT2.38.zip``.
 
 Authors
 -------
