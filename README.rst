@@ -17,6 +17,10 @@ SpeechRecognition
     :target: https://pypi.python.org/pypi/SpeechRecognition/
     :alt: License
 
+.. image:: https://img.shields.io/travis/Uberi/speech_recognition.svg
+    :target: https://travis-ci.org/Uberi/speech_recognition
+    :alt: Continuous Integration Test Results
+
 Library for performing speech recognition, with support for several engines and APIs, online and offline.
 
 Speech recognition engine/API support:
