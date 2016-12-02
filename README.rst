@@ -138,21 +138,31 @@ Otherwise, ensure that you have the ``flac`` command line tool, which is often a
 
 The included ``flac-win32`` executable is the `official FLAC 1.3.1 32-bit Windows binary <http://downloads.xiph.org/releases/flac/flac-1.3.1-win.zip>`__.
 
-The included ``flac-linux-x86`` executable is built from the `FLAC 1.3.1 source code <http://downloads.xiph.org/releases/flac/flac-1.3.1.tar.xz>`__ with `Manylinux <https://github.com/pypa/manylinux>`__ to ensure that it's compatible with a wide variety of distributions. The exact commands used are:
+The included ``flac-linux-x86`` and ``flac-linux-x86_64`` executables are built from the `FLAC 1.3.1 source code <http://downloads.xiph.org/releases/flac/flac-1.3.1.tar.xz>`__ with `Manylinux <https://github.com/pypa/manylinux>`__ to ensure that it's compatible with a wide variety of distributions. The exact commands used inside the project directory are:
 
 .. code:: bash
 
     # download and extract the FLAC source code
-    wget http://downloads.xiph.org/releases/flac/flac-1.3.1.tar.xz
-    tar xf flac-1.3.1.tar.xz
+    cd third-party
     sudo apt-get install --yes docker.io
-    sudo docker run --tty --interactive --rm --volume "$(pwd):/root" quay.io/pypa/manylinux1_i686:latest bash # download and start a shell inside the Manylinux environment
 
-    # we're now in a Bash shell inside the Manylinux Docker image
-    cd /root/flac-1.3.1
-    ./configure LDFLAGS=-static # compiler flags to make a static build
-    make
-    exit # return to the original shell
+    # build FLAC inside the Manylinux i686 Docker image
+    tar xf flac-1.3.1.tar.xz
+    sudo docker run --tty --interactive --rm --volume "$(pwd):/root" quay.io/pypa/manylinux1_i686:latest bash
+        cd /root/flac-1.3.1
+        ./configure LDFLAGS=-static # compiler flags to make a static build
+        make
+    exit
+    cp flac-1.3.1/src/flac/flac flac-linux-x86 && sudo rm -rf flac-1.3.1/
+
+    # build FLAC inside the Manylinux x86_64 Docker image
+    tar xf flac-1.3.1.tar.xz
+    sudo docker run --tty --interactive --rm --volume "$(pwd):/root" quay.io/pypa/manylinux1_x86_64:latest bash
+        cd /root/flac-1.3.1
+        ./configure LDFLAGS=-static # compiler flags to make a static build
+        make
+    exit
+    cp flac-1.3.1/src/flac/flac flac-linux-x86_64 && sudo rm -r flac-1.3.1/
 
 The resulting executable can then be found at ``./flac-1.3.1/src/flac`` relative to the working directory. A copy of the source code can also be found at ``third-party/flac-1.3.1.tar.xz``. The build should be bit-for-bit reproducible.
 
@@ -268,6 +278,18 @@ Before a release, version tags are created using ``git config --global user.sign
 Releases are done by running either ``build.sh`` or ``build.bat``. These are bash and batch scripts, respectively, that automatically build Python source packages and `Python Wheels <http://pythonwheels.com/>`__, then upload them to PyPI.
 
 Features and bugfixes should be tested, at minimum, on Python 2.7 and a recent version of Python 3. It is highly recommended to test new features on Python 2.6, 2.7, 3.3, and the latest version of Python 3.
+
+Testing in the official repository is done using TravisCI. To set up the environment for offline/local Travis-like testing:
+
+.. code:: bash
+
+    sudo docker run --volume "$(pwd):/speech_recognition" --interactive --tty quay.io/travisci/travis-python:latest /bin/bash
+    su - travis && cd /speech_recognition
+    sudo apt-get update && sudo apt-get install swig libpulse-dev
+    pip install --user pocketsphinx monotonic && pip install --user flake8 rstcheck && sudo pip install --user -e .
+    python -m unittest discover --verbose # run unit tests
+    flake8 --ignore=E501,E701 speech_recognition # ignore errors for long lines and multi-statement lines
+    rstcheck README.rst reference/*.rst # ensure RST is well-formed
 
 Authors
 -------

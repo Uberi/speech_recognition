@@ -1036,13 +1036,17 @@ def get_flac_converter():
     """Returns the absolute path of a FLAC converter executable, or raises an OSError if none can be found."""
     flac_converter = shutil_which("flac")  # check for installed version first
     if flac_converter is None:  # flac utility is not installed
-        compatible_machine_types = {"i686", "i786", "x86", "x86_64", "AMD64"}  # whitelist of machine types our bundled binaries are compatible with
-        flac_converters = {"Windows": "flac-win32.exe", "Linux": "flac-linux-x86", "Darwin": "flac-mac"}
-        flac_converter = flac_converters.get(platform.system(), None)
-        if flac_converter is not None and platform.machine() in compatible_machine_types:
-            base_path = os.path.dirname(os.path.abspath(__file__))  # directory of the current module file, where all the FLAC bundled binaries are stored
-            flac_converter = os.path.join(base_path, flac_converter)
-        else:
+        base_path = os.path.dirname(os.path.abspath(__file__))  # directory of the current module file, where all the FLAC bundled binaries are stored
+        system, machine = platform.system(), platform.machine()
+        if system == "Windows" and machine in {"i686", "i786", "x86", "x86_64", "AMD64"}:
+            flac_converter = os.path.join(base_path, "flac-win32.exe")
+        elif system == "Darwin" and machine in {"i686", "i786", "x86", "x86_64", "AMD64"}:
+            flac_converter = os.path.join(base_path, "flac-mac.exe")
+        elif system == "Linux" and machine in {"i686", "i786", "x86"}:
+            flac_converter = os.path.join(base_path, "flac-linux-x86")
+        elif system == "Linux" and machine in {"x86_64", "AMD64"}:
+            flac_converter = os.path.join(base_path, "flac-linux-x86_64")
+        else:  # no FLAC converter available
             raise OSError("FLAC conversion utility not available - consider installing the FLAC command line application by running `apt-get install flac` or your operating system's equivalent")
 
     # mark FLAC converter as executable if possible
