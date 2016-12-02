@@ -249,7 +249,8 @@ Before a release, version tags are created using ``git config --global user.sign
 
 Releases are done by running either ``build.sh`` or ``build.bat``. These are bash and batch scripts, respectively, that automatically build Python source packages and `Python Wheels <http://pythonwheels.com/>`__, then upload them to PyPI.
 
-### Testing
+Testing
+~~~~~~~
 
 To run all the tests:
 
@@ -269,7 +270,8 @@ Testing is also done automatically by TravisCI. To set up the environment for of
     flake8 --ignore=E501,E701 speech_recognition # ignore errors for long lines and multi-statement lines
     rstcheck README.rst reference/*.rst # ensure RST is well-formed
 
-### FLAC Executables
+FLAC Executables
+~~~~~~~~~~~~~~~~
 
 The included ``flac-win32`` executable is the `official FLAC 1.3.1 32-bit Windows binary <http://downloads.xiph.org/releases/flac/flac-1.3.1-win.zip>`__.
 
