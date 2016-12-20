@@ -1042,7 +1042,7 @@ def get_flac_converter():
         if system == "Windows" and machine in {"i686", "i786", "x86", "x86_64", "AMD64"}:
             flac_converter = os.path.join(base_path, "flac-win32.exe")
         elif system == "Darwin" and machine in {"i686", "i786", "x86", "x86_64", "AMD64"}:
-            flac_converter = os.path.join(base_path, "flac-mac.exe")
+            flac_converter = os.path.join(base_path, "flac-mac")
         elif system == "Linux" and machine in {"i686", "i786", "x86"}:
             flac_converter = os.path.join(base_path, "flac-linux-x86")
         elif system == "Linux" and machine in {"x86_64", "AMD64"}:
