@@ -154,12 +154,14 @@ To install, use `Pip <https://pip.readthedocs.org/>`__: execute ``pip install mo
 Troubleshooting
 ---------------
 
-The recognizer tries to recognize speech even when I'm not speaking.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The recognizer tries to recognize speech even when I'm not speaking, or after I'm done speaking.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Try increasing the ``recognizer_instance.energy_threshold`` property. This is basically how sensitive the recognizer is to when recognition should start. Higher values mean that it will be less sensitive, which is useful if you are in a loud room.
 
 This value depends entirely on your microphone or audio data. There is no one-size-fits-all value, but good values typically range from 50 to 4000.
+
+Also, check on your microphone volume settings. If it is too sensitive, the microphone may be picking up a lot of ambient noise. If it is too insensitive, the microphone may be rejecting speech as just noise.
 
 The recognizer can't recognize speech right after it starts listening for the first time.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -245,9 +247,9 @@ To hack on this library, first make sure you have all the requirements listed in
 
 To install/reinstall the library locally, run ``python setup.py install`` in the project `root directory <https://github.com/Uberi/speech_recognition>`__.
 
-Before a release, version tags are created using ``git config --global user.signingkey DB45F6C431DE7C2DCD99FF7904882258A4063489 && git tag -s VERSION_GOES_HERE -m VERSION_GOES_HERE``.
+Before a release, version tags are created using ``git config user.signingkey DB45F6C431DE7C2DCD99FF7904882258A4063489 && git tag -s VERSION_GOES_HERE -m "Version VERSION_GOES_HERE"``.
 
-Releases are done by running either ``build.sh`` or ``build.bat``. These are bash and batch scripts, respectively, that automatically build Python source packages and `Python Wheels <http://pythonwheels.com/>`__, then upload them to PyPI.
+Releases are done by running ``build.sh`` to build the Python source packages, sign them, and upload them to PyPI.
 
 Testing
 ~~~~~~~
@@ -256,9 +258,9 @@ To run all the tests:
 
 .. code:: bash
 
-    python -m unittest discover
+    python -m unittest discover --verbose
 
-Testing is also done automatically by TravisCI. To set up the environment for offline/local Travis-like testing on a Debian-like system:
+Testing is also done automatically by TravisCI, upon every push. To set up the environment for offline/local Travis-like testing on a Debian-like system:
 
 .. code:: bash
 
