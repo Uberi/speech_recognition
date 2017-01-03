@@ -6,8 +6,8 @@ Installing other languages
 
 By default, SpeechRecognition's Sphinx functionality supports only US English. Additional language packs are also available, but not included due to the files being too large:
 
-* `International French <https://db.tt/tVNcZXao>`__
-* `Mandarin Chinese <https://db.tt/2YQVXmEk>`__
+* `International French <https://www.dropbox.com/s/115e3mf3y21x0b8/fr-FR.zip?dl=1>`__
+* `Mandarin Chinese <https://www.dropbox.com/s/0iwx5ypp9uym66c/zh-CN.zip?dl=1>`__
 
 To install a language pack, download the ZIP archives and extract them directly into the module install directory (you can find the module install directory by running ``python -c "import speech_recognition as sr, os.path as p; print(p.dirname(sr.__file__))"``).
 
@@ -94,7 +94,7 @@ Notes on building the language data from source
 * International French: ``/speech_recognition/pocketsphinx-data/fr-FR/``:
     * ``/speech_recognition/pocketsphinx-data/fr-FR/language-model.lm.bin`` is ``fr-small.lm.bin`` from the `Sphinx French language model <http://sourceforge.net/projects/cmusphinx/files/Acoustic%20and%20Language%20Models/French%20Language%20Model/>`__.
     * ``/speech_recognition/pocketsphinx-data/fr-FR/pronounciation-dictionary.dict`` is ``fr.dict`` from the `Sphinx French language model <http://sourceforge.net/projects/cmusphinx/files/Acoustic%20and%20Language%20Models/French%20Language%20Model/>`__.
-    * ``/speech_recognition/pocketsphinx-data/fr-FR/acoustic-model/`` is extracted from ``cmusphinx-fr-5.2.tar.gz`` in the `Sphinx French acoustic model <http://sourceforge.net/projects/cmusphinx/files/Acoustic%20and%20Language%20Models/French/>`__.
+    * ``/speech_recognition/pocketsphinx-data/fr-FR/acoustic-model/`` contains all of the files extracted from ``cmusphinx-fr-5.2.tar.gz`` in the `Sphinx French acoustic model <http://sourceforge.net/projects/cmusphinx/files/Acoustic%20and%20Language%20Models/French/>`__.
     * To get better French recognition accuracy at the expense of higher disk space and RAM usage:
         1. Download ``fr.lm.gmp`` from the `Sphinx French language model <http://sourceforge.net/projects/cmusphinx/files/Acoustic%20and%20Language%20Models/French%20Language%20Model/>`__.
         2. Convert from DMP (an obselete Sphinx binary format) to ARPA format: ``sphinx_lm_convert -i fr.lm.gmp -o french.lm.bin``.
@@ -107,5 +107,13 @@ Notes on building the language data from source
         4. Convert from ARPA format to Sphinx binary format: ``sphinx_lm_convert -i chinese.lm -o chinese.lm.bin``.
         5. Replace ``/speech_recognition/pocketsphinx-data/zh-CN/language-model.lm.bin`` with ``chinese.lm.bin`` created in the previous step.
     * ``/speech_recognition/pocketsphinx-data/zh-CN/pronounciation-dictionary.dict`` is ``zh_broadcastnews_utf8.dic`` from the `Sphinx Mandarin language model <http://sourceforge.net/projects/cmusphinx/files/Acoustic%20and%20Language%20Models/Mandarin%20Language%20Model/>`__.
-    * ``/speech_recognition/pocketsphinx-data/zh-CN/acoustic-model/`` is extracted from ``zh_broadcastnews_16k_ptm256_8000.tar.bz2`` in the `Sphinx Mandarin acoustic model <http://sourceforge.net/projects/cmusphinx/files/Acoustic%20and%20Language%20Models/Mandarin%20Broadcast%20News%20acoustic%20models/>`__.
+    * ``/speech_recognition/pocketsphinx-data/zh-CN/acoustic-model/`` contains all of the files extracted from ``zh_broadcastnews_16k_ptm256_8000.tar.bz2`` in the `Sphinx Mandarin acoustic model <http://sourceforge.net/projects/cmusphinx/files/Acoustic%20and%20Language%20Models/Mandarin%20Broadcast%20News%20acoustic%20models/>`__.
     * To get better Chinese recognition accuracy at the expense of higher disk space and RAM usage, simply skip step 3 when preparing ``zh_broadcastnews_64000_utf8.DMP``.
+* Italian: ``/speech_recognition/pocketsphinx-data/it-IT/``:
+    * ``/speech_recognition/pocketsphinx-data/it-IT/language-model.lm.bin`` is generated as follows:
+        1. Download ``cmusphinx-it-5.2.tar.gz`` from the `Sphinx Italian language model <https://sourceforge.net/projects/cmusphinx/files/Acoustic%20and%20Language%20Models/Italian/>`__.
+        2. Extract ``/etc/voxforge_it_sphinx.lm`` from ``cmusphinx-it-5.2.tar.gz`` as ``italian.lm``.
+        3. Convert from ARPA format to Sphinx binary format: ``sphinx_lm_convert -i italian.lm -o italian.lm.bin``.
+        4. Replace ``/speech_recognition/pocketsphinx-data/it-IT/language-model.lm.bin`` with ``italian.lm.bin`` created in the previous step.
+    * ``/speech_recognition/pocketsphinx-data/it-IT/pronounciation-dictionary.dict`` is ``/etc/voxforge_it_sphinx.dic`` from ``cmusphinx-it-5.2.tar.gz`` (from the `Sphinx Italian language model <https://sourceforge.net/projects/cmusphinx/files/Acoustic%20and%20Language%20Models/Italian/>`__).
+    * ``/speech_recognition/pocketsphinx-data/it-IT/acoustic-model/`` contains all of the files in ``/model_parameters`` extracted from ``cmusphinx-it-5.2.tar.gz`` (from the `Sphinx Italian language model <https://sourceforge.net/projects/cmusphinx/files/Acoustic%20and%20Language%20Models/Italian/>`__).

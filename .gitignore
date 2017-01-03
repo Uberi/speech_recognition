@@ -8,3 +8,4 @@ speech_recognition/pocketsphinx-data/zh-CN/
 fr-FR.zip
 zh-CN.zip
 pocketsphinx-python/
+venv/

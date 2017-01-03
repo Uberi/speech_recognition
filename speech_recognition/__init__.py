@@ -195,12 +195,12 @@ class AudioFile(AudioSource):
             # attempt to read the file as WAV
             self.audio_reader = wave.open(self.filename_or_fileobject, "rb")
             self.little_endian = True  # RIFF WAV is a little-endian format (most ``audioop`` operations assume that the frames are stored in little-endian form)
-        except wave.Error:
+        except (wave.Error, EOFError):
             try:
                 # attempt to read the file as AIFF
                 self.audio_reader = aifc.open(self.filename_or_fileobject, "rb")
                 self.little_endian = False  # AIFF is a big-endian format
-            except aifc.Error:
+            except (aifc.Error, EOFError):
                 # attempt to read the file as FLAC
                 if hasattr(self.filename_or_fileobject, "read"):
                     flac_data = self.filename_or_fileobject.read()
@@ -219,7 +219,7 @@ class AudioFile(AudioSource):
                 aiff_file = io.BytesIO(aiff_data)
                 try:
                     self.audio_reader = aifc.open(aiff_file, "rb")
-                except aifc.Error:
+                except (aifc.Error, EOFError):
                     raise ValueError("Audio file could not be read as PCM WAV, AIFF/AIFF-C, or Native FLAC; check if file is corrupted or in another format")
                 self.little_endian = False  # AIFF is a big-endian format
         assert 1 <= self.audio_reader.getnchannels() <= 2, "Audio must be mono or stereo"
@@ -847,7 +847,7 @@ class Recognizer(AudioSource):
 
         To get the API key, go to the `Microsoft Cognitive Services subscriptions overview <https://www.microsoft.com/cognitive-services/en-us/subscriptions>`__, go to the entry titled "Speech", and look for the key under the "Keys" column. Microsoft Bing Voice Recognition API keys are 32-character lowercase hexadecimal strings.
 
-        The recognition language is determined by ``language``, an RFC5646 language tag like ``"en-US"`` (US English) or ``"fr-FR"`` (International French), defaulting to US English. A list of supported language values can be found in the `API documentation <https://www.microsoft.com/cognitive-services/en-us/speech-api/documentation/api-reference-rest/BingVoiceRecognition#user-content-4-supported-locales>`__.
+        The recognition language is determined by ``language``, an RFC5646 language tag like ``"en-US"`` (US English) or ``"fr-FR"`` (International French), defaulting to US English. A list of supported language values can be found in the `API documentation <https://www.microsoft.com/cognitive-services/en-us/speech-api/documentation/api-reference-rest/BingVoiceRecognition#SupLocales>`__.
 
         Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <https://www.microsoft.com/cognitive-services/en-us/speech-api/documentation/api-reference-rest/BingVoiceRecognition#user-content-3-voice-recognition-responses>`__ as a JSON dictionary.
 
