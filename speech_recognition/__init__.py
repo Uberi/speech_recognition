@@ -23,7 +23,7 @@ import tempfile
 import shutil
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "3.5.0"
+__version__ = "3.6.0"
 __license__ = "BSD"
 
 try:  # attempt to use the Python 2 modules
