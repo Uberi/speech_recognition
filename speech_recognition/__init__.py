@@ -65,27 +65,32 @@ class Microphone(AudioSource):
 
     A device index is an integer between 0 and ``pyaudio.get_device_count() - 1`` (assume we have used ``import pyaudio`` beforehand) inclusive. It represents an audio device such as a microphone or speaker. See the `PyAudio documentation <http://people.csail.mit.edu/hubert/pyaudio/docs/>`__ for more details.
 
-    The microphone audio is recorded in chunks of ``chunk_size`` samples, at a rate of ``sample_rate`` samples per second (Hertz).
+    The microphone audio is recorded in chunks of ``chunk_size`` samples, at a rate of ``sample_rate`` samples per second (Hertz). If not specified, the value of ``sample_rate`` is determined automatically from the system's microphone settings.
 
-    Higher ``sample_rate`` values result in better audio quality, but also more bandwidth (and therefore, slower recognition). Additionally, some machines, such as some Raspberry Pi models, can't keep up if this value is too high.
+    Higher ``sample_rate`` values result in better audio quality, but also more bandwidth (and therefore, slower recognition). Additionally, some CPUs, such as those in older Raspberry Pi models, can't keep up if this value is too high.
 
     Higher ``chunk_size`` values help avoid triggering on rapidly changing ambient noise, but also makes detection less sensitive. This value, generally, should be left at its default.
     """
-    def __init__(self, device_index=None, sample_rate=16000, chunk_size=1024):
+    def __init__(self, device_index=None, sample_rate=None, chunk_size=1024):
+        assert device_index is None or isinstance(device_index, int), "Device index must be None or an integer"
+        assert sample_rate is None or (isinstance(sample_rate, int) and sample_rate > 0), "Sample rate must be None or a positive integer"
+        assert isinstance(chunk_size, int) and chunk_size > 0, "Chunk size must be a positive integer"
+
         # set up PyAudio
         self.pyaudio_module = self.get_pyaudio()
+        audio = self.pyaudio_module.PyAudio()
+        try:
+            count = audio.get_device_count()  # obtain device count
+            if device_index is not None:  # ensure device index is in range
+                assert 0 <= device_index < count, "Device index out of range ({} devices available; device index should be between 0 and {} inclusive)".format(count, count - 1)
+            if sample_rate is None:  # automatically set the sample rate to the hardware's default sample rate if not specified
+                device_info = audio.get_device_info_by_index(device_index) if device_index is not None else audio.get_default_input_device_info()
+                assert isinstance(device_info.get("defaultSampleRate"), (float, int)) and device_info["defaultSampleRate"] > 0, "Invalid device info returned from PyAudio: {}".format(device_info)
+                sample_rate = int(device_info["defaultSampleRate"])
+        except:
+            audio.terminate()
+            raise
 
-        assert device_index is None or isinstance(device_index, int), "Device index must be None or an integer"
-        if device_index is not None:  # ensure device index is in range
-            audio = self.pyaudio_module.PyAudio()
-            try:
-                count = audio.get_device_count()  # obtain device count
-            except:
-                audio.terminate()
-                raise
-            assert 0 <= device_index < count, "Device index out of range ({} devices available; device index should be between 0 and {} inclusive)".format(count, count - 1)
-        assert isinstance(sample_rate, int) and sample_rate > 0, "Sample rate must be a positive integer"
-        assert isinstance(chunk_size, int) and chunk_size > 0, "Chunk size must be a positive integer"
         self.device_index = device_index
         self.format = self.pyaudio_module.paInt16  # 16-bit int sampling
         self.SAMPLE_WIDTH = self.pyaudio_module.get_sample_size(self.format)  # size of each sample
@@ -181,10 +186,7 @@ class AudioFile(AudioSource):
     """
 
     def __init__(self, filename_or_fileobject):
-        if str is bytes:  # Python 2 - if a file path is specified, it must either be a ``str`` instance or a ``unicode`` instance
-            assert isinstance(filename_or_fileobject, (type(""), type(u""))) or hasattr(filename_or_fileobject, "read"), "Given audio file must be a filename string or a file-like object"
-        else:  # Python 3 - if a file path is specified, it must be a ``str`` instance
-            assert isinstance(filename_or_fileobject, str) or hasattr(filename_or_fileobject, "read"), "Given audio file must be a filename string or a file-like object"
+        assert isinstance(filename_or_fileobject, (type(""), type(u""))) or hasattr(filename_or_fileobject, "read"), "Given audio file must be a filename string or a file-like object"
         self.filename_or_fileobject = filename_or_fileobject
         self.stream = None
         self.DURATION = None
@@ -625,7 +627,7 @@ class Recognizer(AudioSource):
         """
         assert isinstance(audio_data, AudioData), "``audio_data`` must be audio data"
         assert isinstance(language, str), "``language`` must be a string"
-        assert keyword_entries is None or all(isinstance(keyword, str) and 0 <= sensitivity <= 1 for keyword, sensitivity in keyword_entries), "``keyword_entries`` must be ``None`` or a list of pairs of strings and numbers between 0 and 1"
+        assert keyword_entries is None or all(isinstance(keyword, (type(""), type(u""))) and 0 <= sensitivity <= 1 for keyword, sensitivity in keyword_entries), "``keyword_entries`` must be ``None`` or a list of pairs of strings and numbers between 0 and 1"
 
         # import the PocketSphinx speech recognition module
         try:
@@ -661,14 +663,13 @@ class Recognizer(AudioSource):
 
         # obtain recognition results
         if keyword_entries is not None:  # explicitly specified set of keywords
-            with tempfile_TemporaryDirectory() as temp_directory:
+            with tempfile.NamedTemporaryFile("w") as f:
                 # generate a keywords file - Sphinx documentation recommendeds sensitivities between 1e-50 and 1e-5
-                keywords_path = os.path.join(temp_directory, "keyphrases.txt")
-                with open(keywords_path, "w") as f:
-                    f.writelines("{} /1e{}/\n".format(keyword, 100 * sensitivity - 110) for keyword, sensitivity in keyword_entries)
+                f.writelines("{} /1e{}/\n".format(keyword, 100 * sensitivity - 110) for keyword, sensitivity in keyword_entries)
+                f.flush()
 
                 # perform the speech recognition with the keywords file (this is inside the context manager so the file isn;t deleted until we're done)
-                decoder.set_kws("keywords", keywords_path)
+                decoder.set_kws("keywords", f.name)
                 decoder.set_search("keywords")
                 decoder.start_utt()  # begin utterance processing
                 decoder.process_raw(raw_data, False, True)  # process audio data with recognition enabled (no_search = False), as a full utterance (full_utt = True)
@@ -693,7 +694,7 @@ class Recognizer(AudioSource):
 
         To obtain your own API key, simply following the steps on the `API Keys <http://www.chromium.org/developers/how-tos/api-keys>`__ page at the Chromium Developers site. In the Google Developers Console, Google Speech Recognition is listed as "Speech API".
 
-        The recognition language is determined by ``language``, an RFC5646 language tag like ``"en-US"`` (US English) or ``"fr-FR"`` (International French), defaulting to US English. A list of supported language values can be found in this `StackOverflow answer <http://stackoverflow.com/a/14302134>`__.
+        The recognition language is determined by ``language``, an RFC5646 language tag like ``"en-US"`` (US English) or ``"fr-FR"`` (International French), defaulting to US English. A list of supported language tags can be found in this `StackOverflow answer <http://stackoverflow.com/a/14302134>`__.
 
         Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the raw API response as a JSON dictionary.
 
@@ -735,20 +736,20 @@ class Recognizer(AudioSource):
 
         # return results
         if show_all: return actual_result
-        if len(actual_result.get("alternative", [])) == 0: raise UnknownValueError()
+        if not isinstance(actual_result, dict) or len(actual_result.get("alternative", [])) == 0: raise UnknownValueError()
 
         # return alternative with highest confidence score
         best_hypothesis = max(actual_result["alternative"], key=lambda alternative: alternative["confidence"])
         if "transcript" not in best_hypothesis: raise UnknownValueError()
         return best_hypothesis["transcript"]
 
-    def recognize_google_cloud(self, audio_data, language="en-US", preferred_phrases=None, show_all=False):
+    def recognize_google_cloud(self, audio_data, credentials_json=None, language="en-US", preferred_phrases=None, show_all=False):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Google Cloud Speech API.
 
-        This requires a Google Cloud Platform account; see the `Google Cloud Speech API Quickstart <https://cloud.google.com/speech/docs/getting-started>`__ for details and instructions.
+        This function requires a Google Cloud Platform account; see the `Google Cloud Speech API Quickstart <https://cloud.google.com/speech/docs/getting-started>`__ for details and instructions. Basically, create a project, enable billing for the project, enable the Google Cloud Speech API for the project, and set up Service Account Key credentials for the project. The result is a JSON file containing the API credentials. The text content of this JSON file is specified by ``credentials_json``. If not specified, the library will try to automatically `find the default API credentials JSON file <https://developers.google.com/identity/protocols/application-default-credentials>`__.
 
-        The recognition language is determined by ``language``, which is a BCP-47 language tag like ``"en-US"`` (US English). For more information see the `RecognitionConfig documentation <https://cloud.google.com/speech/reference/rest/v1beta1/RecognitionConfig>`__.
+        The recognition language is determined by ``language``, which is a BCP-47 language tag like ``"en-US"`` (US English). A list of supported language tags can be found in the `Google Cloud Speech API documentation <https://cloud.google.com/speech/docs/languages>`__.
 
         If ``preferred_phrases`` is a list of phrase strings, those given phrases will be more likely to be recognized over similar-sounding alternatives. This is useful for things like keyword/command recognition or adding new phrases that aren't in Google's vocabulary. Note that the API imposes certain `restrictions on the list of phrase strings <https://cloud.google.com/speech/limits#content>`__.
 
@@ -756,9 +757,10 @@ class Recognizer(AudioSource):
 
         Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the credentials aren't valid, or if there is no Internet connection.
         """
-        assert isinstance(audio_data, AudioData), "`audio_data` must be audio data"
-        assert isinstance(language, str), "`language` must be a string"
-        assert preferred_phrases is None or all(isinstance(preferred_phrases, str) for preferred_phrases in preferred_phrases), "`preferred_phrases` must be a list of strings"
+        assert isinstance(audio_data, AudioData), "``audio_data`` must be audio data"
+        assert credentials_json is None or isinstance(credentials_json, str), "``credentials_json_file_path`` must be ``None`` or a string"
+        assert isinstance(language, str), "``language`` must be a string"
+        assert preferred_phrases is None or all(isinstance(preferred_phrases, (type(""), type(u""))) for preferred_phrases in preferred_phrases), "``preferred_phrases`` must be a list of strings"
 
         # See https://cloud.google.com/speech/reference/rest/v1beta1/RecognitionConfig
         flac_data = audio_data.get_flac_data(
@@ -766,14 +768,30 @@ class Recognizer(AudioSource):
             convert_width=2  # audio samples must be 16-bit
         )
 
-        speech_service = self.get_speech_service()
+        try:
+            from oauth2client.client import GoogleCredentials
+            from googleapiclient.discovery import build
+            import googleapiclient.errors
+
+            if credentials_json is None:
+                api_credentials = GoogleCredentials.get_application_default()
+            else:
+                # the credentials can only be read from a file, so we'll make a temp file and write in the contents to work around that
+                with tempfile.NamedTemporaryFile("w") as f:
+                    f.write(credentials_json)
+                    f.flush()
+                    api_credentials = GoogleCredentials.from_stream(f.name)
+
+            speech_service = build("speech", "v1beta1", credentials=api_credentials)
+        except ImportError:
+            raise RequestError("missing google-api-python-client module: ensure that google-api-python-client is set up correctly.")
+
         if preferred_phrases is None:
             speech_config = {"encoding": "FLAC", "sampleRate": audio_data.sample_rate, "languageCode": language}
         else:
             speech_config = {"encoding": "FLAC", "sampleRate": audio_data.sample_rate, "languageCode": language, "speechContext": {"phrases": preferred_phrases}}
         request = speech_service.speech().syncrecognize(body={"audio": {"content": base64.b64encode(flac_data).decode("utf8")}, "config": speech_config})
 
-        import googleapiclient.errors
         try:
             response = request.execute()
         except googleapiclient.errors.HttpError as e:
@@ -788,19 +806,6 @@ class Recognizer(AudioSource):
             transcript += result["alternatives"][0]["transcript"].strip() + " "
 
         return transcript
-
-    @staticmethod
-    def get_speech_service():
-        try:
-            from oauth2client.client import GoogleCredentials
-            from googleapiclient.discovery import build
-
-            credentials = GoogleCredentials.get_application_default()
-
-            return build("speech", "v1beta1", credentials=credentials)
-        except ImportError:
-            raise ImportError("Could not find google-api-python-client; check "
-                              "installation")
 
     def recognize_wit(self, audio_data, key, show_all=False):
         """
@@ -1066,16 +1071,6 @@ def shutil_which(pgm):
         p = os.path.join(p, pgm)
         if os.path.exists(p) and os.access(p, os.X_OK):
             return p
-
-
-class tempfile_TemporaryDirectory(object):
-    """Python 2 compatibility: backport of ``tempfile.TemporaryDirectory`` from Python 3"""
-    def __enter__(self):
-        self.name = tempfile.mkdtemp()
-        return self.name
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        shutil.rmtree(self.name)
 
 
 # ===============================

@@ -25,7 +25,6 @@ class TestAudioFile(unittest.TestCase):
         self.assertEqual(audio.sample_width, audio_reader.getsampwidth())
         self.assertEqual(audio.get_raw_data(), audio_reader.readframes(audio_reader.getnframes()))
         audio_reader.close()
-        
 
     def test_aiff_load(self):
         r = sr.Recognizer()

@@ -35,6 +35,16 @@ except sr.UnknownValueError:
 except sr.RequestError as e:
     print("Could not request results from Google Speech Recognition service; {0}".format(e))
 
+# recognize speech using Google Cloud Speech
+GOOGLE_CLOUD_SPEECH_CREDENTIALS = r"""INSERT THE CONTENTS OF THE GOOGLE CLOUD SPEECH JSON CREDENTIALS FILE HERE"""
+try:
+    print("Google Cloud Speech recognition results:")
+    pprint(r.recognize_google_cloud(audio, credentials_json=GOOGLE_CLOUD_SPEECH_CREDENTIALS, show_all=True)) # pretty-print the recognition result
+except sr.UnknownValueError:
+    print("Google Cloud Speech could not understand audio")
+except sr.RequestError as e:
+    print("Could not request results from Google Cloud Speech service; {0}".format(e))
+
 # recognize speech using Wit.ai
 WIT_AI_KEY = "INSERT WIT.AI API KEY HERE" # Wit.ai keys are 32-character uppercase alphanumeric strings
 try:

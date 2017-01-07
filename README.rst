@@ -61,6 +61,7 @@ See the ``examples/`` `directory <https://github.com/Uberi/speech_recognition/tr
 -  `Show extended recognition results <https://github.com/Uberi/speech_recognition/blob/master/examples/extended_results.py>`__
 -  `Calibrate the recognizer energy threshold for ambient noise levels <https://github.com/Uberi/speech_recognition/blob/master/examples/calibrate_energy_threshold.py>`__ (see ``recognizer_instance.energy_threshold`` for details)
 -  `Listening to a microphone in the background <https://github.com/Uberi/speech_recognition/blob/master/examples/background_listening.py>`__
+-  `Various other useful recognizer features <https://github.com/Uberi/speech_recognition/blob/master/examples/special_recognizer_features.py>`__
 
 Installing
 ----------
@@ -80,8 +81,8 @@ To use all of the functionality of the library, you should have:
 
 * **Python** 2.6, 2.7, or 3.3+ (required)
 * **PyAudio** 0.2.9+ (required only if you need to use microphone input, ``Microphone``)
-* **google-api-python-client** (required only if you need to use the Google Cloud Speech API)
 * **PocketSphinx** (required only if you need to use the Sphinx recognizer, ``recognizer_instance.recognize_sphinx``)
+* **Google API Client Library for Python** (required only if you need to use the Google Cloud Speech API, ``recognizer_instance.recognize_google_cloud``)
 * **FLAC encoder** (required only if the system is not x86-based Windows/Linux/OS X)
 
 The following requirements are optional, but can improve or extend functionality in some situations:
@@ -101,7 +102,7 @@ PyAudio (for microphone users)
 
 `PyAudio <http://people.csail.mit.edu/hubert/pyaudio/#downloads>`__ is required if and only if you want to use microphone input (``Microphone``). PyAudio version 0.2.9+ is required, as earlier versions have overflow issues with recording on certain machines.
 
-If not installed, everything in the library will still work, except attempting to instantiate a ``Microphone`` object will throw an ``AttributeError``.
+If not installed, everything in the library will still work, except attempting to instantiate a ``Microphone`` object will raise an ``AttributeError``.
 
 The installation instructions are quite good as of PyAudio v0.2.9. For convenience, they are summarized below:
 
@@ -112,13 +113,6 @@ The installation instructions are quite good as of PyAudio v0.2.9. For convenien
 * On other POSIX-based systems, install the ``portaudio19-dev`` and ``python-all-dev`` (or ``python3-all-dev`` if using Python 3) packages (or their closest equivalents) using a package manager of your choice, and then install PyAudio using `Pip <https://pip.readthedocs.org/>`__: ``pip install pyaudio`` (replace ``pip`` with ``pip3`` if using Python 3).
 
 PyAudio `wheel packages <https://pypi.python.org/pypi/wheel>`__ for 64-bit Python 2.7, 3.4, and 3.5 on Windows and Linux are included for convenience, under the ``third-party/`` `directory <https://github.com/Uberi/speech_recognition/tree/master/third-party>`__ in the repository root. To install, simply run ``pip install wheel`` followed by ``pip install ./third-party/WHEEL_FILENAME`` (replace ``pip`` with ``pip3`` if using Python 3) in the repository `root directory <https://github.com/Uberi/speech_recognition>`__.
-
-google-api-python-client (for Google Cloud Speech API users)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-`google-api-python-client <https://developers.google.com/api-client-library/python/>`__ is required if and only if you want to use the Google Cloud Speech API.
-
-If it is not installed, ``recognize_google_cloud()`` will raise ``ImportError.``
 
 PocketSphinx-Python (for Sphinx users)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -132,6 +126,17 @@ On Linux and other POSIX systems (such as OS X), follow the instructions under "
 Note that the versions available in most package repositories are outdated and will not work with the bundled language data. Using the bundled wheel packages or building from source is recommended.
 
 See `Notes on using PocketSphinx <https://github.com/Uberi/speech_recognition/blob/master/reference/pocketsphinx.rst>`__ for information about installing languages, compiling PocketSphinx, and building language packs from online resources. This document is also included under ``reference/pocketsphinx.rst``.
+
+Google API Client Library for Python (for Google Cloud Speech API users)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+`Google API Client Library for Python <https://developers.google.com/api-client-library/python/>`__ is required if and only if you want to use the Google Cloud Speech API (``recognizer_instance.recognize_google_cloud``).
+
+If not installed, everything in the library will still work, except calling ``recognizer_instance.recognize_google_cloud`` will raise an ``RequestError``.
+
+According to the `official installation instructions <https://developers.google.com/api-client-library/python/start/installation>`__, the recommended way to install this is using `Pip <https://pip.readthedocs.org/>`__: execute ``pip install google-api-python-client`` (replace ``pip`` with ``pip3`` if using Python 3).
+
+Alternatively, you can perform the installation completely offline from the source archives under the ``./third-party/Source code for Google API Client Library for Python and its dependencies/`` directory.
 
 FLAC (for some systems)
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -177,10 +182,10 @@ Try setting the recognition language to your language/dialect. To do this, see t
 
 For example, if your language/dialect is British English, it is better to use ``"en-GB"`` as the language rather than ``"en-US"``.
 
-The code examples throw ``UnicodeEncodeError: 'ascii' codec can't encode character`` when run.
+The code examples raise ``UnicodeEncodeError: 'ascii' codec can't encode character`` when run.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When you're using Python 2, and your language uses non-ASCII characters, and the terminal or file-like object you're printing to only supports ASCII, an error is thrown when trying to write non-ASCII characters.
+When you're using Python 2, and your language uses non-ASCII characters, and the terminal or file-like object you're printing to only supports ASCII, an error is raised when trying to write non-ASCII characters.
 
 This is because in Python 2, ``recognizer_instance.recognize_sphinx``, ``recognizer_instance.recognize_google``, ``recognizer_instance.recognize_wit``, ``recognizer_instance.recognize_bing``, ``recognizer_instance.recognize_api``, ``recognizer_instance.recognize_houndify``, and ``recognizer_instance.recognize_ibm`` return unicode strings (``u"something"``) rather than byte strings (``"something"``). In Python 3, all strings are unicode strings.
 
@@ -307,23 +312,24 @@ Authors
     kamushadenes <kamushadenes@hyadesinc.com> (Kamus Hadenes)
     sbraden <braden.sarah@gmail.com> (Sarah Braden)
     tb0hdan (Bohdan Turkynewych)
+    Thynix <steve@asksteved.com> (Steve Dougherty)
 
 Please report bugs and suggestions at the `issue tracker <https://github.com/Uberi/speech_recognition/issues>`__!
 
 How to cite this library (APA style):
 
-    Zhang, A. (2016). Speech Recognition (Version 3.5) [Software]. Available from https://github.com/Uberi/speech_recognition#readme.
+    Zhang, A. (2017). Speech Recognition (Version 3.5) [Software]. Available from https://github.com/Uberi/speech_recognition#readme.
 
 How to cite this library (Chicago style):
 
-    Zhang, Anthony. 2016. *Speech Recognition* (version 3.5).
+    Zhang, Anthony. 2017. *Speech Recognition* (version 3.5).
 
 Also check out the `Python Baidu Yuyin API <https://github.com/DelightRun/PyBaiduYuyin>`__, which is based on an older version of this project, and adds support for `Baidu Yuyin <http://yuyin.baidu.com/>`__. Note that Baidu Yuyin is only available inside China.
 
 License
 -------
 
-Copyright 2014-2016 `Anthony Zhang (Uberi) <https://uberi.github.io>`__. The source code for this library is available online at `GitHub <https://github.com/Uberi/speech_recognition>`__.
+Copyright 2014-2017 `Anthony Zhang (Uberi) <https://uberi.github.io>`__. The source code for this library is available online at `GitHub <https://github.com/Uberi/speech_recognition>`__.
 
 SpeechRecognition is made available under the 3-clause BSD license. See ``LICENSE.txt`` in the project's `root directory <https://github.com/Uberi/speech_recognition>`__ for more information.
 
