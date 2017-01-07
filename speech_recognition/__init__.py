@@ -20,7 +20,6 @@ import hmac
 import time
 import uuid
 import tempfile
-import shutil
 
 __author__ = "Anthony Zhang (Uberi)"
 __version__ = "3.6.0"
