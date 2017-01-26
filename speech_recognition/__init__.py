@@ -624,7 +624,7 @@ class Recognizer(AudioSource):
         energy = audioop.rms(buffer, source.SAMPLE_WIDTH)  # unit energy of the audio signal within the buffer
         return energy
 
-    def recognize_sphinx(self, audio_data, language="en-US", keyword_entries=None, show_all=False, language_directory=):
+    def recognize_sphinx(self, audio_data, language="en-US", keyword_entries=None, show_all=False, language_directory="acoustic_data"):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using CMU Sphinx.
 
@@ -639,6 +639,7 @@ class Recognizer(AudioSource):
         assert isinstance(audio_data, AudioData), "``audio_data`` must be audio data"
         assert isinstance(language, str), "``language`` must be a string"
         assert keyword_entries is None or all(isinstance(keyword, (type(""), type(u""))) and 0 <= sensitivity <= 1 for keyword, sensitivity in keyword_entries), "``keyword_entries`` must be ``None`` or a list of pairs of strings and numbers between 0 and 1"
+        assert isinstance(language_directory, str), "``language_directory`` must be a string"
 
         # import the PocketSphinx speech recognition module
         try:
@@ -654,36 +655,39 @@ class Recognizer(AudioSource):
         language_directory = os.path.join(lauguage_base, "pocketsphinx-data", language)
         if not os.path.isdir(language_directory):
             raise RequestError("missing PocketSphinx language data directory: \"{}\"".format(language_directory))
+            
         acoustic_parameters_directory = os.path.join(language_directory, "acoustic-model")
         if not os.path.isdir(acoustic_parameters_directory):
             raise RequestError("missing PocketSphinx language model parameters directory: \"{}\"".format(acoustic_parameters_directory))
+            
         language_model_file = os.path.join(language_directory, "language-model.lm.bin")
-        if not os.path.isfile(language_model_file):
-            raise RequestError("missing PocketSphinx language model file: \"{}\"".format(language_model_file))
+        #if not os.path.isfile(language_model_file):
+        #    raise RequestError("missing PocketSphinx language model file: \"{}\"".format(language_model_file))
+            
         phoneme_dictionary_file = os.path.join(language_directory, "pronounciation-dictionary.dict")
-        if not os.path.isfile(phoneme_dictionary_file):
-            raise RequestError("missing PocketSphinx phoneme dictionary file: \"{}\"".format(phoneme_dictionary_file))
+        #if not os.path.isfile(phoneme_dictionary_file):
+        #    raise RequestError("missing PocketSphinx phoneme dictionary file: \"{}\"".format(phoneme_dictionary_file))
 
         # create decoder object (update: backwards for other versions of PocketSphinx)
         pocketsphinx_v5 = hasattr(pocketsphinx.Decoder, 'default_config')
         if pocketsphinx_v5:
             config = pocketsphinx.Decoder.default_config()
-            #config.set_string("-hmm", acoustic_parameters_directory)  # set the path of the hidden Markov model (HMM) parameter files
+            config.set_string("-hmm", acoustic_parameters_directory)  # set the path of the hidden Markov model (HMM) parameter files
             #config.set_string("-lm", language_model_file)
             #config.set_string("-dict", phoneme_dictionary_file)
-            #config.set_string("-logfn", os.devnull)  # disable logging (logging causes unwanted output in terminal)
+            config.set_string("-logfn", os.devnull)  # disable logging (logging causes unwanted output in terminal)
             decoder = pocketsphinx.Decoder(config)
         else:
             print "Pocketsphinx v4 or sooner"
             # No config exposed yet...sorry
-            #config = pocketsphinx.Decoder(
-            #    hmm=hmm_dir, logfn=logfile, lm=lm_path, dict=dict_path)
+            decoder = pocketsphinx.Decoder(
+                hmm=acoustic_parameters_directory, logfn=os.devnull) #, lm=lm_path, dict=dict_path)
             #config = pocketsphinx.Decoder()
             #config.set_string("-hmm", acoustic_parameters_directory)  # set the path of the hidden Markov model (HMM) parameter files
             #config.set_string("-lm", language_model_file)
             #config.set_string("-dict", phoneme_dictionary_file)
             # config.set_string("-logfn", os.devnull)  # disable logging (logging causes unwanted output in terminal)
-            decoder = pocketsphinx.Decoder()
+            #decoder = pocketsphinx.Decoder()
 
         # obtain audio data
         raw_data = audio_data.get_raw_data(convert_rate=16000, convert_width=2)  # the included language models require audio to be 16-bit mono 16 kHz in little-endian format
