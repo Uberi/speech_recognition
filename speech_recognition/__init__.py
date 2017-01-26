@@ -562,7 +562,8 @@ class Recognizer(AudioSource):
                 phrase_count += 1
 
                 # check if speaking has stopped for longer than the pause threshold on the audio input
-                energy = audioop.rms(buffer, source.SAMPLE_WIDTH)  # unit energy of the audio signal within the buffer
+                #energy = audioop.rms(buffer, source.SAMPLE_WIDTH)  # unit energy of the audio signal within the buffer
+                energy = measure_energy(source) # Using new measurement function.
                 if energy > self.energy_threshold:
                     pause_count = 0
                 else:
@@ -611,6 +612,17 @@ class Recognizer(AudioSource):
         listener_thread.daemon = True
         listener_thread.start()
         return stopper
+    
+    def measure_energy(self, source):
+        #Will return current energy level measure from source
+        buffer = source.stream.read(source.CHUNK)
+        frames = collections.deque()
+        if len(buffer) == 0: return "To low, mute?" # break  # reached end of the stream
+        frames.append(buffer)
+
+        # This part is a copy from energy measure in LISTEN() function.
+        energy = audioop.rms(buffer, source.SAMPLE_WIDTH)  # unit energy of the audio signal within the buffer
+        return energy
 
     def recognize_sphinx(self, audio_data, language="en-US", keyword_entries=None, show_all=False):
         """
