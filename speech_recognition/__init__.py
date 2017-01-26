@@ -624,7 +624,7 @@ class Recognizer(AudioSource):
         energy = audioop.rms(buffer, source.SAMPLE_WIDTH)  # unit energy of the audio signal within the buffer
         return energy
 
-    def recognize_sphinx(self, audio_data, language="en-US", keyword_entries=None, show_all=False, language_directory="acoustic_data"):
+    def recognize_sphinx(self, audio_data, language="en-US", keyword_entries=None, show_all=False, language_base="acoustic_data"):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using CMU Sphinx.
 
@@ -651,7 +651,7 @@ class Recognizer(AudioSource):
 
         # Weak attempt on making the model directory more exposed.
         # Issue: need to find v4 + v5 config standards
-        if != language_base: language_base = os.path.dirname(os.path.realpath(__file__))
+        if not language_base: language_base = os.path.dirname(os.path.realpath(__file__))
         language_directory = os.path.join(lauguage_base, "pocketsphinx-data", language)
         if not os.path.isdir(language_directory):
             raise RequestError("missing PocketSphinx language data directory: \"{}\"".format(language_directory))
