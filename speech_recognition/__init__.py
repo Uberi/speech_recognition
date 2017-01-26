@@ -624,7 +624,7 @@ class Recognizer(AudioSource):
         energy = audioop.rms(buffer, source.SAMPLE_WIDTH)  # unit energy of the audio signal within the buffer
         return energy
 
-    def recognize_sphinx(self, audio_data, language="en-US", keyword_entries=None, show_all=False):
+    def recognize_sphinx(self, audio_data, language="en-US", keyword_entries=None, show_all=False, language_directory=):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using CMU Sphinx.
 
@@ -648,7 +648,10 @@ class Recognizer(AudioSource):
         except ValueError:
             raise RequestError("bad PocketSphinx installation detected; make sure you have PocketSphinx version 0.0.9 or better.")
 
-        language_directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), "pocketsphinx-data", language)
+        # Weak attempt on making the model directory more exposed.
+        # Issue: need to find v4 + v5 config standards
+        if != language_base: language_base = os.path.dirname(os.path.realpath(__file__))
+        language_directory = os.path.join(lauguage_base, "pocketsphinx-data", language)
         if not os.path.isdir(language_directory):
             raise RequestError("missing PocketSphinx language data directory: \"{}\"".format(language_directory))
         acoustic_parameters_directory = os.path.join(language_directory, "acoustic-model")
@@ -661,13 +664,26 @@ class Recognizer(AudioSource):
         if not os.path.isfile(phoneme_dictionary_file):
             raise RequestError("missing PocketSphinx phoneme dictionary file: \"{}\"".format(phoneme_dictionary_file))
 
-        # create decoder object
-        config = pocketsphinx.Decoder.default_config()
-        config.set_string("-hmm", acoustic_parameters_directory)  # set the path of the hidden Markov model (HMM) parameter files
-        config.set_string("-lm", language_model_file)
-        config.set_string("-dict", phoneme_dictionary_file)
-        config.set_string("-logfn", os.devnull)  # disable logging (logging causes unwanted output in terminal)
-        decoder = pocketsphinx.Decoder(config)
+        # create decoder object (update: backwards for other versions of PocketSphinx)
+        pocketsphinx_v5 = hasattr(pocketsphinx.Decoder, 'default_config')
+        if pocketsphinx_v5:
+            config = pocketsphinx.Decoder.default_config()
+            #config.set_string("-hmm", acoustic_parameters_directory)  # set the path of the hidden Markov model (HMM) parameter files
+            #config.set_string("-lm", language_model_file)
+            #config.set_string("-dict", phoneme_dictionary_file)
+            #config.set_string("-logfn", os.devnull)  # disable logging (logging causes unwanted output in terminal)
+            decoder = pocketsphinx.Decoder(config)
+        else:
+            print "Pocketsphinx v4 or sooner"
+            # No config exposed yet...sorry
+            #config = pocketsphinx.Decoder(
+            #    hmm=hmm_dir, logfn=logfile, lm=lm_path, dict=dict_path)
+            #config = pocketsphinx.Decoder()
+            #config.set_string("-hmm", acoustic_parameters_directory)  # set the path of the hidden Markov model (HMM) parameter files
+            #config.set_string("-lm", language_model_file)
+            #config.set_string("-dict", phoneme_dictionary_file)
+            # config.set_string("-logfn", os.devnull)  # disable logging (logging causes unwanted output in terminal)
+            decoder = pocketsphinx.Decoder()
 
         # obtain audio data
         raw_data = audio_data.get_raw_data(convert_rate=16000, convert_width=2)  # the included language models require audio to be 16-bit mono 16 kHz in little-endian format
@@ -693,9 +709,14 @@ class Recognizer(AudioSource):
         if show_all: return decoder
 
         # return results
-        hypothesis = decoder.hyp()
-        if hypothesis is not None: return hypothesis.hypstr
-        raise UnknownValueError()  # no transcriptions available
+        if pocketsphinx_v5:
+            hyp = decoder.hyp()
+            hypothesis = hyp.hypstr if hyp is not None else ''
+        else:
+            hypothesis = decoder.get_hyp()[0]
+        if hypothesis is not None: return hypothesis
+        return None
+        
 
     def recognize_google(self, audio_data, key=None, language="en-US", show_all=False):
         """
