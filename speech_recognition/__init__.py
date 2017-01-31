@@ -563,7 +563,7 @@ class Recognizer(AudioSource):
 
                 # check if speaking has stopped for longer than the pause threshold on the audio input
                 #energy = audioop.rms(buffer, source.SAMPLE_WIDTH)  # unit energy of the audio signal within the buffer
-                energy = measure_energy(source) # Using new measurement function.
+                energy = self.measure_energy(source) # Using new measurement function.
                 if energy > self.energy_threshold:
                     pause_count = 0
                 else:
