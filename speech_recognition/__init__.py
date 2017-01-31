@@ -639,7 +639,7 @@ class Recognizer(AudioSource):
         assert isinstance(audio_data, AudioData), "``audio_data`` must be audio data"
         assert isinstance(language, str), "``language`` must be a string"
         assert keyword_entries is None or all(isinstance(keyword, (type(""), type(u""))) and 0 <= sensitivity <= 1 for keyword, sensitivity in keyword_entries), "``keyword_entries`` must be ``None`` or a list of pairs of strings and numbers between 0 and 1"
-        assert isinstance(language_directory, str), "``language_directory`` must be a string"
+        assert isinstance(language_base, str), "``language_base`` must be a string"
 
         # import the PocketSphinx speech recognition module
         try:
@@ -652,7 +652,7 @@ class Recognizer(AudioSource):
         # Weak attempt on making the model directory more exposed.
         # Issue: need to find v4 + v5 config standards
         if not language_base: language_base = os.path.dirname(os.path.realpath(__file__))
-        language_directory = os.path.join(lauguage_base, "pocketsphinx-data", language)
+        language_directory = os.path.join(language_base, "pocketsphinx-data", language)
         if not os.path.isdir(language_directory):
             raise RequestError("missing PocketSphinx language data directory: \"{}\"".format(language_directory))
             
