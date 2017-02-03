@@ -624,7 +624,7 @@ class Recognizer(AudioSource):
         energy = audioop.rms(buffer, source.SAMPLE_WIDTH)  # unit energy of the audio signal within the buffer
         return energy
 
-    def recognize_sphinx(self, audio_data, language="en-US", keyword_entries=None, show_all=False, language_base="acoustic_data"):
+    def recognize_sphinx(self, audio_data, language="en_us", keyword_entries=None, show_all=False, language_base=None):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using CMU Sphinx.
 
@@ -642,16 +642,12 @@ class Recognizer(AudioSource):
         assert isinstance(language_base, str), "``language_base`` must be a string"
 
         # import the PocketSphinx speech recognition module
-        try:
-            from pocketsphinx import pocketsphinx
-        except ImportError:
-            raise RequestError("missing PocketSphinx module: ensure that PocketSphinx is set up correctly.")
-        except ValueError:
-            raise RequestError("bad PocketSphinx installation detected; make sure you have PocketSphinx version 0.0.9 or better.")
+        import pocketsphinx
+        
+        # auto detect system?
 
-        # Weak attempt on making the model directory more exposed.
-        # Issue: need to find v4 + v5 config standards
-        if not language_base: language_base = os.path.dirname(os.path.realpath(__file__))
+        #language_base = "/home/pi/acoustic_data"       # os.path.dirname(os.path.realpath(__file__)) 
+        if not language_base: language_base = '/usr/local/lib/python2.7/dist-packages/speech_recognition'
         language_directory = os.path.join(language_base, "pocketsphinx-data", language)
         if not os.path.isdir(language_directory):
             raise RequestError("missing PocketSphinx language data directory: \"{}\"".format(language_directory))
@@ -671,11 +667,12 @@ class Recognizer(AudioSource):
         # create decoder object (update: backwards for other versions of PocketSphinx)
         pocketsphinx_v5 = hasattr(pocketsphinx.Decoder, 'default_config')
         if pocketsphinx_v5:
+            # Pocketsphinx v5
             config = pocketsphinx.Decoder.default_config()
-            config.set_string("-hmm", acoustic_parameters_directory)  # set the path of the hidden Markov model (HMM) parameter files
-            #config.set_string("-lm", language_model_file)
-            #config.set_string("-dict", phoneme_dictionary_file)
-            config.set_string("-logfn", os.devnull)  # disable logging (logging causes unwanted output in terminal)
+            config.set_string('-hmm', acoustic_parameters_directory)
+            config.set_string('-lm', language_model_file)
+            config.set_string('-dict', phoneme_dictionary_file)
+            config.set_string('-logfn', os.devnull)
             decoder = pocketsphinx.Decoder(config)
         else:
             print "Pocketsphinx v4 or sooner"
