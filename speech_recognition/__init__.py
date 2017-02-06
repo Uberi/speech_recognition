@@ -737,8 +737,12 @@ class Recognizer(AudioSource):
         if show_all: return actual_result
         if not isinstance(actual_result, dict) or len(actual_result.get("alternative", [])) == 0: raise UnknownValueError()
 
-        # return alternative with highest confidence score
-        best_hypothesis = max(actual_result["alternative"], key=lambda alternative: alternative["confidence"])
+        if "confidence" in actual_result["alternative"]:
+            # return alternative with highest confidence score
+            best_hypothesis = max(actual_result["alternative"], key=lambda alternative: alternative["confidence"])
+        else:
+            # when there is no confidence available, we arbitrarily choose the first hypothesis.
+            best_hypothesis = actual_result["alternative"][0]
         if "transcript" not in best_hypothesis: raise UnknownValueError()
         return best_hypothesis["transcript"]
 
