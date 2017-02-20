@@ -21,8 +21,8 @@ import time
 import uuid
 import tempfile
 
-__author__ = "Anthony Zhang (Uberi)"
-__version__ = "3.6.0"
+__author__ = "Anthony Zhang (Uberi) & Jan Paul Klompmaker"
+__version__ = "3.6.2"
 __license__ = "BSD"
 
 try:  # attempt to use the Python 2 modules
@@ -32,7 +32,6 @@ except ImportError:  # use the Python 3 modules
     from urllib.parse import urlencode
     from urllib.request import Request, urlopen
     from urllib.error import URLError, HTTPError
-
 
 class WaitTimeoutError(Exception): pass
 
@@ -624,7 +623,7 @@ class Recognizer(AudioSource):
         energy = audioop.rms(buffer, source.SAMPLE_WIDTH)  # unit energy of the audio signal within the buffer
         return energy
 
-    def recognize_sphinx(self, audio_data, language="en_us", keyword_entries=None, show_all=False, language_base=None):
+    def recognize_sphinx(self, audio_data, language="en_us", keyword_entries=None, show_all=False, language_base="/usr/local/lib/python2.7/dist-packages/speech_recognition"):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using CMU Sphinx.
 
@@ -633,6 +632,33 @@ class Recognizer(AudioSource):
         If specified, the keywords to search for are determined by ``keyword_entries``, an iterable of tuples of the form ``(keyword, sensitivity)``, where ``keyword`` is a phrase, and ``sensitivity`` is how sensitive to this phrase the recognizer should be, on a scale of 0 (very insensitive, more false negatives) to 1 (very sensitive, more false positives) inclusive. If not specified or ``None``, no keywords are used and Sphinx will simply transcribe whatever words it recognizes. Specifying ``keyword_entries`` is more accurate than just looking for those same keywords in non-keyword-based transcriptions, because Sphinx knows specifically what sounds to look for.
 
         Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the Sphinx ``pocketsphinx.pocketsphinx.Decoder`` object resulting from the recognition.
+
+        Language Base is the directory that contains language models, which is more specivied by the language. Directory tree example:
+        ...speech_recognition/
+                            pocketsphinx-data/
+                                            en_us/
+                                                language-model.lm.bin
+                                                pronounciation-dictionary.dict
+                                                acoustic-model/
+                                                            mdef
+                                                            feat.params  
+                                                            feature_transform    
+                                                            means  
+                                                            noisedict  
+                                                            transition_matrices  
+                                                            variances
+                                            de_de/
+                                                language-model.lm.bin
+                                                pronounciation-dictionary.dict
+                                                acoustic-model/
+                                                            mdef
+                                                            feat.params  
+                                                            feature_transform    
+                                                            means  
+                                                            noisedict  
+                                                            transition_matrices  
+                                                            variances
+        /End of Directory Example/
 
         Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if there are any issues with the Sphinx installation.
         """
@@ -644,26 +670,29 @@ class Recognizer(AudioSource):
         # import the PocketSphinx speech recognition module
         import pocketsphinx
         
-        # auto detect system?
+        # The next part should become some detection system
 
-        #language_base = "/home/pi/acoustic_data"       # os.path.dirname(os.path.realpath(__file__)) 
-        if not language_base: language_base = '/usr/local/lib/python2.7/dist-packages/speech_recognition'
         language_directory = os.path.join(language_base, "pocketsphinx-data", language)
-        if not os.path.isdir(language_directory):
-            raise RequestError("missing PocketSphinx language data directory: \"{}\"".format(language_directory))
-            
         acoustic_parameters_directory = os.path.join(language_directory, "acoustic-model")
         if not os.path.isdir(acoustic_parameters_directory):
             raise RequestError("missing PocketSphinx language model parameters directory: \"{}\"".format(acoustic_parameters_directory))
-            
-        language_model_file = os.path.join(language_directory, "language-model.lm.bin")
-        #if not os.path.isfile(language_model_file):
-        #    raise RequestError("missing PocketSphinx language model file: \"{}\"".format(language_model_file))
-            
-        phoneme_dictionary_file = os.path.join(language_directory, "pronounciation-dictionary.dict")
-        #if not os.path.isfile(phoneme_dictionary_file):
-        #    raise RequestError("missing PocketSphinx phoneme dictionary file: \"{}\"".format(phoneme_dictionary_file))
 
+        if not os.path.isdir(language_directory):
+            raise RequestError("missing PocketSphinx language data directory: \"{}\"".format(language_directory))
+
+        language_model_file = os.path.join(language_directory, "language-model.lm.bin")
+        if not os.path.isfile(language_model_file):
+            raise RequestError("missing PocketSphinx language model file: \"{}\"".format(language_model_file))
+
+        phoneme_dictionary_file = os.path.join(language_directory, "pronounciation-dictionary.dict")
+        if not os.path.isfile(phoneme_dictionary_file):
+            raise RequestError("missing PocketSphinx phoneme dictionary file: \"{}\"".format(phoneme_dictionary_file))
+
+        # Debug info:
+        print "HMM= ",acoustic_parameters_directory
+        print "LM= ",language_model_file
+        print "DICT= ",phoneme_dictionary_file
+            
         # create decoder object (update: backwards for other versions of PocketSphinx)
         pocketsphinx_v5 = hasattr(pocketsphinx.Decoder, 'default_config')
         if pocketsphinx_v5:
@@ -679,12 +708,6 @@ class Recognizer(AudioSource):
             # No config exposed yet...sorry
             decoder = pocketsphinx.Decoder(
                 hmm=acoustic_parameters_directory, logfn=os.devnull) #, lm=lm_path, dict=dict_path)
-            #config = pocketsphinx.Decoder()
-            #config.set_string("-hmm", acoustic_parameters_directory)  # set the path of the hidden Markov model (HMM) parameter files
-            #config.set_string("-lm", language_model_file)
-            #config.set_string("-dict", phoneme_dictionary_file)
-            # config.set_string("-logfn", os.devnull)  # disable logging (logging causes unwanted output in terminal)
-            #decoder = pocketsphinx.Decoder()
 
         # obtain audio data
         raw_data = audio_data.get_raw_data(convert_rate=16000, convert_width=2)  # the included language models require audio to be 16-bit mono 16 kHz in little-endian format
