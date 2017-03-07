@@ -21,8 +21,8 @@ import time
 import uuid
 import tempfile
 
-__author__ = "Anthony Zhang (Uberi)"
-__version__ = "3.6.0"
+__author__ = "Anthony Zhang (Uberi) & Jan Paul Klompmaker"
+__version__ = "3.6.2"
 __license__ = "BSD"
 
 try:  # attempt to use the Python 2 modules
@@ -32,7 +32,6 @@ except ImportError:  # use the Python 3 modules
     from urllib.parse import urlencode
     from urllib.request import Request, urlopen
     from urllib.error import URLError, HTTPError
-
 
 class WaitTimeoutError(Exception): pass
 
@@ -562,7 +561,8 @@ class Recognizer(AudioSource):
                 phrase_count += 1
 
                 # check if speaking has stopped for longer than the pause threshold on the audio input
-                energy = audioop.rms(buffer, source.SAMPLE_WIDTH)  # unit energy of the audio signal within the buffer
+                #energy = audioop.rms(buffer, source.SAMPLE_WIDTH)  # unit energy of the audio signal within the buffer
+                energy = self.measure_energy(source) # Using new measurement function.
                 if energy > self.energy_threshold:
                     pause_count = 0
                 else:
@@ -611,8 +611,19 @@ class Recognizer(AudioSource):
         listener_thread.daemon = True
         listener_thread.start()
         return stopper
+    
+    def measure_energy(self, source):
+        #Will return current energy level measure from source
+        buffer = source.stream.read(source.CHUNK)
+        frames = collections.deque()
+        if len(buffer) == 0: return "To low, mute?" # break  # reached end of the stream
+        frames.append(buffer)
 
-    def recognize_sphinx(self, audio_data, language="en-US", keyword_entries=None, show_all=False):
+        # This part is a copy from energy measure in LISTEN() function.
+        energy = audioop.rms(buffer, source.SAMPLE_WIDTH)  # unit energy of the audio signal within the buffer
+        return energy
+
+    def recognize_sphinx(self, audio_data, language="en_us", keyword_entries=None, show_all=False, language_base="/usr/local/lib/python2.7/dist-packages/speech_recognition"):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using CMU Sphinx.
 
@@ -622,40 +633,81 @@ class Recognizer(AudioSource):
 
         Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the Sphinx ``pocketsphinx.pocketsphinx.Decoder`` object resulting from the recognition.
 
+        Language Base is the directory that contains language models, which is more specivied by the language. Directory tree example:
+        ...speech_recognition/
+                            pocketsphinx-data/
+                                            en_us/
+                                                language-model.lm.bin
+                                                pronounciation-dictionary.dict
+                                                acoustic-model/
+                                                            mdef
+                                                            feat.params  
+                                                            feature_transform    
+                                                            means  
+                                                            noisedict  
+                                                            transition_matrices  
+                                                            variances
+                                            de_de/
+                                                language-model.lm.bin
+                                                pronounciation-dictionary.dict
+                                                acoustic-model/
+                                                            mdef
+                                                            feat.params  
+                                                            feature_transform    
+                                                            means  
+                                                            noisedict  
+                                                            transition_matrices  
+                                                            variances
+        /End of Directory Example/
+
         Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if there are any issues with the Sphinx installation.
         """
         assert isinstance(audio_data, AudioData), "``audio_data`` must be audio data"
         assert isinstance(language, str), "``language`` must be a string"
         assert keyword_entries is None or all(isinstance(keyword, (type(""), type(u""))) and 0 <= sensitivity <= 1 for keyword, sensitivity in keyword_entries), "``keyword_entries`` must be ``None`` or a list of pairs of strings and numbers between 0 and 1"
+        assert isinstance(language_base, str), "``language_base`` must be a string"
 
         # import the PocketSphinx speech recognition module
-        try:
-            from pocketsphinx import pocketsphinx
-        except ImportError:
-            raise RequestError("missing PocketSphinx module: ensure that PocketSphinx is set up correctly.")
-        except ValueError:
-            raise RequestError("bad PocketSphinx installation detected; make sure you have PocketSphinx version 0.0.9 or better.")
+        import pocketsphinx
+        
+        # The next part should become some detection system
 
-        language_directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), "pocketsphinx-data", language)
-        if not os.path.isdir(language_directory):
-            raise RequestError("missing PocketSphinx language data directory: \"{}\"".format(language_directory))
+        language_directory = os.path.join(language_base, "pocketsphinx-data", language)
         acoustic_parameters_directory = os.path.join(language_directory, "acoustic-model")
         if not os.path.isdir(acoustic_parameters_directory):
             raise RequestError("missing PocketSphinx language model parameters directory: \"{}\"".format(acoustic_parameters_directory))
+
+        if not os.path.isdir(language_directory):
+            raise RequestError("missing PocketSphinx language data directory: \"{}\"".format(language_directory))
+
         language_model_file = os.path.join(language_directory, "language-model.lm.bin")
         if not os.path.isfile(language_model_file):
             raise RequestError("missing PocketSphinx language model file: \"{}\"".format(language_model_file))
+
         phoneme_dictionary_file = os.path.join(language_directory, "pronounciation-dictionary.dict")
         if not os.path.isfile(phoneme_dictionary_file):
             raise RequestError("missing PocketSphinx phoneme dictionary file: \"{}\"".format(phoneme_dictionary_file))
 
-        # create decoder object
-        config = pocketsphinx.Decoder.default_config()
-        config.set_string("-hmm", acoustic_parameters_directory)  # set the path of the hidden Markov model (HMM) parameter files
-        config.set_string("-lm", language_model_file)
-        config.set_string("-dict", phoneme_dictionary_file)
-        config.set_string("-logfn", os.devnull)  # disable logging (logging causes unwanted output in terminal)
-        decoder = pocketsphinx.Decoder(config)
+        # Debug info:
+        print "HMM= ",acoustic_parameters_directory
+        print "LM= ",language_model_file
+        print "DICT= ",phoneme_dictionary_file
+            
+        # create decoder object (update: backwards for other versions of PocketSphinx)
+        pocketsphinx_v5 = hasattr(pocketsphinx.Decoder, 'default_config')
+        if pocketsphinx_v5:
+            # Pocketsphinx v5
+            config = pocketsphinx.Decoder.default_config()
+            config.set_string('-hmm', acoustic_parameters_directory)
+            config.set_string('-lm', language_model_file)
+            config.set_string('-dict', phoneme_dictionary_file)
+            config.set_string('-logfn', os.devnull)
+            decoder = pocketsphinx.Decoder(config)
+        else:
+            print "Pocketsphinx v4 or sooner"
+            # No config exposed yet...sorry
+            decoder = pocketsphinx.Decoder(
+                hmm=acoustic_parameters_directory, logfn=os.devnull) #, lm=lm_path, dict=dict_path)
 
         # obtain audio data
         raw_data = audio_data.get_raw_data(convert_rate=16000, convert_width=2)  # the included language models require audio to be 16-bit mono 16 kHz in little-endian format
@@ -681,9 +733,14 @@ class Recognizer(AudioSource):
         if show_all: return decoder
 
         # return results
-        hypothesis = decoder.hyp()
-        if hypothesis is not None: return hypothesis.hypstr
-        raise UnknownValueError()  # no transcriptions available
+        if pocketsphinx_v5:
+            hyp = decoder.hyp()
+            hypothesis = hyp.hypstr if hyp is not None else ''
+        else:
+            hypothesis = decoder.get_hyp()[0]
+        if hypothesis is not None: return hypothesis
+        return None
+        
 
     def recognize_google(self, audio_data, key=None, language="en-US", show_all=False):
         """

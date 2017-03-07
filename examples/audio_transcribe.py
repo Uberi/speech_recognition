@@ -1,13 +1,31 @@
 #!/usr/bin/env python3
 
+# new example for testing.
+
 import speech_recognition as sr
-
-# obtain path to "english.wav" in the same folder as this script
 from os import path
-AUDIO_FILE = path.join(path.dirname(path.realpath(__file__)), "english.wav")
-#AUDIO_FILE = path.join(path.dirname(path.realpath(__file__)), "french.aiff")
-#AUDIO_FILE = path.join(path.dirname(path.realpath(__file__)), "chinese.flac")
+import argparse
 
+parser = argparse.ArgumentParser(description='Process some integers.')
+parser.add_argument('file', type=str,
+                    help='file name')
+parser.add_argument('--base',
+                    help='language directory base (default: Speech_Recognition installation directory)')
+parser.add_argument('--language',
+                    help='Used language (default: en_us)')
+
+args = parser.parse_args()
+print args.file
+print "next...."
+print "language dir SET: ",args.base
+print "language SET: ",args.language
+
+AUDIO_FILE = path.join(path.dirname(path.realpath(__file__)), args.file)
+if args.base is not None:
+    LANG_DIR = path.join(path.dirname(path.realpath(__file__)), args.base)
+else:
+    LANG_DIR = None
+    
 # use the audio file as the audio source
 r = sr.Recognizer()
 with sr.AudioFile(AUDIO_FILE) as source:
@@ -15,7 +33,7 @@ with sr.AudioFile(AUDIO_FILE) as source:
 
 # recognize speech using Sphinx
 try:
-    print("Sphinx thinks you said " + r.recognize_sphinx(audio))
+    print("Sphinx thinks you said " + r.recognize_sphinx(audio,args.language,None,False,LANG_DIR))
 except sr.UnknownValueError:
     print("Sphinx could not understand audio")
 except sr.RequestError as e:
