@@ -239,7 +239,7 @@ To install/reinstall the library locally, run ``python setup.py install`` in the
 
 Before a release, version tags are created using ``git config user.signingkey DB45F6C431DE7C2DCD99FF7904882258A4063489 && git tag -s VERSION_GOES_HERE -m "Version VERSION_GOES_HERE"``.
 
-Releases are done by running ``build.sh`` to build the Python source packages, sign them, and upload them to PyPI.
+Releases are done by running ``make-release.sh`` to build the Python source packages, sign them, and upload them to PyPI.
 
 Testing
 ~~~~~~~
