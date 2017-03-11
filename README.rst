@@ -17,7 +17,7 @@ SpeechRecognition
     :target: https://pypi.python.org/pypi/SpeechRecognition/
     :alt: License
 
-.. image:: https://img.shields.io/travis/Uberi/speech_recognition.svg
+.. image:: https://api.travis-ci.org/Uberi/speech_recognition.svg?branch=master
     :target: https://travis-ci.org/Uberi/speech_recognition
     :alt: Continuous Integration Test Results
 
@@ -329,7 +329,7 @@ Also check out the `Python Baidu Yuyin API <https://github.com/DelightRun/PyBaid
 License
 -------
 
-Copyright 2014-2017 `Anthony Zhang (Uberi) <https://uberi.github.io>`__. The source code for this library is available online at `GitHub <https://github.com/Uberi/speech_recognition>`__.
+Copyright 2014-2017 `Anthony Zhang (Uberi) <http://anthony-zhang.me/>`__. The source code for this library is available online at `GitHub <https://github.com/Uberi/speech_recognition>`__.
 
 SpeechRecognition is made available under the 3-clause BSD license. See ``LICENSE.txt`` in the project's `root directory <https://github.com/Uberi/speech_recognition>`__ for more information.
 

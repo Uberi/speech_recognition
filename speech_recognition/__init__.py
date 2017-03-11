@@ -210,12 +210,18 @@ class AudioFile(AudioSource):
 
                 # run the FLAC converter with the FLAC data to get the AIFF data
                 flac_converter = get_flac_converter()
+                if os.name == "nt":  # on Windows, specify that the process is to be started without showing a console window
+                    startup_info = subprocess.STARTUPINFO()
+                    startup_info.dwFlags |= subprocess.STARTF_USESHOWWINDOW  # specify that the wShowWindow field of `startup_info` contains a value
+                    startup_info.wShowWindow = subprocess.SW_HIDE  # specify that the console window should be hidden
+                else:
+                    startup_info = None  # default startupinfo
                 process = subprocess.Popen([
                     flac_converter,
                     "--stdout", "--totally-silent",  # put the resulting AIFF file in stdout, and make sure it's not mixed with any program output
                     "--decode", "--force-aiff-format",  # decode the FLAC file into an AIFF file
                     "-",  # the input FLAC file contents will be given in stdin
-                ], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+                ], stdin=subprocess.PIPE, stdout=subprocess.PIPE, startupinfo=startup_info)
                 aiff_data, stderr = process.communicate(flac_data)
                 aiff_file = io.BytesIO(aiff_data)
                 try:
@@ -412,12 +418,18 @@ class AudioData(object):
         # run the FLAC converter with the WAV data to get the FLAC data
         wav_data = self.get_wav_data(convert_rate, convert_width)
         flac_converter = get_flac_converter()
+        if os.name == "nt":  # on Windows, specify that the process is to be started without showing a console window
+            startup_info = subprocess.STARTUPINFO()
+            startup_info.dwFlags |= subprocess.STARTF_USESHOWWINDOW  # specify that the wShowWindow field of `startup_info` contains a value
+            startup_info.wShowWindow = subprocess.SW_HIDE  # specify that the console window should be hidden
+        else:
+            startup_info = None  # default startupinfo
         process = subprocess.Popen([
             flac_converter,
             "--stdout", "--totally-silent",  # put the resulting FLAC file in stdout, and make sure it's not mixed with any program output
             "--best",  # highest level of compression available
             "-",  # the input FLAC file contents will be given in stdin
-        ], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        ], stdin=subprocess.PIPE, stdout=subprocess.PIPE, startupinfo=startup_info)
         flac_data, stderr = process.communicate(wav_data)
         return flac_data
 
