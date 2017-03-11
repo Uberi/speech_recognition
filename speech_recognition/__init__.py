@@ -19,7 +19,6 @@ import hashlib
 import hmac
 import time
 import uuid
-import tempfile
 
 __author__ = "Anthony Zhang (Uberi)"
 __version__ = "3.6.3"
@@ -674,7 +673,7 @@ class Recognizer(AudioSource):
 
         # obtain recognition results
         if keyword_entries is not None:  # explicitly specified set of keywords
-            with tempfile.NamedTemporaryFile("w") as f:
+            with PortableNamedTemporaryFile("w") as f:
                 # generate a keywords file - Sphinx documentation recommendeds sensitivities between 1e-50 and 1e-5
                 f.writelines("{} /1e{}/\n".format(keyword, 100 * sensitivity - 110) for keyword, sensitivity in keyword_entries)
                 f.flush()
@@ -773,7 +772,9 @@ class Recognizer(AudioSource):
         Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the credentials aren't valid, or if there is no Internet connection.
         """
         assert isinstance(audio_data, AudioData), "``audio_data`` must be audio data"
-        assert credentials_json is None or isinstance(credentials_json, str), "``credentials_json_file_path`` must be ``None`` or a string"
+        if credentials_json is not None:
+            try: json.loads(credentials_json)
+            except: raise AssertionError("``credentials_json`` must be ``None`` or a valid JSON string")
         assert isinstance(language, str), "``language`` must be a string"
         assert preferred_phrases is None or all(isinstance(preferred_phrases, (type(""), type(u""))) for preferred_phrases in preferred_phrases), "``preferred_phrases`` must be a list of strings"
 
@@ -792,7 +793,7 @@ class Recognizer(AudioSource):
                 api_credentials = GoogleCredentials.get_application_default()
             else:
                 # the credentials can only be read from a file, so we'll make a temp file and write in the contents to work around that
-                with tempfile.NamedTemporaryFile("w") as f:
+                with PortableNamedTemporaryFile("w") as f:
                     f.write(credentials_json)
                     f.flush()
                     api_credentials = GoogleCredentials.from_stream(f.name)
@@ -1086,6 +1087,35 @@ def shutil_which(pgm):
         p = os.path.join(p, pgm)
         if os.path.exists(p) and os.access(p, os.X_OK):
             return p
+
+
+class PortableNamedTemporaryFile(object):
+    """Limited replacement for ``tempfile.NamedTemporaryFile``, except unlike ``tempfile.NamedTemporaryFile``, the file can be opened again while it's currently open, even on Windows."""
+    def __init__(self, mode="w+b"):
+        self.mode = mode
+
+    def __enter__(self):
+        # create the temporary file and open it
+        import tempfile
+        file_descriptor, file_path = tempfile.mkstemp()
+        self._file = open(file_descriptor, self.mode)
+
+        # the name property is a public field
+        self.name = file_path
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self._file.close()
+        os.remove(self.name)
+
+    def write(self, *args, **kwargs):
+        return self._file.write(*args, **kwargs)
+
+    def writelines(self, *args, **kwargs):
+        return self._file.writelines(*args, **kwargs)
+
+    def flush(self, *args, **kwargs):
+        return self._file.flush(*args, **kwargs)
 
 
 # ===============================
