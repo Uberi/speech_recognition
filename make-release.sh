@@ -9,4 +9,4 @@ echo "if the following doesn't work, make sure you have your account set up prop
 
 # make sure we use GnuPG 2 rather than GnuPG 1
 sudo ln --force "$(which gpg2)" dist/gpg
-PATH=./dist:$PATH python3 setup.py sdist upload --sign
+PATH=./dist:$PATH python3 setup.py bdist_wheel upload --sign
