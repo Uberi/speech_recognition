@@ -1,58 +1,142 @@
 #!/usr/bin/env python3
 
-import os
 import wave
 import aifc
 import io
 import subprocess
 import unittest
+from os import path
 
 import speech_recognition as sr
 
 
 class TestAudioFile(unittest.TestCase):
-    def setUp(self):
-        self.AUDIO_FILE_WAV = os.path.join(os.path.dirname(os.path.realpath(__file__)), "english.wav")
-        self.AUDIO_FILE_AIFF = os.path.join(os.path.dirname(os.path.realpath(__file__)), "french.aiff")
-        self.AUDIO_FILE_FLAC = os.path.join(os.path.dirname(os.path.realpath(__file__)), "chinese.flac")
+    def assertSimilar(self, bytes_1, bytes_2):
+        for i, (byte_1, byte_2) in enumerate(zip(bytes_1, bytes_2)):
+            if str is bytes: byte_1, byte_2 = ord(byte_1), ord(byte_2)  # Python 2 compatibility - get the bytes as integer values
+            if abs(byte_1 - byte_2) > 2:
+                raise AssertionError("{} is really different from {} at index {}".format(bytes_1, bytes_2, i))
 
-    def test_wav_load(self):
+    def test_wav_mono_8_bit(self):
         r = sr.Recognizer()
-        with sr.AudioFile(self.AUDIO_FILE_WAV) as source: audio = r.record(source)
+        with sr.AudioFile(path.join(path.dirname(path.realpath(__file__)), "audio-mono-8-bit-44100Hz.wav")) as source: audio = r.record(source)
         self.assertIsInstance(audio, sr.AudioData)
-        audio_reader = wave.open(self.AUDIO_FILE_WAV, "rb")
-        self.assertEqual(audio.sample_rate, audio_reader.getframerate())
-        self.assertEqual(audio.sample_width, audio_reader.getsampwidth())
-        self.assertEqual(audio.get_raw_data(), audio_reader.readframes(audio_reader.getnframes()))
-        audio_reader.close()
+        self.assertEqual(audio.sample_rate, 44100)
+        self.assertEqual(audio.sample_width, 1)
+        self.assertSimilar(audio.get_raw_data()[:32], b"\x00\xff\x00\xff\x00\xff\xff\x00\xff\x00\xff\x00\xff\x00\x00\xff\x00\x00\xff\x00\xff\x00\xff\x00\xff\x00\xff\x00\xff\x00\xff\xff")
 
-    def test_aiff_load(self):
+    def test_wav_mono_16_bit(self):
         r = sr.Recognizer()
-        with sr.AudioFile(self.AUDIO_FILE_AIFF) as source: audio = r.record(source)
+        with sr.AudioFile(path.join(path.dirname(path.realpath(__file__)), "audio-mono-16-bit-44100Hz.wav")) as source: audio = r.record(source)
         self.assertIsInstance(audio, sr.AudioData)
-        audio_reader = aifc.open(self.AUDIO_FILE_AIFF, "rb")
-        self.assertEqual(audio.sample_rate, audio_reader.getframerate())
-        self.assertEqual(audio.sample_width, audio_reader.getsampwidth())
-        aiff_data = audio_reader.readframes(audio_reader.getnframes())
-        aiff_data_little_endian = aiff_data[1::-1] + b"".join(aiff_data[i + 2:i:-1] for i in range(1, len(aiff_data), 2))
-        self.assertEqual(audio.get_raw_data(), aiff_data_little_endian)
-        audio_reader.close()
+        self.assertEqual(audio.sample_rate, 44100)
+        self.assertEqual(audio.sample_width, 2)
+        self.assertSimilar(audio.get_raw_data()[:32], b"\x00\x00\xff\xff\x01\x00\xff\xff\x00\x00\x01\x00\xfe\xff\x01\x00\xfe\xff\x04\x00\xfc\xff\x04\x00\xfe\xff\xff\xff\x03\x00\xfe\xff")
 
-    def test_flac_load(self):
+    def test_wav_mono_24_bit(self):
         r = sr.Recognizer()
-        with sr.AudioFile(self.AUDIO_FILE_FLAC) as source: audio = r.record(source)
+        with sr.AudioFile(path.join(path.dirname(path.realpath(__file__)), "audio-mono-24-bit-44100Hz.wav")) as source: audio = r.record(source)
         self.assertIsInstance(audio, sr.AudioData)
-        process = subprocess.Popen([sr.get_flac_converter(), "--stdout", "--totally-silent", "--decode", "--force-aiff-format", self.AUDIO_FILE_FLAC], stdout=subprocess.PIPE)
-        aiff_data, _ = process.communicate()
-        aiff_file = io.BytesIO(aiff_data)
-        audio_reader = aifc.open(aiff_file, "rb")
-        self.assertEqual(audio.sample_rate, audio_reader.getframerate())
-        self.assertEqual(audio.sample_width, audio_reader.getsampwidth())
-        aiff_data = audio_reader.readframes(audio_reader.getnframes())
-        aiff_data_little_endian = aiff_data[1::-1] + b"".join(aiff_data[i + 2:i:-1] for i in range(1, len(aiff_data), 2))
-        self.assertEqual(audio.get_raw_data(), aiff_data_little_endian)
-        audio_reader.close()
-        aiff_file.close()
+        self.assertEqual(audio.sample_rate, 44100)
+        if audio.sample_width == 3:
+            self.assertSimilar(audio.get_raw_data()[:32], b"\x00\x00\x00\x00\xff\xff\x00\x01\x00\x00\xff\xff\x00\x00\x00\x00\x01\x00\x00\xfe\xff\x00\x01\x00\x00\xfe\xff\x00\x04\x00\x00\xfb")
+        else:
+            self.assertSimilar(audio.get_raw_data()[:32], b"\x00\x00\x00\x00\x00\x00\xff\xff\x00\x00\x01\x00\x00\x00\xff\xff\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\xfe\xff\x00\x00\x01\x00")
+
+    def test_wav_mono_32_bit(self):
+        r = sr.Recognizer()
+        audio_file_path = path.join(path.dirname(path.realpath(__file__)), "audio-mono-32-bit-44100Hz.wav")
+        with sr.AudioFile(audio_file_path) as source: audio = r.record(source)
+        self.assertIsInstance(audio, sr.AudioData)
+        self.assertEqual(audio.sample_rate, 44100)
+        self.assertEqual(audio.sample_width, 4)
+        self.assertSimilar(audio.get_raw_data()[:32], b"\x00\x00\x00\x00\x00\x00\xff\xff\x00\x00\x01\x00\x00\x00\xff\xff\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\xfe\xff\x00\x00\x01\x00")
+
+    def test_wav_stereo_8_bit(self):
+        r = sr.Recognizer()
+        with sr.AudioFile(path.join(path.dirname(path.realpath(__file__)), "audio-stereo-8-bit-44100Hz.wav")) as source: audio = r.record(source)
+        self.assertIsInstance(audio, sr.AudioData)
+        self.assertEqual(audio.sample_rate, 44100)
+        self.assertEqual(audio.sample_width, 1)
+        self.assertSimilar(audio.get_raw_data()[:32], b"\x00\xff\x00\xff\x00\x00\xff\x7f\x7f\x00\xff\x00\xff\x00\x00\xff\x00\x7f\x7f\x7f\x00\x00\xff\x00\xff\x00\xff\x00\x7f\x7f\x7f\x7f")
+
+    def test_wav_stereo_16_bit(self):
+        r = sr.Recognizer()
+        with sr.AudioFile(path.join(path.dirname(path.realpath(__file__)), "audio-stereo-16-bit-44100Hz.wav")) as source: audio = r.record(source)
+        self.assertIsInstance(audio, sr.AudioData)
+        self.assertEqual(audio.sample_rate, 44100)
+        self.assertEqual(audio.sample_width, 2)
+        self.assertSimilar(audio.get_raw_data()[:32], b"\x02\x00\xfb\xff\x04\x00\xfe\xff\xfe\xff\x07\x00\xf6\xff\x07\x00\xf9\xff\t\x00\xf5\xff\x0c\x00\xf8\xff\x02\x00\x04\x00\xfa\xff")
+
+    def test_wav_stereo_24_bit(self):
+        r = sr.Recognizer()
+        with sr.AudioFile(path.join(path.dirname(path.realpath(__file__)), "audio-stereo-24-bit-44100Hz.wav")) as source: audio = r.record(source)
+        self.assertIsInstance(audio, sr.AudioData)
+        self.assertEqual(audio.sample_rate, 44100)
+        if audio.sample_width == 3:
+            self.assertSimilar(audio.get_raw_data()[:32], b"\x00\x00\x00\x00\xfe\xff\x00\x02\x00\x00\xfe\xff\x00\x00\x00\x00\x02\x00\x00\xfc\xff\x00\x02\x00\x00\xfc\xff\x00\x08\x00\x00\xf6")
+        else:
+            self.assertSimilar(audio.get_raw_data()[:32], b"\x00\x00\x00\x00\x00\x00\xfe\xff\x00\x00\x02\x00\x00\x00\xfe\xff\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\xfc\xff\x00\x00\x02\x00")
+
+    def test_wav_stereo_32_bit(self):
+        r = sr.Recognizer()
+        with sr.AudioFile(path.join(path.dirname(path.realpath(__file__)), "audio-stereo-32-bit-44100Hz.wav")) as source: audio = r.record(source)
+        self.assertIsInstance(audio, sr.AudioData)
+        self.assertEqual(audio.sample_rate, 44100)
+        self.assertEqual(audio.sample_width, 4)
+        self.assertSimilar(audio.get_raw_data()[:32], b"\x00\x00\x00\x00\x00\x00\xfe\xff\x00\x00\x02\x00\x00\x00\xfe\xff\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\xfc\xff\x00\x00\x02\x00")
+
+    def test_aiff_mono_16_bit(self):
+        r = sr.Recognizer()
+        with sr.AudioFile(path.join(path.dirname(path.realpath(__file__)), "audio-mono-16-bit-44100Hz.aiff")) as source: audio = r.record(source)
+        self.assertIsInstance(audio, sr.AudioData)
+        self.assertEqual(audio.sample_rate, 44100)
+        self.assertEqual(audio.sample_width, 2)
+        self.assertSimilar(audio.get_raw_data()[:32], b"\x00\x00\x00\x00\xff\xff\x01\x00\xff\xff\x01\x00\xfe\xff\x02\x00\xfd\xff\x04\x00\xfc\xff\x03\x00\x00\x00\xfe\xff\x03\x00\xfd\xff")
+
+    def test_aiff_stereo_16_bit(self):
+        r = sr.Recognizer()
+        with sr.AudioFile(path.join(path.dirname(path.realpath(__file__)), "audio-stereo-16-bit-44100Hz.aiff")) as source: audio = r.record(source)
+        self.assertIsInstance(audio, sr.AudioData)
+        self.assertEqual(audio.sample_rate, 44100)
+        self.assertEqual(audio.sample_width, 2)
+        self.assertSimilar(audio.get_raw_data()[:32], b"\x00\x00\xfe\xff\x02\x00\xfe\xff\xff\xff\x04\x00\xfa\xff\x04\x00\xfa\xff\t\x00\xf6\xff\n\x00\xfa\xff\xff\xff\x08\x00\xf5\xff")
+
+    def test_flac_mono_16_bit(self):
+        r = sr.Recognizer()
+        with sr.AudioFile(path.join(path.dirname(path.realpath(__file__)), "audio-mono-16-bit-44100Hz.flac")) as source: audio = r.record(source)
+        self.assertIsInstance(audio, sr.AudioData)
+        self.assertEqual(audio.sample_rate, 44100)
+        self.assertEqual(audio.sample_width, 2)
+        self.assertSimilar(audio.get_raw_data()[:32], b"\x00\x00\xff\xff\x01\x00\xff\xff\x00\x00\x01\x00\xfe\xff\x02\x00\xfc\xff\x06\x00\xf9\xff\x06\x00\xfe\xff\xfe\xff\x05\x00\xfa\xff")
+    
+    def test_flac_mono_24_bit(self):
+        r = sr.Recognizer()
+        with sr.AudioFile(path.join(path.dirname(path.realpath(__file__)), "audio-mono-24-bit-44100Hz.flac")) as source: audio = r.record(source)
+        self.assertIsInstance(audio, sr.AudioData)
+        self.assertEqual(audio.sample_rate, 44100)
+        if audio.sample_width == 3:
+            self.assertSimilar(audio.get_raw_data()[:32], b"\x00\x00\x00\xff\xfe\xff\x02\x01\x00\xfd\xfe\xff\x04\x00\x00\xfc\x00\x00\x04\xfe\xff\xfb\x00\x00\x05\xfe\xff\xfc\x03\x00\x04\xfb")
+        else:
+            self.assertSimilar(audio.get_raw_data()[:32], b"\x00\x00\x00\x00\x00\xff\xfe\xff\x00\x02\x01\x00\x00\xfd\xfe\xff\x00\x04\x00\x00\x00\xfc\x00\x00\x00\x04\xfe\xff\x00\xfb\x00\x00")
+
+    def test_flac_stereo_16_bit(self):
+        r = sr.Recognizer()
+        with sr.AudioFile(path.join(path.dirname(path.realpath(__file__)), "audio-stereo-16-bit-44100Hz.flac")) as source: audio = r.record(source)
+        self.assertIsInstance(audio, sr.AudioData)
+        self.assertEqual(audio.sample_rate, 44100)
+        self.assertEqual(audio.sample_width, 2)
+        self.assertSimilar(audio.get_raw_data()[:32], b"\xff\xff\xff\xff\x02\x00\xfe\xff\x00\x00\x01\x00\xfd\xff\x01\x00\xff\xff\x04\x00\xfa\xff\x05\x00\xff\xff\xfd\xff\x08\x00\xf6\xff")
+    
+    def test_flac_stereo_24_bit(self):
+        r = sr.Recognizer()
+        with sr.AudioFile(path.join(path.dirname(path.realpath(__file__)), "audio-stereo-24-bit-44100Hz.flac")) as source: audio = r.record(source)
+        self.assertIsInstance(audio, sr.AudioData)
+        self.assertEqual(audio.sample_rate, 44100)
+        if audio.sample_width == 3:
+            self.assertSimilar(audio.get_raw_data()[:32], b"\x00\x00\x00\x00\xfe\xff\x00\x02\x00\x00\xfe\xff\x00\x00\x00\xff\x01\x00\x02\xfc\xff\xfe\x01\x00\x02\xfc\xff\xfe\x07\x00\x01\xf6")
+        else:
+            self.assertSimilar(audio.get_raw_data()[:32], b"\x00\x00\x00\x00\x00\x00\xfe\xff\x00\x00\x02\x00\x00\x00\xfe\xff\x00\x00\x00\x00\x00\xff\x01\x00\x00\x02\xfc\xff\x00\xfe\x01\x00")
 
 
 if __name__ == "__main__":

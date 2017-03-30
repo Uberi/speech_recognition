@@ -189,6 +189,12 @@ class AudioFile(AudioSource):
         self.stream = None
         self.DURATION = None
 
+        self.audio_reader = None
+        self.little_endian = False
+        self.SAMPLE_RATE = None
+        self.CHUNK = None
+        self.FRAME_COUNT = None
+
     def __enter__(self):
         assert self.stream is None, "This audio source is already inside a context manager"
         try:
@@ -221,7 +227,7 @@ class AudioFile(AudioSource):
                     "--decode", "--force-aiff-format",  # decode the FLAC file into an AIFF file
                     "-",  # the input FLAC file contents will be given in stdin
                 ], stdin=subprocess.PIPE, stdout=subprocess.PIPE, startupinfo=startup_info)
-                aiff_data, stderr = process.communicate(flac_data)
+                aiff_data, _ = process.communicate(flac_data)
                 aiff_file = io.BytesIO(aiff_data)
                 try:
                     self.audio_reader = aifc.open(aiff_file, "rb")
@@ -272,6 +278,7 @@ class AudioFile(AudioSource):
             # workaround for https://bugs.python.org/issue12866
             if self.samples_24_bit_pretending_to_be_32_bit:  # we need to convert samples from 24-bit to 32-bit before we can process them with ``audioop`` functions
                 buffer = b"".join("\x00" + buffer[i:i + sample_width] for i in range(0, len(buffer), sample_width))  # since we're in little endian, we prepend a zero byte to each 24-bit sample to get a 32-bit sample
+                sample_width = 4 # make sure we thread the buffer as 32-bit audio now, after converting it from 24-bit audio
             if self.audio_reader.getnchannels() != 1:  # stereo audio
                 buffer = audioop.tomono(buffer, sample_width, 1, 1)  # convert stereo audio data to mono
             return buffer
