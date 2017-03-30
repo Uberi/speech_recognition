@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 
-import wave
-import aifc
-import io
-import subprocess
 import unittest
 from os import path
 
@@ -109,7 +105,7 @@ class TestAudioFile(unittest.TestCase):
         self.assertEqual(audio.sample_rate, 44100)
         self.assertEqual(audio.sample_width, 2)
         self.assertSimilar(audio.get_raw_data()[:32], b"\x00\x00\xff\xff\x01\x00\xff\xff\x00\x00\x01\x00\xfe\xff\x02\x00\xfc\xff\x06\x00\xf9\xff\x06\x00\xfe\xff\xfe\xff\x05\x00\xfa\xff")
-    
+
     def test_flac_mono_24_bit(self):
         r = sr.Recognizer()
         with sr.AudioFile(path.join(path.dirname(path.realpath(__file__)), "audio-mono-24-bit-44100Hz.flac")) as source: audio = r.record(source)
@@ -127,7 +123,7 @@ class TestAudioFile(unittest.TestCase):
         self.assertEqual(audio.sample_rate, 44100)
         self.assertEqual(audio.sample_width, 2)
         self.assertSimilar(audio.get_raw_data()[:32], b"\xff\xff\xff\xff\x02\x00\xfe\xff\x00\x00\x01\x00\xfd\xff\x01\x00\xff\xff\x04\x00\xfa\xff\x05\x00\xff\xff\xfd\xff\x08\x00\xf6\xff")
-    
+
     def test_flac_stereo_24_bit(self):
         r = sr.Recognizer()
         with sr.AudioFile(path.join(path.dirname(path.realpath(__file__)), "audio-stereo-24-bit-44100Hz.flac")) as source: audio = r.record(source)

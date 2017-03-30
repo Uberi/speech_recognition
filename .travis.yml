@@ -19,7 +19,7 @@ install:
   - pip install flake8 rstcheck
   - pip install -e .
 script:
-  - flake8 --ignore=E501,E701 speech_recognition setup.py # ignore errors for long lines and multi-statement lines
+  - flake8 --ignore=E501,E701 speech_recognition tests examples setup.py # ignore errors for long lines and multi-statement lines
   - rstcheck README.rst reference/*.rst # ensure RST is well-formed
   - python -m unittest discover --verbose # run unit tests
 sudo: false # this allows TravisCI to use the fast Docker build environment rather than the slower VMs

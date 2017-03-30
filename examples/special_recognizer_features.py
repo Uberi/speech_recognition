@@ -9,9 +9,9 @@ AUDIO_FILE_FR = path.join(path.dirname(path.realpath(__file__)), "french.aiff")
 # use the audio file as the audio source
 r = sr.Recognizer()
 with sr.AudioFile(AUDIO_FILE_EN) as source:
-    audio_en = r.record(source) # read the entire audio file
+    audio_en = r.record(source)  # read the entire audio file
 with sr.AudioFile(AUDIO_FILE_FR) as source:
-    audio_fr = r.record(source) # read the entire audio file
+    audio_fr = r.record(source)  # read the entire audio file
 
 # recognize keywords using Sphinx
 try:

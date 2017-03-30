@@ -6,6 +6,7 @@ import unittest
 
 import speech_recognition as sr
 
+
 class TestRecognition(unittest.TestCase):
     def setUp(self):
         self.AUDIO_FILE_EN = os.path.join(os.path.dirname(os.path.realpath(__file__)), "english.wav")
@@ -79,6 +80,7 @@ class TestRecognition(unittest.TestCase):
         r = sr.Recognizer()
         with sr.AudioFile(self.AUDIO_FILE_ZH) as source: audio = r.record(source)
         self.assertEqual(r.recognize_ibm(audio, username=os.environ["IBM_USERNAME"], password=os.environ["IBM_PASSWORD"], language="zh-CN"), u"砸 自己 的 脚 ")
+
 
 if __name__ == "__main__":
     unittest.main()
