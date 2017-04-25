@@ -515,7 +515,7 @@ class Recognizer(AudioSource):
             target_energy = energy * self.dynamic_energy_ratio
             self.energy_threshold = self.energy_threshold * damping + target_energy * (1 - damping)
 
-    def listen(self, source, timeout=None, phrase_time_limit=None):
+    def listen(self, source, timeout=None, phrase_time_limit=None, hot_words=[]]):
         """
         Records a single phrase from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance, which it returns.
 
@@ -530,11 +530,18 @@ class Recognizer(AudioSource):
         assert isinstance(source, AudioSource), "Source must be an audio source"
         assert source.stream is not None, "Audio source must be entered before listening, see documentation for ``AudioSource``; are you using ``source`` outside of a ``with`` statement?"
         assert self.pause_threshold >= self.non_speaking_duration >= 0
+        
+        # just make sure hot_words is iterable
+        if not hasattr(hot_words, '__iter__'):
+            hot_words = [hot_words]
+
+        for f in hot_words: assert os.path.isfile(f), "Unable to locate file with given path: {}".format(f)
 
         seconds_per_buffer = (source.CHUNK + 0.0) / source.SAMPLE_RATE
         pause_buffer_count = int(math.ceil(self.pause_threshold / seconds_per_buffer))  # number of buffers of non-speaking audio during a phrase, before the phrase should be considered complete
         phrase_buffer_count = int(math.ceil(self.phrase_threshold / seconds_per_buffer))  # minimum number of buffers of speaking audio before we consider the speaking audio a phrase
         non_speaking_buffer_count = int(math.ceil(self.non_speaking_duration / seconds_per_buffer))  # maximum number of buffers of non-speaking audio to retain before and after a phrase
+        search_for_hot_word = (len(hot_words) != 0)
 
         # read audio input for phrases until there is a phrase that is long enough
         elapsed_time = 0  # number of seconds of audio read
@@ -568,6 +575,36 @@ class Recognizer(AudioSource):
             # read audio input until the phrase ends
             pause_count, phrase_count = 0, 0
             phrase_start_time = elapsed_time
+
+            # if chosen to do so, wait until we hear our hot word(s) to actually start
+            detector = None
+            if search_for_hot_word:
+                models = ",".join(hot_words)
+                # get file path to needed resource file
+                resource = os.path.join(os.path.dirname(os.path.abspath(__file__)), "resources/common.res")
+                detector = snowboydetect.SnowboyDetect(resource_filename=resource.encode(), model_str=models.encode())
+                detector.SetAudioGain(1.0) # can this be removed?
+                hot_word_buffer = collections.deque(maxlen=4096)
+
+                while True:
+                    # handle phrase being too long by cutting off the audio
+                    elapsed_time += seconds_per_buffer
+                    if phrase_time_limit and elapsed_time - phrase_start_time > phrase_time_limit:
+                        break
+
+                    buffer = source.stream.read(source.CHUNK)
+                    if len(buffer) == 0: break  # reached end of the stream
+
+                    hot_word_buffer.extend(buffer)
+                    ans = detector.RunDetection(bytes(bytearray(hot_word_buffer)))
+                    assert ans >= 0, "Error initializing streams or reading audio data"
+
+                    # if ans is greater than 0, we found a wake word!
+                    if ans > 0:
+                        frames.extend(hot_word_buffer)
+                        break
+
+            
             while True:
                 # handle phrase being too long by cutting off the audio
                 elapsed_time += seconds_per_buffer
