@@ -805,7 +805,7 @@ class Recognizer(AudioSource):
                     f.flush()
                     api_credentials = GoogleCredentials.from_stream(f.name)
 
-            speech_service = build("speech", "v1beta1", credentials=api_credentials)
+            speech_service = build("speech", "v1beta1", credentials=api_credentials, cache_discovery=False)
         except ImportError:
             raise RequestError("missing google-api-python-client module: ensure that google-api-python-client is set up correctly.")
 
