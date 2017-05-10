@@ -23,7 +23,7 @@ import sys
 import struct
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "3.6.3"
+__version__ = "3.6.5"
 __license__ = "BSD"
 
 try:  # attempt to use the Python 2 modules
@@ -1206,7 +1206,7 @@ class PortableNamedTemporaryFile(object):
         # create the temporary file and open it
         import tempfile
         file_descriptor, file_path = tempfile.mkstemp()
-        self._file = open(file_descriptor, self.mode)
+        self._file = os.fdopen(file_descriptor, self.mode)
 
         # the name property is a public field
         self.name = file_path
