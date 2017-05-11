@@ -554,7 +554,7 @@ class Recognizer(AudioSource):
         sb_buffer = collections.deque(maxlen=(detector.SampleRate() * 5))
 
         # snowboy requires a specific sample rate that it provides, to avoid a ripple of issues we will just downsample momentarily by this ammount
-        resample_ratio =  float(source.SAMPLE_RATE) / float(detector.SampleRate())
+        resample_ratio = float(source.SAMPLE_RATE) / float(detector.SampleRate())
         resample_count = 0
 
         seconds_per_buffer = (source.CHUNK + 0.0) / source.SAMPLE_RATE
