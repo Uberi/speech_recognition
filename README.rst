@@ -32,6 +32,7 @@ Speech recognition engine/API support:
 * `Microsoft Bing Voice Recognition <https://www.microsoft.com/cognitive-services/en-us/speech-api>`__
 * `Houndify API <https://houndify.com/>`__
 * `IBM Speech to Text <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text.html>`__
+* `Snowboy Hotword Detection <https://snowboy.kitt.ai/>`__ (works offline)
 
 **Quickstart:** ``pip install SpeechRecognition``. See the "Installing" section for more details.
 
@@ -344,6 +345,7 @@ Authors
     sbraden <braden.sarah@gmail.com> (Sarah Braden)
     tb0hdan (Bohdan Turkynewych)
     Thynix <steve@asksteved.com> (Steve Dougherty)
+    beeedy <broderick.carlin@gmail.com> (Broderick Carlin)
 
 Please report bugs and suggestions at the `issue tracker <https://github.com/Uberi/speech_recognition/issues>`__!
 

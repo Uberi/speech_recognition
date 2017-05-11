@@ -603,8 +603,9 @@ class Recognizer(AudioSource):
 
             # if ans is greater than 0, we found a wake word! return audio
             if ans > 0:
-                print "FOUND WORD"
                 return bytes(mic_buffer), elapsed_time
+        # return no sound bytes and add to timer
+        return None, elapsed_time
 
     def listen(self, source, timeout=None, phrase_time_limit=None, hot_words=[], snowboy_location=None, wait_for_hot_word=False):
         """
@@ -668,6 +669,8 @@ class Recognizer(AudioSource):
             if wait_for_hot_word:
                 audio_data, delta_time = self.__wait_for_hot_word(snowboy_location, hot_words, source, timeout)
                 elapsed_time += delta_time
+                if audio_data is None:
+                    continue
                 frames.append(audio_data)
             while True:
                 # handle phrase being too long by cutting off the audio
