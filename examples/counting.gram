@@ -1,7 +1,7 @@
 #JSGF V1.0;
 
 /**
- * JSGF Grammar for Turtle example
+ * JSGF Grammar for English counting example
  */
 
 grammar counting;
