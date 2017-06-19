@@ -630,13 +630,15 @@ class Recognizer(AudioSource):
         listener_thread.start()
         return stopper
 
-    def recognize_sphinx(self, audio_data, language="en-US", keyword_entries=None, show_all=False):
+    def recognize_sphinx(self, audio_data, language="en-US", keyword_entries=None, grammar=None, show_all=False):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using CMU Sphinx.
 
         The recognition language is determined by ``language``, an RFC5646 language tag like ``"en-US"`` or ``"en-GB"``, defaulting to US English. Out of the box, only ``en-US`` is supported. See `Notes on using `PocketSphinx <https://github.com/Uberi/speech_recognition/blob/master/reference/pocketsphinx.rst>`__ for information about installing other languages. This document is also included under ``reference/pocketsphinx.rst``.
 
         If specified, the keywords to search for are determined by ``keyword_entries``, an iterable of tuples of the form ``(keyword, sensitivity)``, where ``keyword`` is a phrase, and ``sensitivity`` is how sensitive to this phrase the recognizer should be, on a scale of 0 (very insensitive, more false negatives) to 1 (very sensitive, more false positives) inclusive. If not specified or ``None``, no keywords are used and Sphinx will simply transcribe whatever words it recognizes. Specifying ``keyword_entries`` is more accurate than just looking for those same keywords in non-keyword-based transcriptions, because Sphinx knows specifically what sounds to look for.
+
+        Sphinx can also handle FSG or JSGF grammars. The parameter ``grammar`` expects a path to the grammar file. Note that if a JSGF grammar is passed, an FSG grammar will be created at the same location to speed up execution in the next run. If ``keyword_entries`` are passed, content of ``grammar`` will be ignored.
 
         Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the Sphinx ``pocketsphinx.pocketsphinx.Decoder`` object resulting from the recognition.
 
@@ -648,7 +650,8 @@ class Recognizer(AudioSource):
 
         # import the PocketSphinx speech recognition module
         try:
-            from pocketsphinx import pocketsphinx
+            from pocketsphinx import pocketsphinx, Jsgf, FsgModel
+
         except ImportError:
             raise RequestError("missing PocketSphinx module: ensure that PocketSphinx is set up correctly.")
         except ValueError:
@@ -691,6 +694,24 @@ class Recognizer(AudioSource):
                 decoder.start_utt()  # begin utterance processing
                 decoder.process_raw(raw_data, False, True)  # process audio data with recognition enabled (no_search = False), as a full utterance (full_utt = True)
                 decoder.end_utt()  # stop utterance processing
+        elif grammar is not None:  # a path to a FSG or JSGF grammar
+            if not os.path.exists(grammar):
+                raise ValueError("Grammar '{0}' does not exist.".format(grammar))
+            grammar_path = os.path.abspath(os.path.dirname(grammar))
+            grammar_name = os.path.splitext(os.path.basename(grammar))[0]
+            fsg_path = "{0}/{1}.fsg".format(grammar_path, grammar_name)
+            if not os.path.exists(fsg_path):  # create FSG grammar if not available
+                jsgf = Jsgf(grammar)
+                rule = jsgf.get_rule("{0}.{0}".format(grammar_name))
+                fsg = jsgf.build_fsg(rule, decoder.get_logmath(), 7.5)
+                fsg.writefile(fsg_path)
+            else:
+                fsg = FsgModel(fsg_path, decoder.get_logmath(), 7.5)
+            decoder.set_fsg(grammar_name, fsg)
+            decoder.set_search(grammar_name)
+            decoder.start_utt()
+            decoder.process_raw(raw_data, False, True)  # process audio data with recognition enabled (no_search = False), as a full utterance (full_utt = True)
+            decoder.end_utt()  # stop utterance processing
         else:  # no keywords, perform freeform recognition
             decoder.start_utt()  # begin utterance processing
             decoder.process_raw(raw_data, False, True)  # process audio data with recognition enabled (no_search = False), as a full utterance (full_utt = True)
