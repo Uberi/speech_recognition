@@ -1,0 +1,11 @@
+#JSGF V1.0;
+
+/**
+ * JSGF Grammar for English counting example
+ */
+
+grammar counting;
+
+public <counting> = ( <digit> ) +;
+
+<digit> = one | two | three | four | five | six | seven ;
