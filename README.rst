@@ -296,9 +296,9 @@ Testing is also done automatically by TravisCI, upon every push. To set up the e
 FLAC Executables
 ~~~~~~~~~~~~~~~~
 
-The included ``flac-win32`` executable is the `official FLAC 1.3.1 32-bit Windows binary <http://downloads.xiph.org/releases/flac/flac-1.3.1-win.zip>`__.
+The included ``flac-win32`` executable is the `official FLAC 1.3.2 32-bit Windows binary <http://downloads.xiph.org/releases/flac/flac-1.3.2-win.zip>`__.
 
-The included ``flac-linux-x86`` and ``flac-linux-x86_64`` executables are built from the `FLAC 1.3.1 source code <http://downloads.xiph.org/releases/flac/flac-1.3.1.tar.xz>`__ with `Manylinux <https://github.com/pypa/manylinux>`__ to ensure that it's compatible with a wide variety of distributions.
+The included ``flac-linux-x86`` and ``flac-linux-x86_64`` executables are built from the `FLAC 1.3.2 source code <http://downloads.xiph.org/releases/flac/flac-1.3.2.tar.xz>`__ with `Manylinux <https://github.com/pypa/manylinux>`__ to ensure that it's compatible with a wide variety of distributions.
 
 The built FLAC executables should be bit-for-bit reproducible. To rebuild them, run the following inside the project directory on a Debian-like system:
 
@@ -309,24 +309,24 @@ The built FLAC executables should be bit-for-bit reproducible. To rebuild them, 
     sudo apt-get install --yes docker.io
 
     # build FLAC inside the Manylinux i686 Docker image
-    tar xf flac-1.3.1.tar.xz
+    tar xf flac-1.3.2.tar.xz
     sudo docker run --tty --interactive --rm --volume "$(pwd):/root" quay.io/pypa/manylinux1_i686:latest bash
-        cd /root/flac-1.3.1
+        cd /root/flac-1.3.2
         ./configure LDFLAGS=-static # compiler flags to make a static build
         make
     exit
-    cp flac-1.3.1/src/flac/flac ../speech_recognition/flac-linux-x86 && sudo rm -rf flac-1.3.1/
+    cp flac-1.3.2/src/flac/flac ../speech_recognition/flac-linux-x86 && sudo rm -rf flac-1.3.2/
 
     # build FLAC inside the Manylinux x86_64 Docker image
-    tar xf flac-1.3.1.tar.xz
+    tar xf flac-1.3.2.tar.xz
     sudo docker run --tty --interactive --rm --volume "$(pwd):/root" quay.io/pypa/manylinux1_x86_64:latest bash
-        cd /root/flac-1.3.1
+        cd /root/flac-1.3.2
         ./configure LDFLAGS=-static # compiler flags to make a static build
         make
     exit
-    cp flac-1.3.1/src/flac/flac ../speech_recognition/flac-linux-x86_64 && sudo rm -r flac-1.3.1/
+    cp flac-1.3.2/src/flac/flac ../speech_recognition/flac-linux-x86_64 && sudo rm -r flac-1.3.2/
 
-The included ``flac-mac`` executable is extracted from `xACT 2.38 <http://xact.scottcbrown.org/>`__, which is a frontend for FLAC that conveniently includes binaries for all of its encoders. Specifically, it is a copy of ``xACT 2.38/xACT.app/Contents/Resources/flac`` in ``xACT2.38.zip``.
+The included ``flac-mac`` executable is extracted from `xACT 2.39 <http://xact.scottcbrown.org/>`__, which is a frontend for FLAC 1.3.2 that conveniently includes binaries for all of its encoders. Specifically, it is a copy of ``xACT 2.39/xACT.app/Contents/Resources/flac`` in ``xACT2.39.zip``.
 
 Authors
 -------
