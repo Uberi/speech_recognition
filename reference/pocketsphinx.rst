@@ -8,6 +8,7 @@ By default, SpeechRecognition's Sphinx functionality supports only US English. A
 
 * `International French <https://drive.google.com/open?id=0Bw_EqP-hnaFNN2FlQ21RdnVZSVE>`__
 * `Mandarin Chinese <https://drive.google.com/open?id=0Bw_EqP-hnaFNSWdqdm5maWZtTGc>`__
+* `Italian <https://drive.google.com/open?id=0Bw_EqP-hnaFNSXUtMm8tRkdUejg>`__
 
 To install a language pack, download the ZIP archives and extract them directly into the module install directory (you can find the module install directory by running ``python -c "import speech_recognition as sr, os.path as p; print(p.dirname(sr.__file__))"``).
 
