@@ -890,15 +890,15 @@ class Recognizer(AudioSource):
 
     def recognize_bing(self, audio_data, key, language="en-US", show_all=False):
         """
-        Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Microsoft Bing Voice Recognition API.
+        Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Microsoft Bing Speech API.
 
-        The Microsoft Bing Voice Recognition API key is specified by ``key``. Unfortunately, these are not available without `signing up for an account <https://www.microsoft.com/cognitive-services/en-us/speech-api>`__ with Microsoft Cognitive Services.
+        The Microsoft Bing Speech API key is specified by ``key``. Unfortunately, these are not available without `signing up for an account <https://azure.microsoft.com/en-ca/pricing/details/cognitive-services/speech-api/>`__ with Microsoft Azure.
 
-        To get the API key, go to the `Microsoft Cognitive Services subscriptions overview <https://www.microsoft.com/cognitive-services/en-us/subscriptions>`__, go to the entry titled "Speech", and look for the key under the "Keys" column. Microsoft Bing Voice Recognition API keys are 32-character lowercase hexadecimal strings.
+        To get the API key, go to the `Microsoft Azure Portal Resources <https://portal.azure.com/>`__ page, go to "All Resources" > "Add" > "See All" > Search "Bing Speech API > "Create", and fill in the form to make a "Bing Speech API" resource. On the resulting page (which is also accessible from the "All Resources" page in the Azure Portal), go to the "Show Access Keys" page, which will have two API keys, either of which can be used for the `key` parameter. Microsoft Bing Speech API keys are 32-character lowercase hexadecimal strings.
 
-        The recognition language is determined by ``language``, an RFC5646 language tag like ``"en-US"`` (US English) or ``"fr-FR"`` (International French), defaulting to US English. A list of supported language values can be found in the `API documentation <https://www.microsoft.com/cognitive-services/en-us/speech-api/documentation/api-reference-rest/BingVoiceRecognition#SupLocales>`__.
+        The recognition language is determined by ``language``, a BCP-47 language tag like ``"en-US"`` (US English) or ``"fr-FR"`` (International French), defaulting to US English. A list of supported language values can be found in the `API documentation <https://docs.microsoft.com/en-us/azure/cognitive-services/speech/api-reference-rest/bingvoicerecognition#recognition-language>`__ under "Interactive and dictation mode".
 
-        Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <https://www.microsoft.com/cognitive-services/en-us/speech-api/documentation/api-reference-rest/BingVoiceRecognition#user-content-3-voice-recognition-responses>`__ as a JSON dictionary.
+        Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <https://docs.microsoft.com/en-us/azure/cognitive-services/speech/api-reference-rest/bingvoicerecognition#sample-responses>`__ as a JSON dictionary.
 
         Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
         """
@@ -939,27 +939,26 @@ class Recognizer(AudioSource):
             if allow_caching:
                 # save the token for the duration it is valid for
                 self.bing_cached_access_token = access_token
-                self.bing_cached_access_token_expiry = start_time + 600  # according to https://www.microsoft.com/cognitive-services/en-us/Speech-api/documentation/API-Reference-REST/BingVoiceRecognition, the token expires in exactly 10 minutes
+                self.bing_cached_access_token_expiry = start_time + 600  # according to https://docs.microsoft.com/en-us/azure/cognitive-services/speech/api-reference-rest/bingvoicerecognition, the token expires in exactly 10 minutes
 
         wav_data = audio_data.get_wav_data(
             convert_rate=16000,  # audio samples must be 8kHz or 16 kHz
             convert_width=2  # audio samples should be 16-bit
         )
 
-        url = "https://speech.platform.bing.com/recognize/query?{}".format(urlencode({
-            "version": "3.0",
-            "requestid": uuid.uuid4(),
-            "appID": "D4D52672-91D7-4C74-8AD8-42B1D98141A5",
-            "format": "json",
+        # chunked-transfer encoding is only supported in the standard library for Python 3.6+, so we manually format the POST data as if it was a chunked request
+        ascii_hex_data_length = "{:X}".format(len(wav_data)).encode("utf-8")
+        chunked_transfer_encoding_data = ascii_hex_data_length + b"\r\n" + wav_data + b"\r\n0\r\n\r\n"
+
+        url = "https://speech.platform.bing.com/speech/recognition/interactive/cognitiveservices/v1?{}".format(urlencode({
+            "language": language,
             "locale": language,
-            "device.os": "wp7",
-            "scenarios": "ulm",
-            "instanceid": uuid.uuid4(),
-            "result.profanitymarkup": "0",
+            "requestid": uuid.uuid4(),
         }))
-        request = Request(url, data=wav_data, headers={
+        request = Request(url, data=chunked_transfer_encoding_data, headers={
             "Authorization": "Bearer {}".format(access_token),
-            "Content-Type": "audio/wav; samplerate=16000; sourcerate={}; trustsourcerate=true".format(audio_data.sample_rate),
+            "Content-type": "audio/wav; codec=\"audio/pcm\"; samplerate=16000",
+            "Transfer-Encoding": "chunked",
         })
         try:
             response = urlopen(request, timeout=self.operation_timeout)
@@ -972,8 +971,8 @@ class Recognizer(AudioSource):
 
         # return results
         if show_all: return result
-        if "header" not in result or "lexical" not in result["header"]: raise UnknownValueError()
-        return result["header"]["lexical"]
+        if "RecognitionStatus" not in result or result["RecognitionStatus"] != "Success" or "DisplayText" not in result: raise UnknownValueError()
+        return result["DisplayText"]
 
     def recognize_houndify(self, audio_data, client_id, client_key, show_all=False):
         """
@@ -1050,8 +1049,8 @@ class Recognizer(AudioSource):
         )
         url = "https://stream.watsonplatform.net/speech-to-text/api/v1/recognize?{}".format(urlencode({
             "profanity_filter": "false",
-            "continuous": "true",
             "model": "{}_BroadbandModel".format(language),
+            "inactivity_timeout": -1,  # don't stop recognizing when the audio stream activity stops
         }))
         request = Request(url, data=flac_data, headers={
             "Content-Type": "audio/x-flac",
