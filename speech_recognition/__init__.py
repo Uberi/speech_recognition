@@ -655,7 +655,9 @@ class Recognizer(AudioSource):
         except ImportError:
             raise RequestError("missing PocketSphinx module: ensure that PocketSphinx is set up correctly.")
         except ValueError:
-            raise RequestError("bad PocketSphinx installation detected; make sure you have PocketSphinx version 0.0.9 or better.")
+            raise RequestError("bad PocketSphinx installation; try reinstalling PocketSphinx version 0.0.9 or better.")
+        if not hasattr(pocketsphinx, "Decoder") or not hasattr(pocketsphinx.Decoder, "default_config"):
+            raise RequestError("outdated PocketSphinx installation; ensure you have PocketSphinx version 0.0.9 or better.")
 
         language_directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), "pocketsphinx-data", language)
         if not os.path.isdir(language_directory):
