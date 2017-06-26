@@ -4,6 +4,7 @@
 
 import io
 import os
+import sys
 import subprocess
 import wave
 import aifc
@@ -948,20 +949,27 @@ class Recognizer(AudioSource):
             convert_width=2  # audio samples should be 16-bit
         )
 
-        # chunked-transfer encoding is only supported in the standard library for Python 3.6+, so we manually format the POST data as if it was a chunked request
-        ascii_hex_data_length = "{:X}".format(len(wav_data)).encode("utf-8")
-        chunked_transfer_encoding_data = ascii_hex_data_length + b"\r\n" + wav_data + b"\r\n0\r\n\r\n"
-
         url = "https://speech.platform.bing.com/speech/recognition/interactive/cognitiveservices/v1?{}".format(urlencode({
             "language": language,
             "locale": language,
             "requestid": uuid.uuid4(),
         }))
-        request = Request(url, data=chunked_transfer_encoding_data, headers={
-            "Authorization": "Bearer {}".format(access_token),
-            "Content-type": "audio/wav; codec=\"audio/pcm\"; samplerate=16000",
-            "Transfer-Encoding": "chunked",
-        })
+
+        if sys.version_info >= (3, 6):  # chunked-transfer requests are only supported in the standard library as of Python 3.6+, use it if possible
+            request = Request(url, data=io.BytesIO(wav_data), headers={
+                "Authorization": "Bearer {}".format(access_token),
+                "Content-type": "audio/wav; codec=\"audio/pcm\"; samplerate=16000",
+                "Transfer-Encoding": "chunked",
+            })
+        else:  # fall back on manually formatting the POST body as a chunked request
+            ascii_hex_data_length = "{:X}".format(len(wav_data)).encode("utf-8")
+            chunked_transfer_encoding_data = ascii_hex_data_length + b"\r\n" + wav_data + b"\r\n0\r\n\r\n"
+            request = Request(url, data=chunked_transfer_encoding_data, headers={
+                "Authorization": "Bearer {}".format(access_token),
+                "Content-type": "audio/wav; codec=\"audio/pcm\"; samplerate=16000",
+                "Transfer-Encoding": "chunked",
+            })
+
         try:
             response = urlopen(request, timeout=self.operation_timeout)
         except HTTPError as e:
