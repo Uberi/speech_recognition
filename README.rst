@@ -288,10 +288,10 @@ Testing is also done automatically by TravisCI, upon every push. To set up the e
     sudo docker run --volume "$(pwd):/speech_recognition" --interactive --tty quay.io/travisci/travis-python:latest /bin/bash
     su - travis && cd /speech_recognition
     sudo apt-get update && sudo apt-get install swig libpulse-dev
-    pip install --user pocketsphinx monotonic && pip install --user flake8 rstcheck && sudo pip install --user -e .
+    pip install --user pocketsphinx monotonic && pip install --user flake8 rstcheck && pip install --user -e .
     python -m unittest discover --verbose # run unit tests
-    flake8 --ignore=E501,E701 speech_recognition tests examples setup.py # ignore errors for long lines and multi-statement lines
-    rstcheck README.rst reference/*.rst # ensure RST is well-formed
+    python -m flake8 --ignore=E501,E701 speech_recognition tests examples setup.py # ignore errors for long lines and multi-statement lines
+    python -m rstcheck README.rst reference/*.rst # ensure RST is well-formed
 
 FLAC Executables
 ~~~~~~~~~~~~~~~~
