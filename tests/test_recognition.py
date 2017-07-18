@@ -49,7 +49,7 @@ class TestRecognition(unittest.TestCase):
     def test_bing_french(self):
         r = sr.Recognizer()
         with sr.AudioFile(self.AUDIO_FILE_FR) as source: audio = r.record(source)
-        self.assertEqual(r.recognize_bing(audio, key=os.environ["BING_KEY"], language="fr-FR"), u"Et c'est la dictée numéro un.")
+        self.assertEqual(r.recognize_bing(audio, key=os.environ["BING_KEY"], language="fr-FR"), u"Essaye la dictée numéro un.")
 
     @unittest.skipUnless("BING_KEY" in os.environ, "requires Microsoft Bing Voice Recognition key to be specified in BING_KEY environment variable")
     def test_bing_chinese(self):

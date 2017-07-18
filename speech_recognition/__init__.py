@@ -934,9 +934,9 @@ class Recognizer(AudioSource):
             try:
                 credential_response = urlopen(credential_request, timeout=self.operation_timeout)
             except HTTPError as e:
-                raise RequestError("recognition request failed: {}".format(e.reason))
+                raise RequestError("credential request failed: {}".format(e.reason))
             except URLError as e:
-                raise RequestError("recognition connection failed: {}".format(e.reason))
+                raise RequestError("credential connection failed: {}".format(e.reason))
             access_token = credential_response.read().decode("utf-8")
 
             if allow_caching:
