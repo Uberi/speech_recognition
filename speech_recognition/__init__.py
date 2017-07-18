@@ -932,7 +932,7 @@ class Recognizer(AudioSource):
                 start_time = monotonic()
 
             try:
-                credential_response = urlopen(credential_request, timeout=self.operation_timeout)
+                credential_response = urlopen(credential_request, timeout=30)  # credential response can take longer, use longer timeout instead of default one
             except HTTPError as e:
                 raise RequestError("credential request failed: {}".format(e.reason))
             except URLError as e:
