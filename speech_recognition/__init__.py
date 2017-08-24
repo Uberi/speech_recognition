@@ -820,6 +820,14 @@ class Recognizer(AudioSource):
             from googleapiclient.discovery import build
             import googleapiclient.errors
 
+            # cannot simply use 'http = httplib2.Http(timeout=self.operation_timeout)'
+            # because discovery.build() says 'Arguments http and credentials are mutually exclusive'
+            import socket
+            import googleapiclient.http
+            if self.operation_timeout and socket.getdefaulttimeout() is None:
+                # override constant (used by googleapiclient.http.build_http())
+                googleapiclient.http.DEFAULT_HTTP_TIMEOUT_SEC = self.operation_timeout
+
             if credentials_json is None:
                 api_credentials = GoogleCredentials.get_application_default()
             else:
@@ -1110,8 +1118,15 @@ def get_flac_converter():
 
     # mark FLAC converter as executable if possible
     try:
-        stat_info = os.stat(flac_converter)
-        os.chmod(flac_converter, stat_info.st_mode | stat.S_IEXEC)
+        # handle known issue when running on docker:
+        # run executable right after chmod() may result in OSError "Text file busy"
+        # fix: flush FS with sync
+        if not os.access(flac_converter, os.X_OK):
+            stat_info = os.stat(flac_converter)
+            os.chmod(flac_converter, stat_info.st_mode | stat.S_IEXEC)
+            if 'Linux' in platform.system():
+                os.sync() if sys.version_info >= (3, 3) else os.system('sync')
+
     except OSError: pass
 
     return flac_converter
