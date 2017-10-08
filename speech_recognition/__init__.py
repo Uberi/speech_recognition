@@ -20,6 +20,8 @@ import hashlib
 import hmac
 import time
 import uuid
+import sys
+import struct
 
 __author__ = "Anthony Zhang (Uberi)"
 __version__ = "3.7.1"
@@ -516,7 +518,97 @@ class Recognizer(AudioSource):
             target_energy = energy * self.dynamic_energy_ratio
             self.energy_threshold = self.energy_threshold * damping + target_energy * (1 - damping)
 
-    def listen(self, source, timeout=None, phrase_time_limit=None):
+    def __wait_for_hot_word(self, snowboy_location, hot_words, source, timeout=None):
+        """
+        Blocks until a hot word, sometimes refered to as a wake word, it found in an audio input.
+
+        Intended to be used as a means to limit network traffic and reduce cost of online speech-to-text services
+
+        Currently utilizes the SnowBoy service which is free for hobbiest with a paid option for commerical use.
+
+        ``snowboy_location`` is the local top level directory containing the compiled SnowBoy files.
+
+        ``hot_words`` is an iterable element that contains the local file location of models provided by the SnowBoy service, either .pmdl or .umdl format
+
+        ``source`` is the actual audio input as u
+        """
+        assert isinstance(source, AudioSource), "Source must be an audio source"
+        assert source.stream is not None, "Audio source must be entered before listening, see documentation for ``AudioSource``; are you using ``source`` outside of a ``with`` statement?"
+        assert snowboy_location is not None, "Need to specify snowboy_location argument if using hot words"
+        assert os.path.isfile(snowboy_location + "/snowboydetect.py"), "Can not find snowboydetect.py. Make sure snowboy_location is pointed at the root directory"
+        for f in hot_words: assert os.path.isfile(f), "Unable to locate file with given path: {}".format(f)
+
+        sys.path.append(snowboy_location)
+        import snowboydetect
+
+        models = ",".join(hot_words)
+        # get file path to needed resource file
+        resource = snowboy_location + "/resources/common.res"
+        detector = snowboydetect.SnowboyDetect(resource_filename=resource.encode(), model_str=models.encode())
+        detector.SetAudioGain(1.0)
+        sensitivity = [0.4] * len(hot_words)
+        sensitivity_str = ",".join(str(t) for t in sensitivity)
+        detector.SetSensitivity(sensitivity_str.encode())
+
+        # create a deque to store our raw mic input data and one to store snowboy downsampled data, each hold 5sec of audio
+        mic_buffer = collections.deque(maxlen=(source.SAMPLE_RATE * 5))
+        sb_buffer = collections.deque(maxlen=(detector.SampleRate() * 5))
+
+        # snowboy requires a specific sample rate that it provides, to avoid a ripple of issues we will just downsample momentarily by this ammount
+        resample_ratio = float(source.SAMPLE_RATE) / float(detector.SampleRate())
+        resample_count = 0
+
+        seconds_per_buffer = (source.CHUNK + 0.0) / source.SAMPLE_RATE
+        elapsed_time = 0
+
+        while True:
+            # handle phrase being too long by cutting off the audio
+            elapsed_time += seconds_per_buffer
+            if timeout and elapsed_time > timeout:
+                break
+
+            buffer = source.stream.read(source.CHUNK)
+            if len(buffer) == 0: break  # reached end of the stream
+
+            # record mic data for use later
+            mic_buffer.extend(buffer)
+
+            # convert byte's into ints so we can downsample
+            int_data = struct.unpack('<' + ('h' * (len(buffer) / source.SAMPLE_WIDTH)), buffer)
+            ds_data = []
+
+            # rough downsampling, can handle downsampling by non-integer values
+            for i in range(len(int_data)):
+                if resample_count <= 0:
+                    sample = int_data[i]
+
+                    # grab the previous sample too, but make sure we have one to grab
+                    prev_sample = sample
+                    if i != 0:
+                        prev_sample = int_data[i - 1]
+
+                    # get a number betwen 0 and 1, this is used to linearly interpolate between the two samples we have
+                    ratio = 0.0 - resample_count
+                    fab_sample = int((1.0 - ratio) * sample + (ratio) * prev_sample + 0.5)
+                    ds_data.append(fab_sample)
+                    resample_count += resample_ratio
+
+                resample_count -= 1.0
+
+            # convert back into bytes so we can feed it into snowboy
+            sb_buffer.extend(struct.pack('<' + ('h' * len(ds_data)), *ds_data))
+
+            # actually run the snowboy detector
+            ans = detector.RunDetection(bytes(bytearray(sb_buffer)))
+            assert ans != -1, "Error initializing streams or reading audio data"
+
+            # if ans is greater than 0, we found a wake word! return audio
+            if ans > 0:
+                return bytes(mic_buffer), elapsed_time
+        # return no sound bytes and add to timer
+        return None, elapsed_time
+
+    def listen(self, source, timeout=None, phrase_time_limit=None, hot_words=[], snowboy_location=None, wait_for_hot_word=False):
         """
         Records a single phrase from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance, which it returns.
 
@@ -531,6 +623,10 @@ class Recognizer(AudioSource):
         assert isinstance(source, AudioSource), "Source must be an audio source"
         assert source.stream is not None, "Audio source must be entered before listening, see documentation for ``AudioSource``; are you using ``source`` outside of a ``with`` statement?"
         assert self.pause_threshold >= self.non_speaking_duration >= 0
+
+        # just make sure hot_words is iterable
+        if not hasattr(hot_words, '__iter__'):
+            hot_words = [hot_words]
 
         seconds_per_buffer = (source.CHUNK + 0.0) / source.SAMPLE_RATE
         pause_buffer_count = int(math.ceil(self.pause_threshold / seconds_per_buffer))  # number of buffers of non-speaking audio during a phrase, before the phrase should be considered complete
@@ -569,6 +665,13 @@ class Recognizer(AudioSource):
             # read audio input until the phrase ends
             pause_count, phrase_count = 0, 0
             phrase_start_time = elapsed_time
+
+            if wait_for_hot_word:
+                audio_data, delta_time = self.__wait_for_hot_word(snowboy_location, hot_words, source, timeout)
+                elapsed_time += delta_time
+                if audio_data is None:
+                    continue
+                frames.append(audio_data)
             while True:
                 # handle phrase being too long by cutting off the audio
                 elapsed_time += seconds_per_buffer
