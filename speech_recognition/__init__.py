@@ -35,6 +35,9 @@ except ImportError:  # use the Python 3 modules
     from urllib.request import Request, urlopen
     from urllib.error import URLError, HTTPError
 
+default_acoustic_parameters_directory = None
+default_language_model_file = None
+default_phoneme_dictionary_file = None
 
 class WaitTimeoutError(Exception): pass
 
@@ -766,15 +769,24 @@ class Recognizer(AudioSource):
         language_directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), "pocketsphinx-data", language)
         if not os.path.isdir(language_directory):
             raise RequestError("missing PocketSphinx language data directory: \"{}\"".format(language_directory))
-        acoustic_parameters_directory = os.path.join(language_directory, "acoustic-model")
-        if not os.path.isdir(acoustic_parameters_directory):
-            raise RequestError("missing PocketSphinx language model parameters directory: \"{}\"".format(acoustic_parameters_directory))
-        language_model_file = os.path.join(language_directory, "language-model.lm.bin")
-        if not os.path.isfile(language_model_file):
-            raise RequestError("missing PocketSphinx language model file: \"{}\"".format(language_model_file))
-        phoneme_dictionary_file = os.path.join(language_directory, "pronounciation-dictionary.dict")
-        if not os.path.isfile(phoneme_dictionary_file):
-            raise RequestError("missing PocketSphinx phoneme dictionary file: \"{}\"".format(phoneme_dictionary_file))
+        if default_acoustic_parameters_directory:
+            acoustic_parameters_directory = default_acoustic_parameters_directory
+        else:
+            acoustic_parameters_directory = os.path.join(language_directory, "acoustic-model")
+            if not os.path.isdir(acoustic_parameters_directory):
+                raise RequestError("missing PocketSphinx language model parameters directory: \"{}\"".format(acoustic_parameters_directory))
+        if default_language_model_file:
+            language_model_file = default_language_model_file
+        else:
+            language_model_file = os.path.join(language_directory, "language-model.lm.bin")
+            if not os.path.isfile(language_model_file):
+                raise RequestError("missing PocketSphinx language model file: \"{}\"".format(language_model_file))
+        if default_phoneme_dictionary_file:
+            phoneme_dictionary_file = default_phoneme_dictionary_file
+        else:
+            phoneme_dictionary_file = os.path.join(language_directory, "pronounciation-dictionary.dict")
+            if not os.path.isfile(phoneme_dictionary_file):
+                raise RequestError("missing PocketSphinx phoneme dictionary file: \"{}\"".format(phoneme_dictionary_file))
 
         # create decoder object
         config = pocketsphinx.Decoder.default_config()
