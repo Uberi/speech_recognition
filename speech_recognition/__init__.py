@@ -912,7 +912,7 @@ class Recognizer(AudioSource):
         assert isinstance(language, str), "``language`` must be a string"
         assert preferred_phrases is None or all(isinstance(preferred_phrases, (type(""), type(u""))) for preferred_phrases in preferred_phrases), "``preferred_phrases`` must be a list of strings"
 
-        # See https://cloud.google.com/speech/reference/rest/v1beta1/RecognitionConfig
+        # See https://cloud.google.com/speech/reference/rest/v1/RecognitionConfig
         flac_data = audio_data.get_flac_data(
             convert_rate=None if 8000 <= audio_data.sample_rate <= 48000 else max(8000, min(audio_data.sample_rate, 48000)),  # audio sample rate must be between 8 kHz and 48 kHz inclusive - clamp sample rate into this range
             convert_width=2  # audio samples must be 16-bit
@@ -940,15 +940,15 @@ class Recognizer(AudioSource):
                     f.flush()
                     api_credentials = GoogleCredentials.from_stream(f.name)
 
-            speech_service = build("speech", "v1beta1", credentials=api_credentials, cache_discovery=False)
+            speech_service = build("speech", "v1", credentials=api_credentials, cache_discovery=False)
         except ImportError:
             raise RequestError("missing google-api-python-client module: ensure that google-api-python-client is set up correctly.")
 
         if preferred_phrases is None:
-            speech_config = {"encoding": "FLAC", "sampleRate": audio_data.sample_rate, "languageCode": language}
+            speech_config = {"encoding": "FLAC", "sampleRateHertz": audio_data.sample_rate, "languageCode": language}
         else:
-            speech_config = {"encoding": "FLAC", "sampleRate": audio_data.sample_rate, "languageCode": language, "speechContext": {"phrases": preferred_phrases}}
-        request = speech_service.speech().syncrecognize(body={"audio": {"content": base64.b64encode(flac_data).decode("utf8")}, "config": speech_config})
+            speech_config = {"encoding": "FLAC", "sampleRateHertz": audio_data.sample_rate, "languageCode": language, "speechContext": {"phrases": preferred_phrases}}
+        request = speech_service.speech().recognize(body={"audio": {"content": base64.b64encode(flac_data).decode("utf8")}, "config": speech_config})
 
         try:
             response = request.execute()
