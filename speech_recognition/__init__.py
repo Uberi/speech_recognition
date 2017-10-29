@@ -35,9 +35,6 @@ except ImportError:  # use the Python 3 modules
     from urllib.request import Request, urlopen
     from urllib.error import URLError, HTTPError
 
-default_acoustic_parameters_directory = None
-default_language_model_file = None
-default_phoneme_dictionary_file = None
 
 class WaitTimeoutError(Exception): pass
 
@@ -747,8 +744,8 @@ class Recognizer(AudioSource):
 
         Sphinx can also handle FSG or JSGF grammars. The parameter ``grammar`` expects a path to the grammar file. Note that if a JSGF grammar is passed, an FSG grammar will be created at the same location to speed up execution in the next run. If ``keyword_entries`` are passed, content of ``grammar`` will be ignored.
 
-        config is a dictionary that can contain the following keys: language_directory, acoustic_parameters_directory, language_model_file and phoneme_dictionary_file. If set,
-        their value will be used instead of the preset value. Any other key will be ignored.
+        If specified, config is a dictionary that can contain the following keys: language_directory, acoustic_parameters_directory, language_model_file and phoneme_dictionary_file.
+        If set, their value will be used instead of the preset value. Any other key will be ignored.
 
         Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the Sphinx ``pocketsphinx.pocketsphinx.Decoder`` object resulting from the recognition.
 
