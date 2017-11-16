@@ -518,7 +518,7 @@ class Recognizer(AudioSource):
             target_energy = energy * self.dynamic_energy_ratio
             self.energy_threshold = self.energy_threshold * damping + target_energy * (1 - damping)
 
-    def __wait_for_hot_word(self, snowboy_location, hot_words, source, timeout=None):
+    def __wait_for_hot_word(self, snowboy_location, hot_words, source, timeout=None, interrupt_check=lambda: False):
         """
         Blocks until a hot word, sometimes refered to as a wake word, it found in an audio input.
 
@@ -531,6 +531,8 @@ class Recognizer(AudioSource):
         ``hot_words`` is an iterable element that contains the local file location of models provided by the SnowBoy service, either .pmdl or .umdl format
 
         ``source`` is the actual audio input as u
+
+        ``interrupt_check`` must have __call__ implemented which will be invoked during the block. If the function returns ``True``, the function will end early.
         """
         assert isinstance(source, AudioSource), "Source must be an audio source"
         assert source.stream is not None, "Audio source must be entered before listening, see documentation for ``AudioSource``; are you using ``source`` outside of a ``with`` statement?"
@@ -561,7 +563,7 @@ class Recognizer(AudioSource):
         seconds_per_buffer = (source.CHUNK + 0.0) / source.SAMPLE_RATE
         elapsed_time = 0
 
-        while True:
+        while not interrupt_check():
             # handle phrase being too long by cutting off the audio
             elapsed_time += seconds_per_buffer
             if timeout and elapsed_time > timeout:
@@ -608,7 +610,7 @@ class Recognizer(AudioSource):
         # return no sound bytes and add to timer
         return None, elapsed_time
 
-    def listen(self, source, timeout=None, phrase_time_limit=None, hot_words=[], snowboy_location=None, wait_for_hot_word=False):
+    def listen(self, source, timeout=None, phrase_time_limit=None, hot_words=[], snowboy_location=None, wait_for_hot_word=False, interrupt_check=lambda: False):
         """
         Records a single phrase from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance, which it returns.
 
@@ -619,6 +621,8 @@ class Recognizer(AudioSource):
         The ``phrase_time_limit`` parameter is the maximum number of seconds that this will allow a phrase to continue before stopping and returning the part of the phrase processed before the time limit was reached. The resulting audio will be the phrase cut off at the time limit. If ``phrase_timeout`` is ``None``, there will be no phrase time limit.
 
         This operation will always complete within ``timeout + phrase_timeout`` seconds if both are numbers, either by returning the audio data, or by raising an exception.
+
+        ``interrupt_check`` must have __call__ implemented which will be invoked during the block. If the function returns ``True``, the function will end early.
         """
         assert isinstance(source, AudioSource), "Source must be an audio source"
         assert source.stream is not None, "Audio source must be entered before listening, see documentation for ``AudioSource``; are you using ``source`` outside of a ``with`` statement?"
@@ -636,11 +640,11 @@ class Recognizer(AudioSource):
         # read audio input for phrases until there is a phrase that is long enough
         elapsed_time = 0  # number of seconds of audio read
         buffer = b""  # an empty buffer means that the stream has ended and there is no data left to read
-        while True:
+        while not interrupt_check():
             frames = collections.deque()
 
             # store audio input until the phrase starts
-            while True:
+            while not interrupt_check():
                 # handle waiting too long for phrase by raising an exception
                 elapsed_time += seconds_per_buffer
                 if timeout and elapsed_time > timeout:
@@ -667,12 +671,12 @@ class Recognizer(AudioSource):
             phrase_start_time = elapsed_time
 
             if wait_for_hot_word:
-                audio_data, delta_time = self.__wait_for_hot_word(snowboy_location, hot_words, source, timeout)
+                audio_data, delta_time = self.__wait_for_hot_word(snowboy_location, hot_words, source, timeout, interrupt_check)
                 elapsed_time += delta_time
                 if audio_data is None:
                     continue
                 frames.append(audio_data)
-            while True:
+            while not interrupt_check():
                 # handle phrase being too long by cutting off the audio
                 elapsed_time += seconds_per_buffer
                 if phrase_time_limit and elapsed_time - phrase_start_time > phrase_time_limit:
@@ -702,7 +706,7 @@ class Recognizer(AudioSource):
 
         return AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
 
-    def listen_in_background(self, source, callback, phrase_time_limit=None):
+    def listen_in_background(self, source, callback, phrase_time_limit=None, hot_words=[], snowboy_location=None, wait_for_hot_word=False):
         """
         Spawns a thread to repeatedly record phrases from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance and call ``callback`` with that ``AudioData`` instance as soon as each phrase are detected.
 
@@ -719,7 +723,7 @@ class Recognizer(AudioSource):
             with source as s:
                 while running[0]:
                     try:  # listen for 1 second, then check again if the stop function has been called
-                        audio = self.listen(s, 1, phrase_time_limit)
+                        audio = self.listen(s, 1, phrase_time_limit, hot_words, snowboy_location, wait_for_hot_word, interrupt_check=lambda: not running[0])
                     except WaitTimeoutError:  # listening timed out, just try again
                         pass
                     else:
