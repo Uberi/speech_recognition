@@ -1201,6 +1201,54 @@ class Recognizer(AudioSource):
                     transcription.append(hypothesis["transcript"])
         return "\n".join(transcription)
 
+    def recognize_tensorflow(self, audio_data, tensor_graph='tensorflow-data/conv_actions_frozen.pb', tensor_label='tensorflow-data/conv_actions_labels.txt', show_all=False):
+        """
+        Performs speech recognition on ``audio_data`` (an ``AudioData`` instance).
+
+        Tensor loaded from ``tensor_graph``.
+
+        Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <https://www.ibm.com/watson/developercloud/speech-to-text/api/v1/#sessionless_methods>`__ as a JSON dictionary.
+
+        Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
+        """
+        assert isinstance(audio_data, AudioData), "Data must be audio data"
+        assert isinstance(tensor_graph, str), "``tensor_graph`` must be a string"
+        assert isinstance(tensor_label, str), "``tensor_label`` must be a string"
+
+        import tensorflow as tf
+        from tensorflow.contrib.framework.python.ops import audio_ops as contrib_audio
+
+        wav_data = audio_data.get_wav_data(
+            convert_rate=16000, convert_width=2
+        )
+        # load graph
+        with tf.gfile.FastGFile(tensor_graph, 'rb') as f:
+            graph_def = tf.GraphDef()
+            graph_def.ParseFromString(f.read())
+            tf.import_graph_def(graph_def, name='')
+
+        labels = [line.rstrip() for line in tf.gfile.GFile(tensor_label)]
+
+        with tf.Session() as sess:
+            input_layer_name = 'wav_data:0'
+            output_layer_name = 'labels_softmax:0'
+            num_top_predictions = 1
+    # Feed the audio data as input to the graph.
+    #   predictions  will contain a two-dimensional array, where one
+    #   dimension represents the input image count, and the other has
+    #   predictions per class
+            softmax_tensor = sess.graph.get_tensor_by_name(output_layer_name)
+            predictions, = sess.run(softmax_tensor, {input_layer_name: wav_data})
+
+    # Sort to show labels in order of confidence
+            top_k = predictions.argsort()[-num_top_predictions:][::-1]
+            for node_id in top_k:
+                human_string = labels[node_id]
+                score = predictions[node_id]
+                print('%s (score = %.5f)' % (human_string, score))
+                return human_string
+
+
 
 def get_flac_converter():
     """Returns the absolute path of a FLAC converter executable, or raises an OSError if none can be found."""
