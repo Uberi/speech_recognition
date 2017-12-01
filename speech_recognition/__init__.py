@@ -1215,6 +1215,7 @@ class Recognizer(AudioSource):
 
         try:
             import tensorflow as tf
+            from tensorflow.contrib.framework.python.ops import audio_ops as contrib_audio
         except ImportError:
             raise RequestError("missing tensorflow module: ensure that tensorflow is set up correctly.")
 
