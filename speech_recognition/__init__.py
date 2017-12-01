@@ -1215,7 +1215,6 @@ class Recognizer(AudioSource):
 
         try:
             import tensorflow as tf
-            from tensorflow.contrib.framework.python.ops import audio_ops as contrib_audio
         except ImportError:
             raise RequestError("missing tensorflow module: ensure that tensorflow is set up correctly.")
 
@@ -1233,7 +1232,6 @@ class Recognizer(AudioSource):
         with tf.Session() as sess:
             input_layer_name = 'wav_data:0'
             output_layer_name = 'labels_softmax:0'
-            num_top_predictions = 1
             softmax_tensor = sess.graph.get_tensor_by_name(output_layer_name)
             predictions, = sess.run(softmax_tensor, {input_layer_name: wav_data})
 
