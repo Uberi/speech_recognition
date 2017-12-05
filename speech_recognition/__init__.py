@@ -752,7 +752,7 @@ class Recognizer(AudioSource):
         listener_thread.start()
         return stopper
 
-    def recognize_sphinx(self, audio_data, language="en-US", keyword_entries=None, grammar=None, show_all=False):
+    def recognize_sphinx(self, audio_data, language="en-US", keyword_entries=None, grammar=None, show_all=False, config={}):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using CMU Sphinx.
 
@@ -762,6 +762,9 @@ class Recognizer(AudioSource):
 
         Sphinx can also handle FSG or JSGF grammars. The parameter ``grammar`` expects a path to the grammar file. Note that if a JSGF grammar is passed, an FSG grammar will be created at the same location to speed up execution in the next run. If ``keyword_entries`` are passed, content of ``grammar`` will be ignored.
 
+        If specified, config is a dictionary that can contain the following keys: language_directory, acoustic_parameters_directory, language_model_file and phoneme_dictionary_file.
+        If set, their value will be used instead of the preset value. Any other key will be ignored.
+
         Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the Sphinx ``pocketsphinx.pocketsphinx.Decoder`` object resulting from the recognition.
 
         Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if there are any issues with the Sphinx installation.
@@ -769,6 +772,7 @@ class Recognizer(AudioSource):
         assert isinstance(audio_data, AudioData), "``audio_data`` must be audio data"
         assert isinstance(language, str), "``language`` must be a string"
         assert keyword_entries is None or all(isinstance(keyword, (type(""), type(u""))) and 0 <= sensitivity <= 1 for keyword, sensitivity in keyword_entries), "``keyword_entries`` must be ``None`` or a list of pairs of strings and numbers between 0 and 1"
+        assert isinstance(config, dict), "``config` must be a dictionary"
 
         # import the PocketSphinx speech recognition module
         try:
@@ -780,17 +784,28 @@ class Recognizer(AudioSource):
             raise RequestError("bad PocketSphinx installation; try reinstalling PocketSphinx version 0.0.9 or better.")
         if not hasattr(pocketsphinx, "Decoder") or not hasattr(pocketsphinx.Decoder, "default_config"):
             raise RequestError("outdated PocketSphinx installation; ensure you have PocketSphinx version 0.0.9 or better.")
-
-        language_directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), "pocketsphinx-data", language)
+        if "language_directory" in config:
+            language_directory = config["language_directory"]
+        else:
+            language_directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), "pocketsphinx-data", language)
         if not os.path.isdir(language_directory):
             raise RequestError("missing PocketSphinx language data directory: \"{}\"".format(language_directory))
-        acoustic_parameters_directory = os.path.join(language_directory, "acoustic-model")
+        if "acoustic_parameters_directory" in config:
+            acoustic_parameters_directory = config["acoustic_parameters_directory"]
+        else:
+            acoustic_parameters_directory = os.path.join(language_directory, "acoustic-model")
         if not os.path.isdir(acoustic_parameters_directory):
             raise RequestError("missing PocketSphinx language model parameters directory: \"{}\"".format(acoustic_parameters_directory))
-        language_model_file = os.path.join(language_directory, "language-model.lm.bin")
+        if "language_model_file" in config:
+            language_model_file = config["language_model_file"]
+        else:
+            language_model_file = os.path.join(language_directory, "language-model.lm.bin")
         if not os.path.isfile(language_model_file):
             raise RequestError("missing PocketSphinx language model file: \"{}\"".format(language_model_file))
-        phoneme_dictionary_file = os.path.join(language_directory, "pronounciation-dictionary.dict")
+        if "phoneme_dictionary_file" in config:
+            phoneme_dictionary_file = config["phoneme_dictionary_file"]
+        else:
+            phoneme_dictionary_file = os.path.join(language_directory, "pronounciation-dictionary.dict")
         if not os.path.isfile(phoneme_dictionary_file):
             raise RequestError("missing PocketSphinx phoneme dictionary file: \"{}\"".format(phoneme_dictionary_file))
 
