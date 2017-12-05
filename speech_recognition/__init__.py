@@ -87,7 +87,7 @@ class Microphone(AudioSource):
                 device_info = audio.get_device_info_by_index(device_index) if device_index is not None else audio.get_default_input_device_info()
                 assert isinstance(device_info.get("defaultSampleRate"), (float, int)) and device_info["defaultSampleRate"] > 0, "Invalid device info returned from PyAudio: {}".format(device_info)
                 sample_rate = int(device_info["defaultSampleRate"])
-        except:
+        except Exception:
             audio.terminate()
             raise
 
@@ -142,7 +142,7 @@ class Microphone(AudioSource):
                     input=True,  # stream is an input stream
                 )
             )
-        except:
+        except Exception:
             self.audio.terminate()
             raise
         return self
@@ -926,7 +926,7 @@ class Recognizer(AudioSource):
         assert isinstance(audio_data, AudioData), "``audio_data`` must be audio data"
         if credentials_json is not None:
             try: json.loads(credentials_json)
-            except: raise AssertionError("``credentials_json`` must be ``None`` or a valid JSON string")
+            except Exception: raise AssertionError("``credentials_json`` must be ``None`` or a valid JSON string")
         assert isinstance(language, str), "``language`` must be a string"
         assert preferred_phrases is None or all(isinstance(preferred_phrases, (type(""), type(u""))) for preferred_phrases in preferred_phrases), "``preferred_phrases`` must be a list of strings"
 
