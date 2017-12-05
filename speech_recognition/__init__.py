@@ -20,7 +20,6 @@ import hashlib
 import hmac
 import time
 import uuid
-import struct
 
 __author__ = "Anthony Zhang (Uberi)"
 __version__ = "3.7.1"
@@ -535,97 +534,49 @@ class Recognizer(AudioSource):
             target_energy = energy * self.dynamic_energy_ratio
             self.energy_threshold = self.energy_threshold * damping + target_energy * (1 - damping)
 
-    def __wait_for_hot_word(self, snowboy_location, hot_words, source, timeout=None):
-        """
-        Blocks until a hot word, sometimes refered to as a wake word, it found in an audio input.
-
-        Intended to be used as a means to limit network traffic and reduce cost of online speech-to-text services
-
-        Currently utilizes the SnowBoy service which is free for hobbiest with a paid option for commerical use.
-
-        ``snowboy_location`` is the local top level directory containing the compiled SnowBoy files.
-
-        ``hot_words`` is an iterable element that contains the local file location of models provided by the SnowBoy service, either .pmdl or .umdl format
-
-        ``source`` is the actual audio input as u
-        """
-        assert isinstance(source, AudioSource), "Source must be an audio source"
-        assert source.stream is not None, "Audio source must be entered before listening, see documentation for ``AudioSource``; are you using ``source`` outside of a ``with`` statement?"
-        assert snowboy_location is not None, "Need to specify snowboy_location argument if using hot words"
-        assert os.path.isfile(snowboy_location + "/snowboydetect.py"), "Can not find snowboydetect.py. Make sure snowboy_location is pointed at the root directory"
-        for f in hot_words: assert os.path.isfile(f), "Unable to locate file with given path: {}".format(f)
-
+    def snowboy_wait_for_hot_word(self, snowboy_location, snowboy_hot_word_files, source, timeout=None):
+        # load snowboy library (NOT THREAD SAFE)
         sys.path.append(snowboy_location)
         import snowboydetect
+        sys.path.pop()
 
-        models = ",".join(hot_words)
-        # get file path to needed resource file
-        resource = snowboy_location + "/resources/common.res"
-        detector = snowboydetect.SnowboyDetect(resource_filename=resource.encode(), model_str=models.encode())
+        detector = snowboydetect.SnowboyDetect(
+            resource_filename=os.path.join(snowboy_location, "resources", "common.res").encode(),
+            model_str=",".join(snowboy_hot_word_files).encode()
+        )
         detector.SetAudioGain(1.0)
-        sensitivity = [0.4] * len(hot_words)
-        sensitivity_str = ",".join(str(t) for t in sensitivity)
-        detector.SetSensitivity(sensitivity_str.encode())
+        detector.SetSensitivity(",".join(["0.4"] * len(snowboy_hot_word_files)).encode())
+        snowboy_sample_rate = detector.SampleRate()
 
-        # create a deque to store our raw mic input data and one to store snowboy downsampled data, each hold 5sec of audio
-        mic_buffer = collections.deque(maxlen=(source.SAMPLE_RATE * 5))
-        sb_buffer = collections.deque(maxlen=(detector.SampleRate() * 5))
-
-        # snowboy requires a specific sample rate that it provides, to avoid a ripple of issues we will just downsample momentarily by this ammount
-        resample_ratio = float(source.SAMPLE_RATE) / float(detector.SampleRate())
-        resample_count = 0
-
-        seconds_per_buffer = (source.CHUNK + 0.0) / source.SAMPLE_RATE
         elapsed_time = 0
+        seconds_per_buffer = float(source.CHUNK) / source.SAMPLE_RATE
+        resampling_state = None
 
+        # buffers capable of holding 5 seconds of original and resampled audio
+        five_seconds_buffer_count = int(math.ceil(5 / seconds_per_buffer))
+        frames = collections.deque(maxlen=five_seconds_buffer_count)
+        resampled_frames = collections.deque(maxlen=five_seconds_buffer_count)
         while True:
-            # handle phrase being too long by cutting off the audio
             elapsed_time += seconds_per_buffer
             if timeout and elapsed_time > timeout:
-                break
+                raise WaitTimeoutError("listening timed out while waiting for hotword to be said")
 
             buffer = source.stream.read(source.CHUNK)
             if len(buffer) == 0: break  # reached end of the stream
+            frames.append(buffer)
 
-            # record mic data for use later
-            mic_buffer.extend(buffer)
+            # resample audio to the required sample rate
+            resampled_buffer, resampling_state = audioop.ratecv(buffer, source.SAMPLE_WIDTH, 1, source.SAMPLE_RATE, snowboy_sample_rate, resampling_state)
+            resampled_frames.append(resampled_buffer)
 
-            # convert byte's into ints so we can downsample
-            int_data = struct.unpack('<' + ('h' * (len(buffer) / source.SAMPLE_WIDTH)), buffer)
-            ds_data = []
+            # run Snowboy on the resampled audio
+            snowboy_result = detector.RunDetection(b"".join(resampled_frames))
+            assert snowboy_result != -1, "Error initializing streams or reading audio data"
+            if snowboy_result > 0: break  # wake word found
 
-            # rough downsampling, can handle downsampling by non-integer values
-            for i in range(len(int_data)):
-                if resample_count <= 0:
-                    sample = int_data[i]
+        return b"".join(frames), elapsed_time
 
-                    # grab the previous sample too, but make sure we have one to grab
-                    prev_sample = sample
-                    if i != 0:
-                        prev_sample = int_data[i - 1]
-
-                    # get a number betwen 0 and 1, this is used to linearly interpolate between the two samples we have
-                    ratio = 0.0 - resample_count
-                    fab_sample = int((1.0 - ratio) * sample + (ratio) * prev_sample + 0.5)
-                    ds_data.append(fab_sample)
-                    resample_count += resample_ratio
-
-                resample_count -= 1.0
-
-            # convert back into bytes so we can feed it into snowboy
-            sb_buffer.extend(struct.pack('<' + ('h' * len(ds_data)), *ds_data))
-
-            # actually run the snowboy detector
-            ans = detector.RunDetection(bytes(bytearray(sb_buffer)))
-            assert ans != -1, "Error initializing streams or reading audio data"
-
-            # if ans is greater than 0, we found a wake word! return audio
-            if ans > 0:
-                return bytes(mic_buffer), elapsed_time
-        # return no sound bytes and add to timer
-        return None, elapsed_time
-
-    def listen(self, source, timeout=None, phrase_time_limit=None, hot_words=[], snowboy_location=None, wait_for_hot_word=False):
+    def listen(self, source, timeout=None, phrase_time_limit=None, snowboy_configuration=None):
         """
         Records a single phrase from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance, which it returns.
 
@@ -635,17 +586,19 @@ class Recognizer(AudioSource):
 
         The ``phrase_time_limit`` parameter is the maximum number of seconds that this will allow a phrase to continue before stopping and returning the part of the phrase processed before the time limit was reached. The resulting audio will be the phrase cut off at the time limit. If ``phrase_timeout`` is ``None``, there will be no phrase time limit.
 
-        This operation will always complete within ``timeout + phrase_timeout`` seconds if both are numbers, either by returning the audio data, or by raising an exception.
+        The ``snowboy_configuration`` parameter allows integration with `Snowboy <https://snowboy.kitt.ai/>`__, an offline, high-accuracy, power-efficient hotword recognition engine. When used, this function will pause until Snowboy detects a hotword, after which it will unpause. This parameter should either be ``None`` to turn off Snowboy support, or a tuple of the form ``(SNOWBOY_LOCATION, LIST_OF_HOT_WORD_FILES)``, where ``SNOWBOY_LOCATION`` is the path to the Snowboy root directory, and ``LIST_OF_HOT_WORD_FILES`` is a list of paths to Snowboy hotword configuration files (`*.pmdl` or `*.umdl` format).
+
+        This operation will always complete within ``timeout + phrase_timeout`` seconds if both are numbers, either by returning the audio data, or by raising a ``speech_recognition.WaitTimeoutError`` exception.
         """
         assert isinstance(source, AudioSource), "Source must be an audio source"
         assert source.stream is not None, "Audio source must be entered before listening, see documentation for ``AudioSource``; are you using ``source`` outside of a ``with`` statement?"
         assert self.pause_threshold >= self.non_speaking_duration >= 0
+        if snowboy_configuration is not None:
+            assert os.path.isfile(os.path.join(snowboy_configuration[0], "snowboydetect.py")), "``snowboy_configuration[0]`` must be a Snowboy root directory containing ``snowboydetect.py``"
+            for hot_word_file in snowboy_configuration[1]:
+                assert os.path.isfile(hot_word_file), "``snowboy_configuration[1]`` must be a list of Snowboy hot word configuration files"
 
-        # just make sure hot_words is iterable
-        if not hasattr(hot_words, '__iter__'):
-            hot_words = [hot_words]
-
-        seconds_per_buffer = (source.CHUNK + 0.0) / source.SAMPLE_RATE
+        seconds_per_buffer = float(source.CHUNK) / source.SAMPLE_RATE
         pause_buffer_count = int(math.ceil(self.pause_threshold / seconds_per_buffer))  # number of buffers of non-speaking audio during a phrase, before the phrase should be considered complete
         phrase_buffer_count = int(math.ceil(self.phrase_threshold / seconds_per_buffer))  # minimum number of buffers of speaking audio before we consider the speaking audio a phrase
         non_speaking_buffer_count = int(math.ceil(self.non_speaking_duration / seconds_per_buffer))  # maximum number of buffers of non-speaking audio to retain before and after a phrase
@@ -656,39 +609,40 @@ class Recognizer(AudioSource):
         while True:
             frames = collections.deque()
 
-            # store audio input until the phrase starts
-            while True:
-                # handle waiting too long for phrase by raising an exception
-                elapsed_time += seconds_per_buffer
-                if timeout and elapsed_time > timeout:
-                    raise WaitTimeoutError("listening timed out while waiting for phrase to start")
+            if snowboy_configuration is None:
+                # store audio input until the phrase starts
+                while True:
+                    # handle waiting too long for phrase by raising an exception
+                    elapsed_time += seconds_per_buffer
+                    if timeout and elapsed_time > timeout:
+                        raise WaitTimeoutError("listening timed out while waiting for phrase to start")
 
-                buffer = source.stream.read(source.CHUNK)
+                    buffer = source.stream.read(source.CHUNK)
+                    if len(buffer) == 0: break  # reached end of the stream
+                    frames.append(buffer)
+                    if len(frames) > non_speaking_buffer_count:  # ensure we only keep the needed amount of non-speaking buffers
+                        frames.popleft()
+
+                    # detect whether speaking has started on audio input
+                    energy = audioop.rms(buffer, source.SAMPLE_WIDTH)  # energy of the audio signal
+                    if energy > self.energy_threshold: break
+
+                    # dynamically adjust the energy threshold using asymmetric weighted average
+                    if self.dynamic_energy_threshold:
+                        damping = self.dynamic_energy_adjustment_damping ** seconds_per_buffer  # account for different chunk sizes and rates
+                        target_energy = energy * self.dynamic_energy_ratio
+                        self.energy_threshold = self.energy_threshold * damping + target_energy * (1 - damping)
+            else:
+                # read audio input until the hotword is said
+                snowboy_location, snowboy_hot_word_files = snowboy_configuration
+                buffer, delta_time = self.snowboy_wait_for_hot_word(snowboy_location, snowboy_hot_word_files, source, timeout)
+                elapsed_time += delta_time
                 if len(buffer) == 0: break  # reached end of the stream
                 frames.append(buffer)
-                if len(frames) > non_speaking_buffer_count:  # ensure we only keep the needed amount of non-speaking buffers
-                    frames.popleft()
-
-                # detect whether speaking has started on audio input
-                energy = audioop.rms(buffer, source.SAMPLE_WIDTH)  # energy of the audio signal
-                if energy > self.energy_threshold: break
-
-                # dynamically adjust the energy threshold using asymmetric weighted average
-                if self.dynamic_energy_threshold:
-                    damping = self.dynamic_energy_adjustment_damping ** seconds_per_buffer  # account for different chunk sizes and rates
-                    target_energy = energy * self.dynamic_energy_ratio
-                    self.energy_threshold = self.energy_threshold * damping + target_energy * (1 - damping)
 
             # read audio input until the phrase ends
             pause_count, phrase_count = 0, 0
             phrase_start_time = elapsed_time
-
-            if wait_for_hot_word:
-                audio_data, delta_time = self.__wait_for_hot_word(snowboy_location, hot_words, source, timeout)
-                elapsed_time += delta_time
-                if audio_data is None:
-                    continue
-                frames.append(audio_data)
             while True:
                 # handle phrase being too long by cutting off the audio
                 elapsed_time += seconds_per_buffer
@@ -715,7 +669,7 @@ class Recognizer(AudioSource):
 
         # obtain frame data
         for i in range(pause_count - non_speaking_buffer_count): frames.pop()  # remove extra non-speaking frames at the end
-        frame_data = b"".join(list(frames))
+        frame_data = b"".join(frames)
 
         return AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
 
