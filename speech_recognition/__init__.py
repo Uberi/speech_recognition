@@ -20,7 +20,6 @@ import hashlib
 import hmac
 import time
 import uuid
-import sys
 import struct
 
 __author__ = "Anthony Zhang (Uberi)"
@@ -306,7 +305,7 @@ class AudioData(object):
         self.sample_rate = sample_rate
         self.sample_width = int(sample_width)
 
-    def get_segment(self, start_ms = None, end_ms = None):
+    def get_segment(self, start_ms=None, end_ms=None):
         """
         Returns a new ``AudioData`` instance, trimmed to a given time interval. In other words, an ``AudioData`` instance with the same audio data except starting at ``start_ms`` milliseconds in and ending ``end_ms`` milliseconds in.
 
