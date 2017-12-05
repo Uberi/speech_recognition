@@ -723,7 +723,7 @@ class Recognizer(AudioSource):
         """
         Spawns a thread to repeatedly record phrases from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance and call ``callback`` with that ``AudioData`` instance as soon as each phrase are detected.
 
-        Returns a function object that, when called, requests that the background listener thread stop, and waits until it does before returning. The background thread is a daemon and will not stop the program from exiting if there are no other non-daemon threads.
+        Returns a function object that, when called from the current thread, requests that the background listener thread stop. The background thread is a daemon and will not stop the program from exiting if there are no other non-daemon threads. The function accepts one parameter, ``wait_for_stop``: if truthy, the function will wait for the background listener to stop before returning, otherwise it will return immediately and the background listener thread might still be running for a second or two afterwards.
 
         Phrase recognition uses the exact same mechanism as ``recognizer_instance.listen(source)``. The ``phrase_time_limit`` parameter works in the same way as the ``phrase_time_limit`` parameter for ``recognizer_instance.listen(source)``, as well.
 
@@ -742,9 +742,10 @@ class Recognizer(AudioSource):
                     else:
                         if running[0]: callback(self, audio)
 
-        def stopper():
+        def stopper(wait_for_stop=True):
             running[0] = False
-            listener_thread.join()  # block until the background thread is done, which can be up to 1 second
+            if wait_for_stop:
+                listener_thread.join()  # block until the background thread is done, which can take around 1 second
 
         listener_thread = threading.Thread(target=threaded_listen)
         listener_thread.daemon = True
