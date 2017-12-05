@@ -301,6 +301,13 @@ The audio data is assumed to have a sample rate of ``sample_rate`` samples per s
 
 Usually, instances of this class are obtained from ``recognizer_instance.record`` or ``recognizer_instance.listen``, or in the callback for ``recognizer_instance.listen_in_background``, rather than instantiating them directly.
 
+``audiodata_instance.get_segment(start_ms = None, end_ms = None)``
+------------------------------------------------------------------
+
+Returns a new ``AudioData`` instance, trimmed to a given time interval. In other words, an ``AudioData`` instance with the same audio data except starting at ``start_ms`` milliseconds in and ending ``end_ms`` milliseconds in.
+
+If not specified, ``start_ms`` defaults to the beginning of the audio, and ``end_ms`` defaults to the end.
+
 ``audiodata_instance.get_raw_data(convert_rate = None, convert_width = None)``
 ------------------------------------------------------------------------------
 

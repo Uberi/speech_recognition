@@ -341,7 +341,7 @@ Authors
 
 ::
 
-    Uberi <azhang9@gmail.com> (Anthony Zhang)
+    Uberi <me@anthonyz.ca> (Anthony Zhang)
     bobsayshilol
     arvindch <achembarpu@gmail.com> (Arvind Chembarpu)
     kevinismith <kevin_i_smith@yahoo.com> (Kevin Smith)
@@ -369,7 +369,7 @@ Also check out the `Python Baidu Yuyin API <https://github.com/DelightRun/PyBaid
 License
 -------
 
-Copyright 2014-2017 `Anthony Zhang (Uberi) <http://anthony-zhang.me/>`__. The source code for this library is available online at `GitHub <https://github.com/Uberi/speech_recognition>`__.
+Copyright 2014-2017 `Anthony Zhang (Uberi) <http://anthonyz.ca/>`__. The source code for this library is available online at `GitHub <https://github.com/Uberi/speech_recognition>`__.
 
 SpeechRecognition is made available under the 3-clause BSD license. See ``LICENSE.txt`` in the project's `root directory <https://github.com/Uberi/speech_recognition>`__ for more information.
 

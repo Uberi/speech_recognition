@@ -306,6 +306,24 @@ class AudioData(object):
         self.sample_rate = sample_rate
         self.sample_width = int(sample_width)
 
+    def get_segment(self, start_ms = None, end_ms = None):
+        """
+        Returns a new ``AudioData`` instance, trimmed to a given time interval. In other words, an ``AudioData`` instance with the same audio data except starting at ``start_ms`` milliseconds in and ending ``end_ms`` milliseconds in.
+
+        If not specified, ``start_ms`` defaults to the beginning of the audio, and ``end_ms`` defaults to the end.
+        """
+        assert start_ms is None or start_ms > 0, "``start_ms`` must be a positive number"
+        assert end_ms is None or end_ms > 0, "``end_ms`` must be a positive number"
+        if start_ms is None:
+            start_byte = 0
+        else:
+            start_byte = int((start_ms * self.sample_rate * self.sample_width) // 1000)
+        if end_ms is None:
+            end_byte = len(self.frame_data)
+        else:
+            end_byte = int((end_ms * self.sample_rate * self.sample_width) // 1000)
+        return AudioData(self.frame_data[start_byte:end_byte], self.sample_rate, self.sample_width)
+
     def get_raw_data(self, convert_rate=None, convert_width=None):
         """
         Returns a byte string representing the raw frame data for the audio represented by the ``AudioData`` instance.
