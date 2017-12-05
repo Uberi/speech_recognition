@@ -962,10 +962,11 @@ class Recognizer(AudioSource):
         except ImportError:
             raise RequestError("missing google-api-python-client module: ensure that google-api-python-client is set up correctly.")
 
-        if preferred_phrases is None:
-            speech_config = {"encoding": "FLAC", "sampleRateHertz": audio_data.sample_rate, "languageCode": language}
-        else:
-            speech_config = {"encoding": "FLAC", "sampleRateHertz": audio_data.sample_rate, "languageCode": language, "speechContext": {"phrases": preferred_phrases}}
+        speech_config = {"encoding": "FLAC", "sampleRateHertz": audio_data.sample_rate, "languageCode": language}
+        if preferred_phrases is not None:
+            speech_config["speechContext"] = {"phrases": preferred_phrases}
+        if show_all:
+            speech_config["enableWordTimeOffsets"] = True  # some useful extra options for when we want all the output
         request = speech_service.speech().recognize(body={"audio": {"content": base64.b64encode(flac_data).decode("utf8")}, "config": speech_config})
 
         try:

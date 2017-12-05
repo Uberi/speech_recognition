@@ -34,6 +34,7 @@ def recognize_worker():
 
         audio_queue.task_done()  # mark the audio processing job as completed in the queue
 
+
 # start a new thread to recognize audio, while this thread focuses on listening
 recognize_thread = Thread(target=recognize_worker)
 recognize_thread.daemon = True
