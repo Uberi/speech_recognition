@@ -358,11 +358,11 @@ Please report bugs and suggestions at the `issue tracker <https://github.com/Ube
 
 How to cite this library (APA style):
 
-    Zhang, A. (2017). Speech Recognition (Version 3.7) [Software]. Available from https://github.com/Uberi/speech_recognition#readme.
+    Zhang, A. (2017). Speech Recognition (Version 3.8) [Software]. Available from https://github.com/Uberi/speech_recognition#readme.
 
 How to cite this library (Chicago style):
 
-    Zhang, Anthony. 2017. *Speech Recognition* (version 3.7).
+    Zhang, Anthony. 2017. *Speech Recognition* (version 3.8).
 
 Also check out the `Python Baidu Yuyin API <https://github.com/DelightRun/PyBaiduYuyin>`__, which is based on an older version of this project, and adds support for `Baidu Yuyin <http://yuyin.baidu.com/>`__. Note that Baidu Yuyin is only available inside China.
 
