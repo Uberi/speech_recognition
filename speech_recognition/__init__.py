@@ -22,7 +22,7 @@ import time
 import uuid
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "3.8.0"
+__version__ = "3.8.1"
 __license__ = "BSD"
 
 try:  # attempt to use the Python 2 modules
@@ -311,7 +311,7 @@ class AudioData(object):
         If not specified, ``start_ms`` defaults to the beginning of the audio, and ``end_ms`` defaults to the end.
         """
         assert start_ms is None or start_ms >= 0, "``start_ms`` must be a non-negative number"
-        assert end_ms is None or end_ms >= start_ms, "``end_ms`` must be a number greater or equal to ``start_ms``"
+        assert end_ms is None or end_ms >= (0 if start_ms is None else start_ms), "``end_ms`` must be a non-negative number greater or equal to ``start_ms``"
         if start_ms is None:
             start_byte = 0
         else:
