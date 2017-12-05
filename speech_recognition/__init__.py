@@ -956,7 +956,7 @@ class Recognizer(AudioSource):
                 api_credentials = GoogleCredentials.get_application_default()
             else:
                 # the credentials can only be read from a file, so we'll make a temp file and write in the contents to work around that
-                with PortableNamedTemporaryFile("w") as f:
+                with PortableNamedTemporaryFile("w", delete=False) as f:
                     f.write(credentials_json)
                     f.flush()
                     api_credentials = GoogleCredentials.from_stream(f.name)
