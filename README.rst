@@ -341,7 +341,7 @@ Authors
 
 ::
 
-    Uberi <azhang9@gmail.com> (Anthony Zhang)
+    Uberi <me@anthonyz.ca> (Anthony Zhang)
     bobsayshilol
     arvindch <achembarpu@gmail.com> (Arvind Chembarpu)
     kevinismith <kevin_i_smith@yahoo.com> (Kevin Smith)
@@ -358,18 +358,18 @@ Please report bugs and suggestions at the `issue tracker <https://github.com/Ube
 
 How to cite this library (APA style):
 
-    Zhang, A. (2017). Speech Recognition (Version 3.7) [Software]. Available from https://github.com/Uberi/speech_recognition#readme.
+    Zhang, A. (2017). Speech Recognition (Version 3.8) [Software]. Available from https://github.com/Uberi/speech_recognition#readme.
 
 How to cite this library (Chicago style):
 
-    Zhang, Anthony. 2017. *Speech Recognition* (version 3.7).
+    Zhang, Anthony. 2017. *Speech Recognition* (version 3.8).
 
 Also check out the `Python Baidu Yuyin API <https://github.com/DelightRun/PyBaiduYuyin>`__, which is based on an older version of this project, and adds support for `Baidu Yuyin <http://yuyin.baidu.com/>`__. Note that Baidu Yuyin is only available inside China.
 
 License
 -------
 
-Copyright 2014-2017 `Anthony Zhang (Uberi) <http://anthony-zhang.me/>`__. The source code for this library is available online at `GitHub <https://github.com/Uberi/speech_recognition>`__.
+Copyright 2014-2017 `Anthony Zhang (Uberi) <http://anthonyz.ca/>`__. The source code for this library is available online at `GitHub <https://github.com/Uberi/speech_recognition>`__.
 
 SpeechRecognition is made available under the 3-clause BSD license. See ``LICENSE.txt`` in the project's `root directory <https://github.com/Uberi/speech_recognition>`__ for more information.
 

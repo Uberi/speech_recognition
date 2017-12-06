@@ -13,6 +13,14 @@ class TestAudioFile(unittest.TestCase):
             if abs(byte_1 - byte_2) > 2:
                 raise AssertionError("{} is really different from {} at index {}".format(bytes_1, bytes_2, i))
 
+    def test_get_segment(self):
+        r = sr.Recognizer()
+        with sr.AudioFile(path.join(path.dirname(path.realpath(__file__)), "audio-mono-32-bit-44100Hz.wav")) as source: audio = r.record(source)
+        self.assertEqual(audio.get_raw_data(), audio.get_segment().get_raw_data())
+        self.assertEqual(audio.get_raw_data()[8:], audio.get_segment(0.022675738 * 2).get_raw_data())
+        self.assertEqual(audio.get_raw_data()[:16], audio.get_segment(None, 0.022675738 * 4).get_raw_data())
+        self.assertEqual(audio.get_raw_data()[8:16], audio.get_segment(0.022675738 * 2, 0.022675738 * 4).get_raw_data())
+
     def test_wav_mono_8_bit(self):
         r = sr.Recognizer()
         with sr.AudioFile(path.join(path.dirname(path.realpath(__file__)), "audio-mono-8-bit-44100Hz.wav")) as source: audio = r.record(source)

@@ -1,8 +1,8 @@
 Speech Recognition Library Reference
 ====================================
 
-``Microphone(device_index = None, sample_rate = 16000, chunk_size = 1024)``
----------------------------------------------------------------------------
+``Microphone(device_index: Union[int, None] = None, sample_rate: int = 16000, chunk_size: int = 1024) -> Microphone``
+---------------------------------------------------------------------------------------------------------------------
 
 Creates a new ``Microphone`` instance, which represents a physical microphone on the computer. Subclass of ``AudioSource``.
 
@@ -26,8 +26,8 @@ Instances of this class are context managers, and are designed to be used with `
         pass                        # do things here - ``source`` is the Microphone instance created above
                                     # the microphone is automatically released at this point
 
-``Microphone.list_microphone_names()``
---------------------------------------
+``Microphone.list_microphone_names() -> List[str]``
+---------------------------------------------------
 
 Returns a list of the names of all available microphones. For microphones where the name can't be retrieved, the list entry contains ``None`` instead.
 
@@ -42,8 +42,8 @@ To create a ``Microphone`` instance by name:
         if microphone_name == "HDA Intel HDMI: 0 (hw:0,3)":
             m = Microphone(device_index=i)
 
-``AudioFile(filename_or_fileobject)``
--------------------------------------
+``AudioFile(filename_or_fileobject: Union[str, io.IOBase]) -> AudioFile``
+-------------------------------------------------------------------------
 
 Creates a new ``AudioFile`` instance given a WAV/AIFF/FLAC audio file ``filename_or_fileobject``. Subclass of ``AudioSource``.
 
@@ -65,8 +65,8 @@ Instances of this class are context managers, and are designed to be used with `
     with sr.AudioFile("SOME_AUDIO_FILE") as source:    # open the audio file for reading
         pass                                           # do things here - ``source`` is the AudioFile instance created above
 
-``audiofile_instance.DURATION``
--------------------------------
+``audiofile_instance.DURATION  # type: float``
+----------------------------------------------
 
 Represents the length of the audio stored in the audio file in seconds. This property is only available when inside a context - essentially, that means it should only be accessed inside the body of a ``with audiofile_instance ...`` statement. Outside of contexts, this property is ``None``.
 
@@ -74,13 +74,13 @@ This is useful when combined with the ``offset`` parameter of ``recognizer_insta
 
 However, note that recognizing speech in multiple chunks is not the same as recognizing the whole thing at once. If spoken words appear on the boundaries that we split the audio into chunks on, each chunk only gets part of the word, which may result in inaccurate results.
 
-``Recognizer()``
-----------------
+``Recognizer() -> Recognizer``
+------------------------------
 
 Creates a new ``Recognizer`` instance, which represents a collection of speech recognition settings and functionality.
 
-``recognizer_instance.energy_threshold = 300``
-----------------------------------------------
+``recognizer_instance.energy_threshold = 300  # type: float``
+-------------------------------------------------------------
 
 Represents the energy level threshold for sounds. Values below this threshold are considered silence, and values above this threshold are considered speech. Can be changed.
 
@@ -101,50 +101,50 @@ The dynamic energy threshold setting can mitigate this by increasing or decreasi
 
 To avoid this, use ``recognizer_instance.adjust_for_ambient_noise(source, duration = 1)`` to calibrate the level to a good value. Alternatively, simply set this property to a high value initially (4000 works well), so the threshold is always above ambient noise levels: over time, it will be automatically decreased to account for ambient noise levels.
 
-``recognizer_instance.dynamic_energy_threshold = True``
--------------------------------------------------------
+``recognizer_instance.dynamic_energy_threshold = True  # type: bool``
+---------------------------------------------------------------------
 
 Represents whether the energy level threshold (see ``recognizer_instance.energy_threshold``) for sounds should be automatically adjusted based on the currently ambient noise level while listening. Can be changed.
 
 Recommended for situations where the ambient noise level is unpredictable, which seems to be the majority of use cases. If the ambient noise level is strictly controlled, better results might be achieved by setting this to ``False`` to turn it off.
 
-``recognizer_instance.dynamic_energy_adjustment_damping = 0.15``
-----------------------------------------------------------------
+``recognizer_instance.dynamic_energy_adjustment_damping = 0.15  # type: float``
+-------------------------------------------------------------------------------
 
 If the dynamic energy threshold setting is enabled (see ``recognizer_instance.dynamic_energy_threshold``), represents approximately the fraction of the current energy threshold that is retained after one second of dynamic threshold adjustment. Can be changed (not recommended).
 
 Lower values allow for faster adjustment, but also make it more likely to miss certain phrases (especially those with slowly changing volume). This value should be between 0 and 1. As this value approaches 1, dynamic adjustment has less of an effect over time. When this value is 1, dynamic adjustment has no effect.
 
-``recognizer_instance.dynamic_energy_adjustment_ratio = 1.5``
--------------------------------------------------------------
+``recognizer_instance.dynamic_energy_adjustment_ratio = 1.5  # type: float``
+----------------------------------------------------------------------------
 
 If the dynamic energy threshold setting is enabled (see ``recognizer_instance.dynamic_energy_threshold``), represents the minimum factor by which speech is louder than ambient noise. Can be changed (not recommended).
 
 For example, the default value of 1.5 means that speech is at least 1.5 times louder than ambient noise. Smaller values result in more false positives (but fewer false negatives) when ambient noise is loud compared to speech.
 
-``recognizer_instance.pause_threshold = 0.8``
----------------------------------------------
+``recognizer_instance.pause_threshold = 0.8  # type: float``
+------------------------------------------------------------
 
 Represents the minimum length of silence (in seconds) that will register as the end of a phrase. Can be changed.
 
 Smaller values result in the recognition completing more quickly, but might result in slower speakers being cut off.
 
-``recognizer_instance.operation_timeout = None``
-------------------------------------------------
+``recognizer_instance.operation_timeout = None  # type: Union[float, None]``
+----------------------------------------------------------------------------
 
 Represents the timeout (in seconds) for internal operations, such as API requests. Can be changed.
 
 Setting this to a reasonable value ensures that these operations will never block indefinitely, though good values depend on your network speed and the expected length of the audio to recognize.
 
-``recognizer_instance.record(source, duration = None, offset = None)``
-----------------------------------------------------------------------
+``recognizer_instance.record(source: AudioSource, duration: Union[float, None] = None, offset: Union[float, None] = None) -> AudioData``
+----------------------------------------------------------------------------------------------------------------------------------------
 
 Records up to ``duration`` seconds of audio from ``source`` (an ``AudioSource`` instance) starting at ``offset`` (or at the beginning if not specified) into an ``AudioData`` instance, which it returns.
 
 If ``duration`` is not specified, then it will record until there is no more audio input.
 
-``recognizer_instance.adjust_for_ambient_noise(source, duration = 1)``
-----------------------------------------------------------------------
+``recognizer_instance.adjust_for_ambient_noise(source: AudioSource, duration: float = 1) -> None``
+--------------------------------------------------------------------------------------------------
 
 Adjusts the energy threshold dynamically using audio from ``source`` (an ``AudioSource`` instance) to account for ambient noise.
 
@@ -152,8 +152,8 @@ Intended to calibrate the energy threshold with the ambient energy level. Should
 
 The ``duration`` parameter is the maximum number of seconds that it will dynamically adjust the threshold for before returning. This value should be at least 0.5 in order to get a representative sample of the ambient noise.
 
-``recognizer_instance.listen(source, timeout = None)``
-------------------------------------------------------
+``recognizer_instance.listen(source: AudioSource, timeout: Union[float, None] = None, phrase_time_limit: Union[float, None] = None, snowboy_configuration: Union[Tuple[str, Iterable[str]], None] = None) -> AudioData``
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Records a single phrase from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance, which it returns.
 
@@ -163,36 +163,38 @@ The ``timeout`` parameter is the maximum number of seconds that this will wait f
 
 The ``phrase_time_limit`` parameter is the maximum number of seconds that this will allow a phrase to continue before stopping and returning the part of the phrase processed before the time limit was reached. The resulting audio will be the phrase cut off at the time limit. If ``phrase_timeout`` is ``None``, there will be no phrase time limit.
 
-This operation will always complete within ``timeout + phrase_timeout`` seconds if both are numbers, either by returning the audio data, or by raising an exception.
+The ``snowboy_configuration`` parameter allows integration with `Snowboy <https://snowboy.kitt.ai/>`__, an offline, high-accuracy, power-efficient hotword recognition engine. When used, this function will pause until Snowboy detects a hotword, after which it will unpause. This parameter should either be ``None`` to turn off Snowboy support, or a tuple of the form ``(SNOWBOY_LOCATION, LIST_OF_HOT_WORD_FILES)``, where ``SNOWBOY_LOCATION`` is the path to the Snowboy root directory, and ``LIST_OF_HOT_WORD_FILES`` is a list of paths to Snowboy hotword configuration files (`*.pmdl` or `*.umdl` format).
 
-``recognizer_instance.listen_in_background(source, callback)``
---------------------------------------------------------------
+This operation will always complete within ``timeout + phrase_timeout`` seconds if both are numbers, either by returning the audio data, or by raising a ``speech_recognition.WaitTimeoutError`` exception.
+
+``recognizer_instance.listen_in_background(source: AudioSource, callback: Callable[[Recognizer, AudioData], Any]) -> Callable[bool, None]``
+-------------------------------------------------------------------------------------------------------------------------------------------
 
 Spawns a thread to repeatedly record phrases from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance and call ``callback`` with that ``AudioData`` instance as soon as each phrase are detected.
 
-Returns a function object that, when called, requests that the background listener thread stop, and waits until it does before returning. The background thread is a daemon and will not stop the program from exiting if there are no other non-daemon threads.
+Returns a function object that, when called, requests that the background listener thread stop. The background thread is a daemon and will not stop the program from exiting if there are no other non-daemon threads. The function accepts one parameter, ``wait_for_stop``: if truthy, the function will wait for the background listener to stop before returning, otherwise it will return immediately and the background listener thread might still be running for a second or two afterwards. Additionally, if you are using a truthy value for ``wait_for_stop``, you must call the function from the same thread you originally called ``listen_in_background`` from.
 
 Phrase recognition uses the exact same mechanism as ``recognizer_instance.listen(source)``. The ``phrase_time_limit`` parameter works in the same way as the ``phrase_time_limit`` parameter for ``recognizer_instance.listen(source)``, as well.
 
 The ``callback`` parameter is a function that should accept two parameters - the ``recognizer_instance``, and an ``AudioData`` instance representing the captured audio. Note that ``callback`` function will be called from a non-main thread.
 
-``recognizer_instance.recognize_sphinx(audio_data, language = "en-US", keyword_entries = None, grammar= None, show_all = False)``
----------------------------------------------------------------------------------------------------------------------------------
+``recognizer_instance.recognize_sphinx(audio_data: AudioData, language: str = "en-US", keyword_entries: Union[Iterable[Tuple[str, float]], None] = None, grammar: Union[str, None] = None, show_all: bool = False) -> Union[str, pocketsphinx.pocketsphinx.Decoder]``
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using CMU Sphinx.
 
-The recognition language is determined by ``language``, an IETF language tag like ``"en-US"`` or ``"en-GB"``, defaulting to US English. Out of the box, only ``en-US`` is supported. See `Notes on using `PocketSphinx <https://github.com/Uberi/speech_recognition/blob/master/reference/pocketsphinx.rst>`__ for information about installing other languages. This document is also included under ``reference/pocketsphinx.rst``.
+The recognition language is determined by ``language``, an RFC5646 language tag like ``"en-US"`` or ``"en-GB"``, defaulting to US English. Out of the box, only ``en-US`` is supported. See `Notes on using `PocketSphinx <https://github.com/Uberi/speech_recognition/blob/master/reference/pocketsphinx.rst>`__ for information about installing other languages. This document is also included under ``reference/pocketsphinx.rst``. The ``language`` parameter can also be a tuple of filesystem paths, of the form ``(acoustic_parameters_directory, language_model_file, phoneme_dictionary_file)`` - this allows you to load arbitrary Sphinx models.
 
 If specified, the keywords to search for are determined by ``keyword_entries``, an iterable of tuples of the form ``(keyword, sensitivity)``, where ``keyword`` is a phrase, and ``sensitivity`` is how sensitive to this phrase the recognizer should be, on a scale of 0 (very insensitive, more false negatives) to 1 (very sensitive, more false positives) inclusive. If not specified or ``None``, no keywords are used and Sphinx will simply transcribe whatever words it recognizes. Specifying ``keyword_entries`` is more accurate than just looking for those same keywords in non-keyword-based transcriptions, because Sphinx knows specifically what sounds to look for.
 
 Sphinx can also handle FSG or JSGF grammars. The parameter ``grammar`` expects a path to the grammar file. Note that if a JSGF grammar is passed, an FSG grammar will be created at the same location to speed up execution in the next run. If ``keyword_entries`` are passed, content of ``grammar`` will be ignored.
 
-Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the Sphinx ``pocketsphinx.pocketsphinx.Hypothesis`` object generated by Sphinx.
+Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the Sphinx ``pocketsphinx.pocketsphinx.Decoder`` object resulting from the recognition.
 
 Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if there are any issues with the Sphinx installation.
 
-``recognizer_instance.recognize_google(audio_data, key = None, language = "en-US", show_all = False)``
-------------------------------------------------------------------------------------------------------
+``recognizer_instance.recognize_google(audio_data: AudioData, key: Union[str, None] = None, language: str = "en-US", show_all: bool = False) -> Union[str, Dict[str, Any]]``
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Google Speech Recognition API.
 
@@ -206,8 +208,8 @@ Returns the most likely transcription if ``show_all`` is false (the default). Ot
 
 Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
 
-``recognizer_instance.recognize_google_cloud(audio_data, credentials_json = None, language = "en-US", preferred_phrases = None, show_all = False)``
----------------------------------------------------------------------------------------------------------------------------------------------------
+``recognizer_instance.recognize_google_cloud(audio_data: AudioData, credentials_json: Union[str, None] = None, language: str = "en-US", preferred_phrases: Union[Iterable[str], None] = None, show_all: bool = False) -> Union[str, Dict[str, Any]]``
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Google Cloud Speech API.
 
@@ -215,14 +217,14 @@ This function requires a Google Cloud Platform account; see the `Google Cloud Sp
 
 The recognition language is determined by ``language``, which is a BCP-47 language tag like ``"en-US"`` (US English). A list of supported language tags can be found in the `Google Cloud Speech API documentation <https://cloud.google.com/speech/docs/languages>`__.
 
-If ``preferred_phrases`` is a list of phrase strings, those given phrases will be more likely to be recognized over similar-sounding alternatives. This is useful for things like keyword/command recognition or adding new phrases that aren't in Google's vocabulary. Note that the API imposes certain `restrictions on the list of phrase strings <https://cloud.google.com/speech/limits#content>`__.
+If ``preferred_phrases`` is an iterable of phrase strings, those given phrases will be more likely to be recognized over similar-sounding alternatives. This is useful for things like keyword/command recognition or adding new phrases that aren't in Google's vocabulary. Note that the API imposes certain `restrictions on the list of phrase strings <https://cloud.google.com/speech/limits#content>`__.
 
 Returns the most likely transcription if ``show_all`` is False (the default). Otherwise, returns the raw API response as a JSON dictionary.
 
 Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the credentials aren't valid, or if there is no Internet connection.
 
-``recognizer_instance.recognize_wit(audio_data, key, show_all = False)``
-------------------------------------------------------------------------
+``recognizer_instance.recognize_wit(audio_data: AudioData, key: str, show_all: bool = False) -> Union[str, Dict[str, Any]]``
+----------------------------------------------------------------------------------------------------------------------------
 
 Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Wit.ai API.
 
@@ -236,8 +238,8 @@ Returns the most likely transcription if ``show_all`` is false (the default). Ot
 
 Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
 
-``recognizer_instance.recognize_bing(audio_data, key, language = "en-US", show_all = False)``
----------------------------------------------------------------------------------------------
+``recognizer_instance.recognize_bing(audio_data: AudioData, key: str, language: str = "en-US", show_all: bool = False) -> Union[str, Dict[str, Any]]``
+------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Microsoft Bing Speech API.
 
@@ -251,8 +253,8 @@ Returns the most likely transcription if ``show_all`` is false (the default). Ot
 
 Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
 
-``recognizer_instance.recognize_houndify(audio_data, client_id, client_key, show_all = False)``
------------------------------------------------------------------------------------------------
+``recognizer_instance.recognize_houndify(audio_data: AudioData, client_id: str, client_key: str, show_all: bool = False) -> Union[str, Dict[str, Any]]``
+--------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Houndify API.
 
@@ -262,12 +264,12 @@ To get the client ID and client key for a Houndify client, go to the `dashboard 
 
 Currently, only English is supported as a recognition language.
 
-Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns a JSON dictionary.
+Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the raw API response as a JSON dictionary.
 
 Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
 
-``recognizer_instance.recognize_ibm(audio_data, username, password, language = "en-US", show_all = False)``
------------------------------------------------------------------------------------------------------------
+``recognizer_instance.recognize_ibm(audio_data: AudioData, username: str, password: str, language: str = "en-US", show_all: bool = False) -> Union[str, Dict[str, Any]]``
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the IBM Speech to Text API.
 
@@ -288,8 +290,8 @@ Instances of subclasses of this class, such as ``Microphone`` and ``AudioFile``,
 
 For more information, see the documentation for the individual subclasses.
 
-``AudioData(frame_data, sample_rate, sample_width)``
-----------------------------------------------------
+``AudioData(frame_data: bytes, sample_rate: int, sample_width: int) -> AudioData``
+----------------------------------------------------------------------------------
 
 Creates a new ``AudioData`` instance, which represents mono audio data.
 
@@ -301,8 +303,15 @@ The audio data is assumed to have a sample rate of ``sample_rate`` samples per s
 
 Usually, instances of this class are obtained from ``recognizer_instance.record`` or ``recognizer_instance.listen``, or in the callback for ``recognizer_instance.listen_in_background``, rather than instantiating them directly.
 
-``audiodata_instance.get_raw_data(convert_rate = None, convert_width = None)``
-------------------------------------------------------------------------------
+``audiodata_instance.get_segment(start_ms: Union[float, None] = None, end_ms: Union[float, None] = None) -> AudioData``
+-----------------------------------------------------------------------------------------------------------------------
+
+Returns a new ``AudioData`` instance, trimmed to a given time interval. In other words, an ``AudioData`` instance with the same audio data except starting at ``start_ms`` milliseconds in and ending ``end_ms`` milliseconds in.
+
+If not specified, ``start_ms`` defaults to the beginning of the audio, and ``end_ms`` defaults to the end.
+
+``audiodata_instance.get_raw_data(convert_rate: Union[int, None] = None, convert_width: Union[int, None] = None) -> bytes``
+---------------------------------------------------------------------------------------------------------------------------
 
 Returns a byte string representing the raw frame data for the audio represented by the ``AudioData`` instance.
 
@@ -312,8 +321,8 @@ If ``convert_width`` is specified and the audio samples are not ``convert_width`
 
 Writing these bytes directly to a file results in a valid `RAW/PCM audio file <https://en.wikipedia.org/wiki/Raw_audio_format>`__.
 
-``audiodata_instance.get_wav_data(convert_rate = None, convert_width = None)``
-------------------------------------------------------------------------------
+``audiodata_instance.get_wav_data(convert_rate: Union[int, None] = None, convert_width: Union[int, None] = None) -> bytes``
+---------------------------------------------------------------------------------------------------------------------------
 
 Returns a byte string representing the contents of a WAV file containing the audio represented by the ``AudioData`` instance.
 
@@ -323,8 +332,8 @@ If ``convert_rate`` is specified and the audio sample rate is not ``convert_rate
 
 Writing these bytes directly to a file results in a valid `WAV file <https://en.wikipedia.org/wiki/WAV>`__.
 
-``audiodata_instance.get_aiff_data(convert_rate = None, convert_width = None)``
--------------------------------------------------------------------------------
+``audiodata_instance.get_aiff_data(convert_rate: Union[int, None] = None, convert_width: Union[int, None] = None) -> bytes``
+----------------------------------------------------------------------------------------------------------------------------
 
 Returns a byte string representing the contents of an AIFF-C file containing the audio represented by the ``AudioData`` instance.
 
@@ -334,8 +343,8 @@ If ``convert_rate`` is specified and the audio sample rate is not ``convert_rate
 
 Writing these bytes directly to a file results in a valid `AIFF-C file <https://en.wikipedia.org/wiki/Audio_Interchange_File_Format>`__.
 
-``audiodata_instance.get_flac_data(convert_rate = None, convert_width = None)``
--------------------------------------------------------------------------------
+``audiodata_instance.get_flac_data(convert_rate: Union[int, None] = None, convert_width: Union[int, None] = None) -> bytes``
+----------------------------------------------------------------------------------------------------------------------------
 
 Returns a byte string representing the contents of a FLAC file containing the audio represented by the ``AudioData`` instance.
 
