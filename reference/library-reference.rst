@@ -31,7 +31,7 @@ Instances of this class are context managers, and are designed to be used with `
 
 Returns a list of the names of all available microphones. For microphones where the name can't be retrieved, the list entry contains ``None`` instead.
 
-The index of each microphone's name is the same as its device index when creating a ``Microphone`` instance - indices in this list can be used as values of ``device_index``.
+The index of each microphone's name in the returned list is the same as its device index when creating a ``Microphone`` instance - if you want to use the microphone at index 3 in the returned list, use ``Microphone(device_index=3)``.
 
 To create a ``Microphone`` instance by name:
 
@@ -41,6 +41,23 @@ To create a ``Microphone`` instance by name:
     for i, microphone_name in enumerate(Microphone.list_microphone_names()):
         if microphone_name == "HDA Intel HDMI: 0 (hw:0,3)":
             m = Microphone(device_index=i)
+
+``Microphone.list_working_microphones() -> Dict[int, str]``
+-----------------------------------------------------------
+
+Returns a dictionary mapping device indices to microphone names, for microphones that are currently hearing sounds. When using this function, ensure that your microphone is unmuted and make some noise at it to ensure it will be detected as working.
+
+Each key in the returned dictionary can be passed to the ``Microphone`` constructor to use that microphone. For example, if the return value is ``{3: "HDA Intel PCH: ALC3232 Analog (hw:1,0)"}``, you can do ``Microphone(device_index=3)`` to use that microphone.
+
+To create a ``Microphone`` instance for the first working microphone:
+
+.. code:: python
+
+    for device_index in Microphone.list_working_microphones():
+        m = Microphone(device_index=device_index)
+        break
+    else:
+        print("No working microphones found!")
 
 ``AudioFile(filename_or_fileobject: Union[str, io.IOBase]) -> AudioFile``
 -------------------------------------------------------------------------

@@ -36,4 +36,6 @@ My **PyAudio library version** is <INSERT VERSION HERE> / I don't have PyAudio i
 
 My **microphones** are: (You can check this by running `python -c "import speech_recognition as sr;print(sr.Microphone.list_microphone_names())"`.)
 
+My **working microphones** are: (You can check this by running `python -c "import speech_recognition as sr;print(sr.Microphone.list_working_microphones())"`.)
+
 I **installed PocketSphinx from** <INSERT SOURCE HERE>. (For example, from the Debian repositories, from Homebrew, or from the source code.)
