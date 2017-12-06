@@ -1200,7 +1200,7 @@ class Recognizer(AudioSource):
 
         if not (tensor_graph == self.lasttfgraph):
             self.lasttfgraph = tensor_graph
-            
+
             # load graph
             with tf.gfile.FastGFile(tensor_graph, 'rb') as f:
                 graph_def = tf.GraphDef()
@@ -1208,7 +1208,7 @@ class Recognizer(AudioSource):
                 tf.import_graph_def(graph_def, name='')
             # load labels
             self.tflabels = [line.rstrip() for line in tf.gfile.GFile(tensor_label)]
-        
+
         wav_data = audio_data.get_wav_data(
             convert_rate=16000, convert_width=2
         )
@@ -1224,6 +1224,7 @@ class Recognizer(AudioSource):
             for node_id in top_k:
                 human_string = self.tflabels[node_id]
                 return human_string
+
 
 def get_flac_converter():
     """Returns the absolute path of a FLAC converter executable, or raises an OSError if none can be found."""
