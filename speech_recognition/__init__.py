@@ -1161,7 +1161,7 @@ class Recognizer(AudioSource):
             raise UnknownValueError()
         return result['Disambiguation']['ChoiceData'][0]['Transcription']
 
-    def recognize_ibm(self, audio_data, username, password, language="en-US", show_all=False):
+    def recognize_ibm(self, audio_data, username, password, language="en-US", show_all=False, narrowband=False):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the IBM Speech to Text API.
 
@@ -1181,9 +1181,10 @@ class Recognizer(AudioSource):
             convert_rate=None if audio_data.sample_rate >= 16000 else 16000,  # audio samples should be at least 16 kHz
             convert_width=None if audio_data.sample_width >= 2 else 2  # audio samples should be at least 16-bit
         )
+        band = 'Narrowband' if narrowband else 'Broadband'
         url = "https://stream.watsonplatform.net/speech-to-text/api/v1/recognize?{}".format(urlencode({
             "profanity_filter": "false",
-            "model": "{}_BroadbandModel".format(language),
+            "model": "{}_{}Model".format(language, band),
             "inactivity_timeout": -1,  # don't stop recognizing when the audio stream activity stops
         }))
         request = Request(url, data=flac_data, headers={
