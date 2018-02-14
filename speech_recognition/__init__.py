@@ -809,9 +809,6 @@ class Recognizer(AudioSource):
                 # perform the speech recognition with the keywords file (this is inside the context manager so the file isn;t deleted until we're done)
                 decoder.set_kws("keywords", f.name)
                 decoder.set_search("keywords")
-                decoder.start_utt()  # begin utterance processing
-                decoder.process_raw(raw_data, False, True)  # process audio data with recognition enabled (no_search = False), as a full utterance (full_utt = True)
-                decoder.end_utt()  # stop utterance processing
         elif grammar is not None:  # a path to a FSG or JSGF grammar
             if not os.path.exists(grammar):
                 raise ValueError("Grammar '{0}' does not exist.".format(grammar))
@@ -827,13 +824,10 @@ class Recognizer(AudioSource):
                 fsg = FsgModel(fsg_path, decoder.get_logmath(), 7.5)
             decoder.set_fsg(grammar_name, fsg)
             decoder.set_search(grammar_name)
-            decoder.start_utt()
-            decoder.process_raw(raw_data, False, True)  # process audio data with recognition enabled (no_search = False), as a full utterance (full_utt = True)
-            decoder.end_utt()  # stop utterance processing
-        else:  # no keywords, perform freeform recognition
-            decoder.start_utt()  # begin utterance processing
-            decoder.process_raw(raw_data, False, True)  # process audio data with recognition enabled (no_search = False), as a full utterance (full_utt = True)
-            decoder.end_utt()  # stop utterance processing
+        
+        decoder.start_utt()  # begin utterance processing
+        decoder.process_raw(raw_data, False, True)  # process audio data with recognition enabled (no_search = False), as a full utterance (full_utt = True)
+        decoder.end_utt()  # stop utterance processing
 
         if show_all: return decoder
 
