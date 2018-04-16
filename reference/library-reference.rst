@@ -225,7 +225,7 @@ Returns the most likely transcription if ``show_all`` is false (the default). Ot
 
 Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
 
-``recognizer_instance.recognize_google_cloud(audio_data: AudioData, credentials_json: Union[str, None] = None, language: str = "en-US", preferred_phrases: Union[Iterable[str], None] = None, show_all: bool = False) -> Union[str, Dict[str, Any]]``
+``recognizer_instance.recognize_google_cloud(audio_data: AudioData, credentials_json: Union[str, None] = None, language: str = "en-US", preferred_phrases: Union[Iterable[str], None] = None, preferred_model: str in ["command_and_search", "phone_call", "video", "default"], None] = None, show_all: bool = False) -> Union[str, Dict[str, Any]]``
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Google Cloud Speech API.
@@ -235,6 +235,8 @@ This function requires a Google Cloud Platform account; see the `Google Cloud Sp
 The recognition language is determined by ``language``, which is a BCP-47 language tag like ``"en-US"`` (US English). A list of supported language tags can be found in the `Google Cloud Speech API documentation <https://cloud.google.com/speech/docs/languages>`__.
 
 If ``preferred_phrases`` is an iterable of phrase strings, those given phrases will be more likely to be recognized over similar-sounding alternatives. This is useful for things like keyword/command recognition or adding new phrases that aren't in Google's vocabulary. Note that the API imposes certain `restrictions on the list of phrase strings <https://cloud.google.com/speech/limits#content>`__.
+
+Define a model by ``preferred_model`` as a string. Select the model best suited to your domain to get best results. If a model is not explicitly specified, then Google Cloud auto-selects a model based on the given parameters. 
 
 Returns the most likely transcription if ``show_all`` is False (the default). Otherwise, returns the raw API response as a JSON dictionary.
 
