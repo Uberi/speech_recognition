@@ -925,7 +925,7 @@ class Recognizer(AudioSource):
             except Exception: raise AssertionError("``credentials_json`` must be ``None`` or a valid JSON string")
         assert isinstance(language, str), "``language`` must be a string"
         assert preferred_phrases is None or all(isinstance(preferred_phrases, (type(""), type(u""))) for preferred_phrases in preferred_phrases), "``preferred_phrases`` must be a list of strings"
-        assert preferred_model is None or in ["command_and_search", "phone_call", "video", "default"], "``preferred_model`` must be a string or None"
+        assert preferred_model is None or preferred_model in ["command_and_search", "phone_call", "video", "default"], "``preferred_model`` must be a string or None"
         
         # See https://cloud.google.com/speech/reference/rest/v1/RecognitionConfig
         flac_data = audio_data.get_flac_data(
