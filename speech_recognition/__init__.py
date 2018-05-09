@@ -1145,7 +1145,7 @@ class Recognizer(AudioSource):
         ), "``preferred_phrases`` must be a list of strings"
 
         # See https://cloud.google.com/speech/reference/rest/v1/RecognitionConfig
-        raw_data = audio_data.get_raw_data(
+        wav_data = audio_data.get_wav_data(
             # convert_rate=None
             # if 8000 <= audio_data.sample_rate <= 48000 else max(
             #     8000, min(audio_data.sample_rate, 48000)
@@ -1198,7 +1198,7 @@ class Recognizer(AudioSource):
         request = speech_service.speech().recognize(
             body={
                 "audio": {
-                    "content": base64.b64encode(raw_data).decode("utf8")
+                    "content": base64.b64encode(wav_data).decode("utf8")
                 },
                 "config": speech_config
             })
@@ -1628,7 +1628,7 @@ class Recognizer(AudioSource):
             aws_secret_access_key=secret_access_key,
             region_name=region)
 
-        raw_data = audio_data.get_raw_data(
+        wav_data = audio_data.get_wav_data(
             # convert_rate=16000, convert_width=2
         )
 
@@ -1639,7 +1639,7 @@ class Recognizer(AudioSource):
             userId=user_id,
             contentType=content_type,
             accept=accept,
-            inputStream=raw_data)
+            inputStream=wav_data)
 
         if not response["inputTranscript"]:
             raise UnknownValueError()
