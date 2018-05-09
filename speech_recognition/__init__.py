@@ -1,46 +1,48 @@
 #!/usr/bin/env python3
-
 """Library for performing speech recognition, with support for several engines and APIs, online and offline."""
 
-import io
-import os
-import sys
-import subprocess
-import wave
 import aifc
-import math
 import audioop
-import collections
-import json
 import base64
-import threading
-import platform
-import stat
+import collections
 import hashlib
 import hmac
+import io
+import json
+import math
+import os
+import platform
+import stat
+import subprocess
+import sys
+import threading
 import time
 import uuid
+import wave
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "3.8.1"
+__version__ = "3.8.2"
 __license__ = "BSD"
 
-try:  # attempt to use the Python 2 modules
-    from urllib import urlencode
-    from urllib2 import Request, urlopen, URLError, HTTPError
-except ImportError:  # use the Python 3 modules
+try:  # attempt to use the Python 3 modules
     from urllib.parse import urlencode
     from urllib.request import Request, urlopen
     from urllib.error import URLError, HTTPError
+except ImportError:  # use the Python 2 modules
+    from urllib import urlencode
+    from urllib2 import Request, urlopen, URLError, HTTPError
 
 
-class WaitTimeoutError(Exception): pass
+class WaitTimeoutError(Exception):
+    pass
 
 
-class RequestError(Exception): pass
+class RequestError(Exception):
+    pass
 
 
-class UnknownValueError(Exception): pass
+class UnknownValueError(Exception):
+    pass
 
 
 class AudioSource(object):
@@ -70,10 +72,16 @@ class Microphone(AudioSource):
 
     Higher ``chunk_size`` values help avoid triggering on rapidly changing ambient noise, but also makes detection less sensitive. This value, generally, should be left at its default.
     """
+
     def __init__(self, device_index=None, sample_rate=None, chunk_size=1024):
-        assert device_index is None or isinstance(device_index, int), "Device index must be None or an integer"
-        assert sample_rate is None or (isinstance(sample_rate, int) and sample_rate > 0), "Sample rate must be None or a positive integer"
-        assert isinstance(chunk_size, int) and chunk_size > 0, "Chunk size must be a positive integer"
+        assert device_index is None or isinstance(
+            device_index, int), "Device index must be None or an integer"
+        assert sample_rate is None or (
+            isinstance(sample_rate, int) and
+            sample_rate > 0), "Sample rate must be None or a positive integer"
+        assert isinstance(
+            chunk_size,
+            int) and chunk_size > 0, "Chunk size must be a positive integer"
 
         # set up PyAudio
         self.pyaudio_module = self.get_pyaudio()
@@ -81,17 +89,25 @@ class Microphone(AudioSource):
         try:
             count = audio.get_device_count()  # obtain device count
             if device_index is not None:  # ensure device index is in range
-                assert 0 <= device_index < count, "Device index out of range ({} devices available; device index should be between 0 and {} inclusive)".format(count, count - 1)
+                assert 0 <= device_index < count, "Device index out of range ({} devices available; device index should be between 0 and {} inclusive)".format(
+                    count, count - 1)
             if sample_rate is None:  # automatically set the sample rate to the hardware's default sample rate if not specified
-                device_info = audio.get_device_info_by_index(device_index) if device_index is not None else audio.get_default_input_device_info()
-                assert isinstance(device_info.get("defaultSampleRate"), (float, int)) and device_info["defaultSampleRate"] > 0, "Invalid device info returned from PyAudio: {}".format(device_info)
+                device_info = audio.get_device_info_by_index(
+                    device_index
+                ) if device_index is not None else audio.get_default_input_device_info(
+                )
+                assert isinstance(
+                    device_info.get("defaultSampleRate"), (float, int)
+                ) and device_info["defaultSampleRate"] > 0, "Invalid device info returned from PyAudio: {}".format(
+                    device_info)
                 sample_rate = int(device_info["defaultSampleRate"])
         finally:
             audio.terminate()
 
         self.device_index = device_index
         self.format = self.pyaudio_module.paInt16  # 16-bit int sampling
-        self.SAMPLE_WIDTH = self.pyaudio_module.get_sample_size(self.format)  # size of each sample
+        self.SAMPLE_WIDTH = self.pyaudio_module.get_sample_size(
+            self.format)  # size of each sample
         self.SAMPLE_RATE = sample_rate  # sampling rate in Hertz
         self.CHUNK = chunk_size  # number of frames stored in each buffer
 
@@ -109,7 +125,9 @@ class Microphone(AudioSource):
             raise AttributeError("Could not find PyAudio; check installation")
         from distutils.version import LooseVersion
         if LooseVersion(pyaudio.__version__) < LooseVersion("0.2.11"):
-            raise AttributeError("PyAudio 0.2.11 or later is required (found version {})".format(pyaudio.__version__))
+            raise AttributeError(
+                "PyAudio 0.2.11 or later is required (found version {})".
+                format(pyaudio.__version__))
         return pyaudio
 
     @staticmethod
@@ -143,16 +161,22 @@ class Microphone(AudioSource):
             for device_index in range(audio.get_device_count()):
                 device_info = audio.get_device_info_by_index(device_index)
                 device_name = device_info.get("name")
-                assert isinstance(device_info.get("defaultSampleRate"), (float, int)) and device_info["defaultSampleRate"] > 0, "Invalid device info returned from PyAudio: {}".format(device_info)
+                assert isinstance(
+                    device_info.get("defaultSampleRate"), (float, int)
+                ) and device_info["defaultSampleRate"] > 0, "Invalid device info returned from PyAudio: {}".format(
+                    device_info)
                 try:
                     # read audio
                     pyaudio_stream = audio.open(
-                        input_device_index=device_index, channels=1, format=pyaudio_module.paInt16,
-                        rate=int(device_info["defaultSampleRate"]), input=True
-                    )
+                        input_device_index=device_index,
+                        channels=1,
+                        format=pyaudio_module.paInt16,
+                        rate=int(device_info["defaultSampleRate"]),
+                        input=True)
                     try:
                         buffer = pyaudio_stream.read(1024)
-                        if not pyaudio_stream.is_stopped(): pyaudio_stream.stop_stream()
+                        if not pyaudio_stream.is_stopped():
+                            pyaudio_stream.stop_stream()
                     finally:
                         pyaudio_stream.close()
                 except Exception:
@@ -160,8 +184,13 @@ class Microphone(AudioSource):
 
                 # compute RMS of debiased audio
                 energy = -audioop.rms(buffer, 2)
-                energy_bytes = chr(energy & 0xFF) + chr((energy >> 8) & 0xFF) if bytes is str else bytes([energy & 0xFF, (energy >> 8) & 0xFF])  # Python 2 compatibility
-                debiased_energy = audioop.rms(audioop.add(buffer, energy_bytes * (len(buffer) // 2), 2), 2)
+                energy_bytes = chr(energy & 0xFF) + chr(
+                    (energy >> 8) & 0xFF) if bytes is str else bytes(
+                        [energy & 0xFF,
+                         (energy >> 8) & 0xFF])  # Python 2 compatibility
+                debiased_energy = audioop.rms(
+                    audioop.add(buffer, energy_bytes * (len(buffer) // 2), 2),
+                    2)
 
                 if debiased_energy > 30:  # probably actually audio
                     result[device_index] = device_name
@@ -175,10 +204,13 @@ class Microphone(AudioSource):
         try:
             self.stream = Microphone.MicrophoneStream(
                 self.audio.open(
-                    input_device_index=self.device_index, channels=1, format=self.format,
-                    rate=self.SAMPLE_RATE, frames_per_buffer=self.CHUNK, input=True,
-                )
-            )
+                    input_device_index=self.device_index,
+                    channels=1,
+                    format=self.format,
+                    rate=self.SAMPLE_RATE,
+                    frames_per_buffer=self.CHUNK,
+                    input=True,
+                ))
         finally:
             self.audio.terminate()
         return self
@@ -222,7 +254,11 @@ class AudioFile(AudioSource):
     """
 
     def __init__(self, filename_or_fileobject):
-        assert isinstance(filename_or_fileobject, (type(""), type(u""))) or hasattr(filename_or_fileobject, "read"), "Given audio file must be a filename string or a file-like object"
+        assert isinstance(
+            filename_or_fileobject, (type(""), type(u""))
+        ) or hasattr(
+            filename_or_fileobject, "read"
+        ), "Given audio file must be a filename string or a file-like object"
         self.filename_or_fileobject = filename_or_fileobject
         self.stream = None
         self.DURATION = None
@@ -242,14 +278,16 @@ class AudioFile(AudioSource):
         except (wave.Error, EOFError):
             try:
                 # attempt to read the file as AIFF
-                self.audio_reader = aifc.open(self.filename_or_fileobject, "rb")
+                self.audio_reader = aifc.open(self.filename_or_fileobject,
+                                              "rb")
                 self.little_endian = False  # AIFF is a big-endian format
             except (aifc.Error, EOFError):
                 # attempt to read the file as FLAC
                 if hasattr(self.filename_or_fileobject, "read"):
                     flac_data = self.filename_or_fileobject.read()
                 else:
-                    with open(self.filename_or_fileobject, "rb") as f: flac_data = f.read()
+                    with open(self.filename_or_fileobject, "rb") as f:
+                        flac_data = f.read()
 
                 # run the FLAC converter with the FLAC data to get the AIFF data
                 flac_converter = get_flac_converter()
@@ -259,26 +297,38 @@ class AudioFile(AudioSource):
                     startup_info.wShowWindow = subprocess.SW_HIDE  # specify that the console window should be hidden
                 else:
                     startup_info = None  # default startupinfo
-                process = subprocess.Popen([
-                    flac_converter,
-                    "--stdout", "--totally-silent",  # put the resulting AIFF file in stdout, and make sure it's not mixed with any program output
-                    "--decode", "--force-aiff-format",  # decode the FLAC file into an AIFF file
-                    "-",  # the input FLAC file contents will be given in stdin
-                ], stdin=subprocess.PIPE, stdout=subprocess.PIPE, startupinfo=startup_info)
+                process = subprocess.Popen(
+                    [
+                        flac_converter,
+                        "--stdout",
+                        "--totally-silent",  # put the resulting AIFF file in stdout, and make sure it's not mixed with any program output
+                        "--decode",
+                        "--force-aiff-format",  # decode the FLAC file into an AIFF file
+                        "-",  # the input FLAC file contents will be given in stdin
+                    ],
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    startupinfo=startup_info)
                 aiff_data, _ = process.communicate(flac_data)
                 aiff_file = io.BytesIO(aiff_data)
                 try:
                     self.audio_reader = aifc.open(aiff_file, "rb")
                 except (aifc.Error, EOFError):
-                    raise ValueError("Audio file could not be read as PCM WAV, AIFF/AIFF-C, or Native FLAC; check if file is corrupted or in another format")
+                    raise ValueError(
+                        "Audio file could not be read as PCM WAV, AIFF/AIFF-C, or Native FLAC; check if file is corrupted or in another format"
+                    )
                 self.little_endian = False  # AIFF is a big-endian format
-        assert 1 <= self.audio_reader.getnchannels() <= 2, "Audio must be mono or stereo"
+        assert 1 <= self.audio_reader.getnchannels(
+        ) <= 2, "Audio must be mono or stereo"
         self.SAMPLE_WIDTH = self.audio_reader.getsampwidth()
 
         # 24-bit audio needs some special handling for old Python versions (workaround for https://bugs.python.org/issue12866)
         samples_24_bit_pretending_to_be_32_bit = False
         if self.SAMPLE_WIDTH == 3:  # 24-bit audio
-            try: audioop.bias(b"", self.SAMPLE_WIDTH, 0)  # test whether this sample width is supported (for example, ``audioop`` in Python 3.3 and below don't support sample width 3, while Python 3.4+ do)
+            try:
+                audioop.bias(
+                    b"", self.SAMPLE_WIDTH, 0
+                )  # test whether this sample width is supported (for example, ``audioop`` in Python 3.3 and below don't support sample width 3, while Python 3.4+ do)
             except audioop.error:  # this version of audioop doesn't support 24-bit audio (probably Python 3.3 or less)
                 samples_24_bit_pretending_to_be_32_bit = True  # while the ``AudioFile`` instance will outwardly appear to be 32-bit, it will actually internally be 24-bit
                 self.SAMPLE_WIDTH = 4  # the ``AudioFile`` instance should present itself as a 32-bit stream now, since we'll be converting into 32-bit on the fly when reading
@@ -287,38 +337,53 @@ class AudioFile(AudioSource):
         self.CHUNK = 4096
         self.FRAME_COUNT = self.audio_reader.getnframes()
         self.DURATION = self.FRAME_COUNT / float(self.SAMPLE_RATE)
-        self.stream = AudioFile.AudioFileStream(self.audio_reader, self.little_endian, samples_24_bit_pretending_to_be_32_bit)
+        self.stream = AudioFile.AudioFileStream(
+            self.audio_reader, self.little_endian,
+            samples_24_bit_pretending_to_be_32_bit)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        if not hasattr(self.filename_or_fileobject, "read"):  # only close the file if it was opened by this class in the first place (if the file was originally given as a path)
+        if not hasattr(
+                self.filename_or_fileobject, "read"
+        ):  # only close the file if it was opened by this class in the first place (if the file was originally given as a path)
             self.audio_reader.close()
         self.stream = None
         self.DURATION = None
 
     class AudioFileStream(object):
-        def __init__(self, audio_reader, little_endian, samples_24_bit_pretending_to_be_32_bit):
+        def __init__(self, audio_reader, little_endian,
+                     samples_24_bit_pretending_to_be_32_bit):
             self.audio_reader = audio_reader  # an audio file object (e.g., a `wave.Wave_read` instance)
             self.little_endian = little_endian  # whether the audio data is little-endian (when working with big-endian things, we'll have to convert it to little-endian before we process it)
             self.samples_24_bit_pretending_to_be_32_bit = samples_24_bit_pretending_to_be_32_bit  # this is true if the audio is 24-bit audio, but 24-bit audio isn't supported, so we have to pretend that this is 32-bit audio and convert it on the fly
 
         def read(self, size=-1):
-            buffer = self.audio_reader.readframes(self.audio_reader.getnframes() if size == -1 else size)
-            if not isinstance(buffer, bytes): buffer = b""  # workaround for https://bugs.python.org/issue24608
+            buffer = self.audio_reader.readframes(
+                self.audio_reader.getnframes() if size == -1 else size)
+            if not isinstance(buffer, bytes):
+                buffer = b""  # workaround for https://bugs.python.org/issue24608
 
             sample_width = self.audio_reader.getsampwidth()
             if not self.little_endian:  # big endian format, convert to little endian on the fly
-                if hasattr(audioop, "byteswap"):  # ``audioop.byteswap`` was only added in Python 3.4 (incidentally, that also means that we don't need to worry about 24-bit audio being unsupported, since Python 3.4+ always has that functionality)
+                if hasattr(
+                        audioop, "byteswap"
+                ):  # ``audioop.byteswap`` was only added in Python 3.4 (incidentally, that also means that we don't need to worry about 24-bit audio being unsupported, since Python 3.4+ always has that functionality)
                     buffer = audioop.byteswap(buffer, sample_width)
                 else:  # manually reverse the bytes of each sample, which is slower but works well enough as a fallback
-                    buffer = buffer[sample_width - 1::-1] + b"".join(buffer[i + sample_width:i:-1] for i in range(sample_width - 1, len(buffer), sample_width))
+                    buffer = buffer[sample_width - 1::-1] + b"".join(
+                        buffer[i + sample_width:i:-1] for i in range(
+                            sample_width - 1, len(buffer), sample_width))
 
             # workaround for https://bugs.python.org/issue12866
             if self.samples_24_bit_pretending_to_be_32_bit:  # we need to convert samples from 24-bit to 32-bit before we can process them with ``audioop`` functions
-                buffer = b"".join(b"\x00" + buffer[i:i + sample_width] for i in range(0, len(buffer), sample_width))  # since we're in little endian, we prepend a zero byte to each 24-bit sample to get a 32-bit sample
+                buffer = b"".join(
+                    b"\x00" + buffer[i:i + sample_width]
+                    for i in range(0, len(buffer), sample_width)
+                )  # since we're in little endian, we prepend a zero byte to each 24-bit sample to get a 32-bit sample
                 sample_width = 4  # make sure we thread the buffer as 32-bit audio now, after converting it from 24-bit audio
             if self.audio_reader.getnchannels() != 1:  # stereo audio
-                buffer = audioop.tomono(buffer, sample_width, 1, 1)  # convert stereo audio data to mono
+                buffer = audioop.tomono(buffer, sample_width, 1,
+                                        1)  # convert stereo audio data to mono
             return buffer
 
 
@@ -334,6 +399,7 @@ class AudioData(object):
 
     Usually, instances of this class are obtained from ``recognizer_instance.record`` or ``recognizer_instance.listen``, or in the callback for ``recognizer_instance.listen_in_background``, rather than instantiating them directly.
     """
+
     def __init__(self, frame_data, sample_rate, sample_width):
         assert sample_rate > 0, "Sample rate must be a positive integer"
         assert sample_width % 1 == 0 and 1 <= sample_width <= 4, "Sample width must be between 1 and 4 inclusive"
@@ -348,16 +414,21 @@ class AudioData(object):
         If not specified, ``start_ms`` defaults to the beginning of the audio, and ``end_ms`` defaults to the end.
         """
         assert start_ms is None or start_ms >= 0, "``start_ms`` must be a non-negative number"
-        assert end_ms is None or end_ms >= (0 if start_ms is None else start_ms), "``end_ms`` must be a non-negative number greater or equal to ``start_ms``"
+        assert end_ms is None or end_ms >= (
+            0 if start_ms is None else start_ms
+        ), "``end_ms`` must be a non-negative number greater or equal to ``start_ms``"
         if start_ms is None:
             start_byte = 0
         else:
-            start_byte = int((start_ms * self.sample_rate * self.sample_width) // 1000)
+            start_byte = int(
+                (start_ms * self.sample_rate * self.sample_width) // 1000)
         if end_ms is None:
             end_byte = len(self.frame_data)
         else:
-            end_byte = int((end_ms * self.sample_rate * self.sample_width) // 1000)
-        return AudioData(self.frame_data[start_byte:end_byte], self.sample_rate, self.sample_width)
+            end_byte = int(
+                (end_ms * self.sample_rate * self.sample_width) // 1000)
+        return AudioData(self.frame_data[start_byte:end_byte],
+                         self.sample_rate, self.sample_width)
 
     def get_raw_data(self, convert_rate=None, convert_width=None):
         """
@@ -370,33 +441,50 @@ class AudioData(object):
         Writing these bytes directly to a file results in a valid `RAW/PCM audio file <https://en.wikipedia.org/wiki/Raw_audio_format>`__.
         """
         assert convert_rate is None or convert_rate > 0, "Sample rate to convert to must be a positive integer"
-        assert convert_width is None or (convert_width % 1 == 0 and 1 <= convert_width <= 4), "Sample width to convert to must be between 1 and 4 inclusive"
+        assert convert_width is None or (
+            convert_width % 1 == 0 and 1 <= convert_width <= 4
+        ), "Sample width to convert to must be between 1 and 4 inclusive"
 
         raw_data = self.frame_data
 
         # make sure unsigned 8-bit audio (which uses unsigned samples) is handled like higher sample width audio (which uses signed samples)
         if self.sample_width == 1:
-            raw_data = audioop.bias(raw_data, 1, -128)  # subtract 128 from every sample to make them act like signed samples
+            raw_data = audioop.bias(
+                raw_data, 1, -128
+            )  # subtract 128 from every sample to make them act like signed samples
 
         # resample audio at the desired rate if specified
         if convert_rate is not None and self.sample_rate != convert_rate:
-            raw_data, _ = audioop.ratecv(raw_data, self.sample_width, 1, self.sample_rate, convert_rate, None)
+            raw_data, _ = audioop.ratecv(raw_data, self.sample_width, 1,
+                                         self.sample_rate, convert_rate, None)
 
         # convert samples to desired sample width if specified
         if convert_width is not None and self.sample_width != convert_width:
             if convert_width == 3:  # we're converting the audio into 24-bit (workaround for https://bugs.python.org/issue12866)
-                raw_data = audioop.lin2lin(raw_data, self.sample_width, 4)  # convert audio into 32-bit first, which is always supported
-                try: audioop.bias(b"", 3, 0)  # test whether 24-bit audio is supported (for example, ``audioop`` in Python 3.3 and below don't support sample width 3, while Python 3.4+ do)
+                raw_data = audioop.lin2lin(
+                    raw_data, self.sample_width, 4
+                )  # convert audio into 32-bit first, which is always supported
+                try:
+                    audioop.bias(
+                        b"", 3, 0
+                    )  # test whether 24-bit audio is supported (for example, ``audioop`` in Python 3.3 and below don't support sample width 3, while Python 3.4+ do)
                 except audioop.error:  # this version of audioop doesn't support 24-bit audio (probably Python 3.3 or less)
-                    raw_data = b"".join(raw_data[i + 1:i + 4] for i in range(0, len(raw_data), 4))  # since we're in little endian, we discard the first byte from each 32-bit sample to get a 24-bit sample
+                    raw_data = b"".join(
+                        raw_data[i + 1:i + 4]
+                        for i in range(0, len(raw_data), 4)
+                    )  # since we're in little endian, we discard the first byte from each 32-bit sample to get a 24-bit sample
                 else:  # 24-bit audio fully supported, we don't need to shim anything
-                    raw_data = audioop.lin2lin(raw_data, self.sample_width, convert_width)
+                    raw_data = audioop.lin2lin(raw_data, self.sample_width,
+                                               convert_width)
             else:
-                raw_data = audioop.lin2lin(raw_data, self.sample_width, convert_width)
+                raw_data = audioop.lin2lin(raw_data, self.sample_width,
+                                           convert_width)
 
         # if the output is 8-bit audio with unsigned samples, convert the samples we've been treating as signed to unsigned again
         if convert_width == 1:
-            raw_data = audioop.bias(raw_data, 1, 128)  # add 128 to every sample to make them act like unsigned samples again
+            raw_data = audioop.bias(
+                raw_data, 1, 128
+            )  # add 128 to every sample to make them act like unsigned samples again
 
         return raw_data
 
@@ -442,10 +530,13 @@ class AudioData(object):
         sample_width = self.sample_width if convert_width is None else convert_width
 
         # the AIFF format is big-endian, so we need to covnert the little-endian raw data to big-endian
-        if hasattr(audioop, "byteswap"):  # ``audioop.byteswap`` was only added in Python 3.4
+        if hasattr(audioop, "byteswap"
+                   ):  # ``audioop.byteswap`` was only added in Python 3.4
             raw_data = audioop.byteswap(raw_data, sample_width)
         else:  # manually reverse the bytes of each sample, which is slower but works well enough as a fallback
-            raw_data = raw_data[sample_width - 1::-1] + b"".join(raw_data[i + sample_width:i:-1] for i in range(sample_width - 1, len(raw_data), sample_width))
+            raw_data = raw_data[sample_width - 1::-1] + b"".join(
+                raw_data[i + sample_width:i:-1]
+                for i in range(sample_width - 1, len(raw_data), sample_width))
 
         # generate the AIFF-C file contents
         with io.BytesIO() as aiff_file:
@@ -472,7 +563,9 @@ class AudioData(object):
 
         Writing these bytes directly to a file results in a valid `FLAC file <https://en.wikipedia.org/wiki/FLAC>`__.
         """
-        assert convert_width is None or (convert_width % 1 == 0 and 1 <= convert_width <= 3), "Sample width to convert to must be between 1 and 3 inclusive"
+        assert convert_width is None or (
+            convert_width % 1 == 0 and 1 <= convert_width <= 3
+        ), "Sample width to convert to must be between 1 and 3 inclusive"
 
         if self.sample_width > 3 and convert_width is None:  # resulting WAV data would be 32-bit, which is not convertable to FLAC using our encoder
             convert_width = 3  # the largest supported sample width is 24-bit, so we'll limit the sample width to that
@@ -486,12 +579,17 @@ class AudioData(object):
             startup_info.wShowWindow = subprocess.SW_HIDE  # specify that the console window should be hidden
         else:
             startup_info = None  # default startupinfo
-        process = subprocess.Popen([
-            flac_converter,
-            "--stdout", "--totally-silent",  # put the resulting FLAC file in stdout, and make sure it's not mixed with any program output
-            "--best",  # highest level of compression available
-            "-",  # the input FLAC file contents will be given in stdin
-        ], stdin=subprocess.PIPE, stdout=subprocess.PIPE, startupinfo=startup_info)
+        process = subprocess.Popen(
+            [
+                flac_converter,
+                "--stdout",
+                "--totally-silent",  # put the resulting FLAC file in stdout, and make sure it's not mixed with any program output
+                "--best",  # highest level of compression available
+                "-",  # the input FLAC file contents will be given in stdin
+            ],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            startupinfo=startup_info)
         flac_data, stderr = process.communicate(wav_data)
         return flac_data
 
@@ -517,7 +615,8 @@ class Recognizer(AudioSource):
 
         If ``duration`` is not specified, then it will record until there is no more audio input.
         """
-        assert isinstance(source, AudioSource), "Source must be an audio source"
+        assert isinstance(source,
+                          AudioSource), "Source must be an audio source"
         assert source.stream is not None, "Audio source must be entered before recording, see documentation for ``AudioSource``; are you using ``source`` outside of a ``with`` statement?"
 
         frames = io.BytesIO()
@@ -552,7 +651,8 @@ class Recognizer(AudioSource):
 
         The ``duration`` parameter is the maximum number of seconds that it will dynamically adjust the threshold for before returning. This value should be at least 0.5 in order to get a representative sample of the ambient noise.
         """
-        assert isinstance(source, AudioSource), "Source must be an audio source"
+        assert isinstance(source,
+                          AudioSource), "Source must be an audio source"
         assert source.stream is not None, "Audio source must be entered before adjusting, see documentation for ``AudioSource``; are you using ``source`` outside of a ``with`` statement?"
         assert self.pause_threshold >= self.non_speaking_duration >= 0
 
@@ -564,25 +664,32 @@ class Recognizer(AudioSource):
             elapsed_time += seconds_per_buffer
             if elapsed_time > duration: break
             buffer = source.stream.read(source.CHUNK)
-            energy = audioop.rms(buffer, source.SAMPLE_WIDTH)  # energy of the audio signal
+            energy = audioop.rms(
+                buffer, source.SAMPLE_WIDTH)  # energy of the audio signal
 
             # dynamically adjust the energy threshold using asymmetric weighted average
-            damping = self.dynamic_energy_adjustment_damping ** seconds_per_buffer  # account for different chunk sizes and rates
+            damping = self.dynamic_energy_adjustment_damping**seconds_per_buffer  # account for different chunk sizes and rates
             target_energy = energy * self.dynamic_energy_ratio
-            self.energy_threshold = self.energy_threshold * damping + target_energy * (1 - damping)
+            self.energy_threshold = self.energy_threshold * damping + target_energy * (
+                1 - damping)
 
-    def snowboy_wait_for_hot_word(self, snowboy_location, snowboy_hot_word_files, source, timeout=None):
+    def snowboy_wait_for_hot_word(self,
+                                  snowboy_location,
+                                  snowboy_hot_word_files,
+                                  source,
+                                  timeout=None):
         # load snowboy library (NOT THREAD SAFE)
         sys.path.append(snowboy_location)
         import snowboydetect
         sys.path.pop()
 
         detector = snowboydetect.SnowboyDetect(
-            resource_filename=os.path.join(snowboy_location, "resources", "common.res").encode(),
-            model_str=",".join(snowboy_hot_word_files).encode()
-        )
+            resource_filename=os.path.join(snowboy_location, "resources",
+                                           "common.res").encode(),
+            model_str=",".join(snowboy_hot_word_files).encode())
         detector.SetAudioGain(1.0)
-        detector.SetSensitivity(",".join(["0.4"] * len(snowboy_hot_word_files)).encode())
+        detector.SetSensitivity(",".join(
+            ["0.4"] * len(snowboy_hot_word_files)).encode())
         snowboy_sample_rate = detector.SampleRate()
 
         elapsed_time = 0
@@ -596,14 +703,17 @@ class Recognizer(AudioSource):
         while True:
             elapsed_time += seconds_per_buffer
             if timeout and elapsed_time > timeout:
-                raise WaitTimeoutError("listening timed out while waiting for hotword to be said")
+                raise WaitTimeoutError(
+                    "listening timed out while waiting for hotword to be said")
 
             buffer = source.stream.read(source.CHUNK)
             if len(buffer) == 0: break  # reached end of the stream
             frames.append(buffer)
 
             # resample audio to the required sample rate
-            resampled_buffer, resampling_state = audioop.ratecv(buffer, source.SAMPLE_WIDTH, 1, source.SAMPLE_RATE, snowboy_sample_rate, resampling_state)
+            resampled_buffer, resampling_state = audioop.ratecv(
+                buffer, source.SAMPLE_WIDTH, 1, source.SAMPLE_RATE,
+                snowboy_sample_rate, resampling_state)
             resampled_frames.append(resampled_buffer)
 
             # run Snowboy on the resampled audio
@@ -613,7 +723,11 @@ class Recognizer(AudioSource):
 
         return b"".join(frames), elapsed_time
 
-    def listen(self, source, timeout=None, phrase_time_limit=None, snowboy_configuration=None):
+    def listen(self,
+               source,
+               timeout=None,
+               phrase_time_limit=None,
+               snowboy_configuration=None):
         """
         Records a single phrase from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance, which it returns.
 
@@ -627,18 +741,29 @@ class Recognizer(AudioSource):
 
         This operation will always complete within ``timeout + phrase_timeout`` seconds if both are numbers, either by returning the audio data, or by raising a ``speech_recognition.WaitTimeoutError`` exception.
         """
-        assert isinstance(source, AudioSource), "Source must be an audio source"
+        assert isinstance(source,
+                          AudioSource), "Source must be an audio source"
         assert source.stream is not None, "Audio source must be entered before listening, see documentation for ``AudioSource``; are you using ``source`` outside of a ``with`` statement?"
         assert self.pause_threshold >= self.non_speaking_duration >= 0
         if snowboy_configuration is not None:
-            assert os.path.isfile(os.path.join(snowboy_configuration[0], "snowboydetect.py")), "``snowboy_configuration[0]`` must be a Snowboy root directory containing ``snowboydetect.py``"
+            assert os.path.isfile(
+                os.path.join(snowboy_configuration[0], "snowboydetect.py")
+            ), "``snowboy_configuration[0]`` must be a Snowboy root directory containing ``snowboydetect.py``"
             for hot_word_file in snowboy_configuration[1]:
-                assert os.path.isfile(hot_word_file), "``snowboy_configuration[1]`` must be a list of Snowboy hot word configuration files"
+                assert os.path.isfile(
+                    hot_word_file
+                ), "``snowboy_configuration[1]`` must be a list of Snowboy hot word configuration files"
 
         seconds_per_buffer = float(source.CHUNK) / source.SAMPLE_RATE
-        pause_buffer_count = int(math.ceil(self.pause_threshold / seconds_per_buffer))  # number of buffers of non-speaking audio during a phrase, before the phrase should be considered complete
-        phrase_buffer_count = int(math.ceil(self.phrase_threshold / seconds_per_buffer))  # minimum number of buffers of speaking audio before we consider the speaking audio a phrase
-        non_speaking_buffer_count = int(math.ceil(self.non_speaking_duration / seconds_per_buffer))  # maximum number of buffers of non-speaking audio to retain before and after a phrase
+        pause_buffer_count = int(
+            math.ceil(self.pause_threshold / seconds_per_buffer)
+        )  # number of buffers of non-speaking audio during a phrase, before the phrase should be considered complete
+        phrase_buffer_count = int(
+            math.ceil(self.phrase_threshold / seconds_per_buffer)
+        )  # minimum number of buffers of speaking audio before we consider the speaking audio a phrase
+        non_speaking_buffer_count = int(
+            math.ceil(self.non_speaking_duration / seconds_per_buffer)
+        )  # maximum number of buffers of non-speaking audio to retain before and after a phrase
 
         # read audio input for phrases until there is a phrase that is long enough
         elapsed_time = 0  # number of seconds of audio read
@@ -652,27 +777,35 @@ class Recognizer(AudioSource):
                     # handle waiting too long for phrase by raising an exception
                     elapsed_time += seconds_per_buffer
                     if timeout and elapsed_time > timeout:
-                        raise WaitTimeoutError("listening timed out while waiting for phrase to start")
+                        raise WaitTimeoutError(
+                            "listening timed out while waiting for phrase to start"
+                        )
 
                     buffer = source.stream.read(source.CHUNK)
                     if len(buffer) == 0: break  # reached end of the stream
                     frames.append(buffer)
-                    if len(frames) > non_speaking_buffer_count:  # ensure we only keep the needed amount of non-speaking buffers
+                    if len(
+                            frames
+                    ) > non_speaking_buffer_count:  # ensure we only keep the needed amount of non-speaking buffers
                         frames.popleft()
 
                     # detect whether speaking has started on audio input
-                    energy = audioop.rms(buffer, source.SAMPLE_WIDTH)  # energy of the audio signal
+                    energy = audioop.rms(
+                        buffer,
+                        source.SAMPLE_WIDTH)  # energy of the audio signal
                     if energy > self.energy_threshold: break
 
                     # dynamically adjust the energy threshold using asymmetric weighted average
                     if self.dynamic_energy_threshold:
-                        damping = self.dynamic_energy_adjustment_damping ** seconds_per_buffer  # account for different chunk sizes and rates
+                        damping = self.dynamic_energy_adjustment_damping**seconds_per_buffer  # account for different chunk sizes and rates
                         target_energy = energy * self.dynamic_energy_ratio
-                        self.energy_threshold = self.energy_threshold * damping + target_energy * (1 - damping)
+                        self.energy_threshold = self.energy_threshold * damping + target_energy * (
+                            1 - damping)
             else:
                 # read audio input until the hotword is said
                 snowboy_location, snowboy_hot_word_files = snowboy_configuration
-                buffer, delta_time = self.snowboy_wait_for_hot_word(snowboy_location, snowboy_hot_word_files, source, timeout)
+                buffer, delta_time = self.snowboy_wait_for_hot_word(
+                    snowboy_location, snowboy_hot_word_files, source, timeout)
                 elapsed_time += delta_time
                 if len(buffer) == 0: break  # reached end of the stream
                 frames.append(buffer)
@@ -692,7 +825,9 @@ class Recognizer(AudioSource):
                 phrase_count += 1
 
                 # check if speaking has stopped for longer than the pause threshold on the audio input
-                energy = audioop.rms(buffer, source.SAMPLE_WIDTH)  # unit energy of the audio signal within the buffer
+                energy = audioop.rms(
+                    buffer, source.SAMPLE_WIDTH
+                )  # unit energy of the audio signal within the buffer
                 if energy > self.energy_threshold:
                     pause_count = 0
                 else:
@@ -702,10 +837,12 @@ class Recognizer(AudioSource):
 
             # check how long the detected phrase is, and retry listening if the phrase is too short
             phrase_count -= pause_count  # exclude the buffers for the pause before the phrase
-            if phrase_count >= phrase_buffer_count or len(buffer) == 0: break  # phrase is long enough or we've reached the end of the stream, so stop listening
+            if phrase_count >= phrase_buffer_count or len(buffer) == 0:
+                break  # phrase is long enough or we've reached the end of the stream, so stop listening
 
         # obtain frame data
-        for i in range(pause_count - non_speaking_buffer_count): frames.pop()  # remove extra non-speaking frames at the end
+        for i in range(pause_count - non_speaking_buffer_count):
+            frames.pop()  # remove extra non-speaking frames at the end
         frame_data = b"".join(frames)
 
         return AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
@@ -720,7 +857,8 @@ class Recognizer(AudioSource):
 
         The ``callback`` parameter is a function that should accept two parameters - the ``recognizer_instance``, and an ``AudioData`` instance representing the captured audio. Note that ``callback`` function will be called from a non-main thread.
         """
-        assert isinstance(source, AudioSource), "Source must be an audio source"
+        assert isinstance(source,
+                          AudioSource), "Source must be an audio source"
         running = [True]
 
         def threaded_listen():
@@ -736,14 +874,20 @@ class Recognizer(AudioSource):
         def stopper(wait_for_stop=True):
             running[0] = False
             if wait_for_stop:
-                listener_thread.join()  # block until the background thread is done, which can take around 1 second
+                listener_thread.join(
+                )  # block until the background thread is done, which can take around 1 second
 
         listener_thread = threading.Thread(target=threaded_listen)
         listener_thread.daemon = True
         listener_thread.start()
         return stopper
 
-    def recognize_sphinx(self, audio_data, language="en-US", keyword_entries=None, grammar=None, show_all=False):
+    def recognize_sphinx(self,
+                         audio_data,
+                         language="en-US",
+                         keyword_entries=None,
+                         grammar=None,
+                         show_all=False):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using CMU Sphinx.
 
@@ -757,68 +901,107 @@ class Recognizer(AudioSource):
 
         Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if there are any issues with the Sphinx installation.
         """
-        assert isinstance(audio_data, AudioData), "``audio_data`` must be audio data"
-        assert isinstance(language, str) or (isinstance(language, tuple) and len(language) == 3), "``language`` must be a string or 3-tuple of Sphinx data file paths of the form ``(acoustic_parameters, language_model, phoneme_dictionary)``"
-        assert keyword_entries is None or all(isinstance(keyword, (type(""), type(u""))) and 0 <= sensitivity <= 1 for keyword, sensitivity in keyword_entries), "``keyword_entries`` must be ``None`` or a list of pairs of strings and numbers between 0 and 1"
+        assert isinstance(audio_data,
+                          AudioData), "``audio_data`` must be audio data"
+        assert isinstance(language, str) or (
+            isinstance(language, tuple) and len(language) == 3
+        ), "``language`` must be a string or 3-tuple of Sphinx data file paths of the form ``(acoustic_parameters, language_model, phoneme_dictionary)``"
+        assert keyword_entries is None or all(
+            isinstance(keyword, (type(""),
+                                 type(u""))) and 0 <= sensitivity <= 1
+            for keyword, sensitivity in keyword_entries
+        ), "``keyword_entries`` must be ``None`` or a list of pairs of strings and numbers between 0 and 1"
 
         # import the PocketSphinx speech recognition module
         try:
             from pocketsphinx import pocketsphinx, Jsgf, FsgModel
 
         except ImportError:
-            raise RequestError("missing PocketSphinx module: ensure that PocketSphinx is set up correctly.")
+            raise RequestError(
+                "missing PocketSphinx module: ensure that PocketSphinx is set up correctly."
+            )
         except ValueError:
-            raise RequestError("bad PocketSphinx installation; try reinstalling PocketSphinx version 0.0.9 or better.")
-        if not hasattr(pocketsphinx, "Decoder") or not hasattr(pocketsphinx.Decoder, "default_config"):
-            raise RequestError("outdated PocketSphinx installation; ensure you have PocketSphinx version 0.0.9 or better.")
+            raise RequestError(
+                "bad PocketSphinx installation; try reinstalling PocketSphinx version 0.0.9 or better."
+            )
+        if not hasattr(pocketsphinx, "Decoder") or not hasattr(
+                pocketsphinx.Decoder, "default_config"):
+            raise RequestError(
+                "outdated PocketSphinx installation; ensure you have PocketSphinx version 0.0.9 or better."
+            )
 
         if isinstance(language, str):  # directory containing language data
-            language_directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), "pocketsphinx-data", language)
+            language_directory = os.path.join(
+                os.path.dirname(os.path.realpath(__file__)),
+                "pocketsphinx-data", language)
             if not os.path.isdir(language_directory):
-                raise RequestError("missing PocketSphinx language data directory: \"{}\"".format(language_directory))
-            acoustic_parameters_directory = os.path.join(language_directory, "acoustic-model")
-            language_model_file = os.path.join(language_directory, "language-model.lm.bin")
-            phoneme_dictionary_file = os.path.join(language_directory, "pronounciation-dictionary.dict")
+                raise RequestError(
+                    "missing PocketSphinx language data directory: \"{}\"".
+                    format(language_directory))
+            acoustic_parameters_directory = os.path.join(
+                language_directory, "acoustic-model")
+            language_model_file = os.path.join(language_directory,
+                                               "language-model.lm.bin")
+            phoneme_dictionary_file = os.path.join(
+                language_directory, "pronounciation-dictionary.dict")
         else:  # 3-tuple of Sphinx data file paths
             acoustic_parameters_directory, language_model_file, phoneme_dictionary_file = language
         if not os.path.isdir(acoustic_parameters_directory):
-            raise RequestError("missing PocketSphinx language model parameters directory: \"{}\"".format(acoustic_parameters_directory))
+            raise RequestError(
+                "missing PocketSphinx language model parameters directory: \"{}\"".
+                format(acoustic_parameters_directory))
         if not os.path.isfile(language_model_file):
-            raise RequestError("missing PocketSphinx language model file: \"{}\"".format(language_model_file))
+            raise RequestError(
+                "missing PocketSphinx language model file: \"{}\"".format(
+                    language_model_file))
         if not os.path.isfile(phoneme_dictionary_file):
-            raise RequestError("missing PocketSphinx phoneme dictionary file: \"{}\"".format(phoneme_dictionary_file))
+            raise RequestError(
+                "missing PocketSphinx phoneme dictionary file: \"{}\"".format(
+                    phoneme_dictionary_file))
 
         # create decoder object
         config = pocketsphinx.Decoder.default_config()
-        config.set_string("-hmm", acoustic_parameters_directory)  # set the path of the hidden Markov model (HMM) parameter files
+        config.set_string(
+            "-hmm", acoustic_parameters_directory
+        )  # set the path of the hidden Markov model (HMM) parameter files
         config.set_string("-lm", language_model_file)
         config.set_string("-dict", phoneme_dictionary_file)
-        config.set_string("-logfn", os.devnull)  # disable logging (logging causes unwanted output in terminal)
+        config.set_string(
+            "-logfn", os.devnull
+        )  # disable logging (logging causes unwanted output in terminal)
         decoder = pocketsphinx.Decoder(config)
 
         # obtain audio data
-        raw_data = audio_data.get_raw_data(convert_rate=16000, convert_width=2)  # the included language models require audio to be 16-bit mono 16 kHz in little-endian format
+        raw_data = audio_data.get_raw_data(
+            convert_rate=16000, convert_width=2
+        )  # the included language models require audio to be 16-bit mono 16 kHz in little-endian format
 
         # obtain recognition results
         if keyword_entries is not None:  # explicitly specified set of keywords
             with PortableNamedTemporaryFile("w") as f:
                 # generate a keywords file - Sphinx documentation recommendeds sensitivities between 1e-50 and 1e-5
-                f.writelines("{} /1e{}/\n".format(keyword, 100 * sensitivity - 110) for keyword, sensitivity in keyword_entries)
+                f.writelines(
+                    "{} /1e{}/\n".format(keyword, 100 * sensitivity - 110)
+                    for keyword, sensitivity in keyword_entries)
                 f.flush()
 
                 # perform the speech recognition with the keywords file (this is inside the context manager so the file isn;t deleted until we're done)
                 decoder.set_kws("keywords", f.name)
                 decoder.set_search("keywords")
                 decoder.start_utt()  # begin utterance processing
-                decoder.process_raw(raw_data, False, True)  # process audio data with recognition enabled (no_search = False), as a full utterance (full_utt = True)
+                decoder.process_raw(
+                    raw_data, False, True
+                )  # process audio data with recognition enabled (no_search = False), as a full utterance (full_utt = True)
                 decoder.end_utt()  # stop utterance processing
         elif grammar is not None:  # a path to a FSG or JSGF grammar
             if not os.path.exists(grammar):
-                raise ValueError("Grammar '{0}' does not exist.".format(grammar))
+                raise ValueError(
+                    "Grammar '{0}' does not exist.".format(grammar))
             grammar_path = os.path.abspath(os.path.dirname(grammar))
             grammar_name = os.path.splitext(os.path.basename(grammar))[0]
             fsg_path = "{0}/{1}.fsg".format(grammar_path, grammar_name)
-            if not os.path.exists(fsg_path):  # create FSG grammar if not available
+            if not os.path.exists(
+                    fsg_path):  # create FSG grammar if not available
                 jsgf = Jsgf(grammar)
                 rule = jsgf.get_rule("{0}.{0}".format(grammar_name))
                 fsg = jsgf.build_fsg(rule, decoder.get_logmath(), 7.5)
@@ -828,11 +1011,15 @@ class Recognizer(AudioSource):
             decoder.set_fsg(grammar_name, fsg)
             decoder.set_search(grammar_name)
             decoder.start_utt()
-            decoder.process_raw(raw_data, False, True)  # process audio data with recognition enabled (no_search = False), as a full utterance (full_utt = True)
+            decoder.process_raw(
+                raw_data, False, True
+            )  # process audio data with recognition enabled (no_search = False), as a full utterance (full_utt = True)
             decoder.end_utt()  # stop utterance processing
         else:  # no keywords, perform freeform recognition
             decoder.start_utt()  # begin utterance processing
-            decoder.process_raw(raw_data, False, True)  # process audio data with recognition enabled (no_search = False), as a full utterance (full_utt = True)
+            decoder.process_raw(
+                raw_data, False, True
+            )  # process audio data with recognition enabled (no_search = False), as a full utterance (full_utt = True)
             decoder.end_utt()  # stop utterance processing
 
         if show_all: return decoder
@@ -842,7 +1029,11 @@ class Recognizer(AudioSource):
         if hypothesis is not None: return hypothesis.hypstr
         raise UnknownValueError()  # no transcriptions available
 
-    def recognize_google(self, audio_data, key=None, language="en-US", show_all=False):
+    def recognize_google(self,
+                         audio_data,
+                         key=None,
+                         language="en-US",
+                         show_all=False):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Google Speech Recognition API.
 
@@ -856,29 +1047,41 @@ class Recognizer(AudioSource):
 
         Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
         """
-        assert isinstance(audio_data, AudioData), "``audio_data`` must be audio data"
-        assert key is None or isinstance(key, str), "``key`` must be ``None`` or a string"
+        assert isinstance(audio_data,
+                          AudioData), "``audio_data`` must be audio data"
+        assert key is None or isinstance(
+            key, str), "``key`` must be ``None`` or a string"
         assert isinstance(language, str), "``language`` must be a string"
 
-        flac_data = audio_data.get_flac_data(
-            convert_rate=None if audio_data.sample_rate >= 8000 else 8000,  # audio samples must be at least 8 kHz
-            convert_width=2  # audio samples must be 16-bit
+        raw_data = audio_data.get_raw_data(
+            convert_rate=None if audio_data.sample_rate >= 8000 else
+            8000,  # audio samples must be at least 8 kHz
+            convert_width=None  # audio samples must be 16-bit
         )
         if key is None: key = "AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw"
-        url = "http://www.google.com/speech-api/v2/recognize?{}".format(urlencode({
-            "client": "chromium",
-            "lang": language,
-            "key": key,
-        }))
-        request = Request(url, data=flac_data, headers={"Content-Type": "audio/x-flac; rate={}".format(audio_data.sample_rate)})
+        url = "http://www.google.com/speech-api/v2/recognize?{}".format(
+            urlencode({
+                "client": "chromium",
+                "lang": language,
+                "key": key,
+            }))
+        request = Request(
+            url,
+            data=raw_data,
+            headers={
+                "Content-Type":
+                "audio/x-flac; rate={}".format(audio_data.sample_rate)
+            })
 
         # obtain audio transcription results
         try:
             response = urlopen(request, timeout=self.operation_timeout)
         except HTTPError as e:
-            raise RequestError("recognition request failed: {}".format(e.reason))
+            raise RequestError("recognition request failed: {}".format(
+                e.reason))
         except URLError as e:
-            raise RequestError("recognition connection failed: {}".format(e.reason))
+            raise RequestError("recognition connection failed: {}".format(
+                e.reason))
         response_text = response.read().decode("utf-8")
 
         # ignore any blank blocks
@@ -892,18 +1095,27 @@ class Recognizer(AudioSource):
 
         # return results
         if show_all: return actual_result
-        if not isinstance(actual_result, dict) or len(actual_result.get("alternative", [])) == 0: raise UnknownValueError()
+        if not isinstance(actual_result, dict) or len(
+                actual_result.get("alternative", [])) == 0:
+            raise UnknownValueError()
 
         if "confidence" in actual_result["alternative"]:
             # return alternative with highest confidence score
-            best_hypothesis = max(actual_result["alternative"], key=lambda alternative: alternative["confidence"])
+            best_hypothesis = max(
+                actual_result["alternative"],
+                key=lambda alternative: alternative["confidence"])
         else:
             # when there is no confidence available, we arbitrarily choose the first hypothesis.
             best_hypothesis = actual_result["alternative"][0]
         if "transcript" not in best_hypothesis: raise UnknownValueError()
         return best_hypothesis["transcript"]
 
-    def recognize_google_cloud(self, audio_data, credentials_json=None, language="en-US", preferred_phrases=None, show_all=False):
+    def recognize_google_cloud(self,
+                               audio_data,
+                               credentials_json=None,
+                               language="en-US",
+                               preferred_phrases=None,
+                               show_all=False):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Google Cloud Speech API.
 
@@ -917,17 +1129,28 @@ class Recognizer(AudioSource):
 
         Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the credentials aren't valid, or if there is no Internet connection.
         """
-        assert isinstance(audio_data, AudioData), "``audio_data`` must be audio data"
+        assert isinstance(audio_data,
+                          AudioData), "``audio_data`` must be audio data"
         if credentials_json is not None:
-            try: json.loads(credentials_json)
-            except Exception: raise AssertionError("``credentials_json`` must be ``None`` or a valid JSON string")
+            try:
+                json.loads(credentials_json)
+            except Exception:
+                raise AssertionError(
+                    "``credentials_json`` must be ``None`` or a valid JSON string"
+                )
         assert isinstance(language, str), "``language`` must be a string"
-        assert preferred_phrases is None or all(isinstance(preferred_phrases, (type(""), type(u""))) for preferred_phrases in preferred_phrases), "``preferred_phrases`` must be a list of strings"
+        assert preferred_phrases is None or all(
+            isinstance(preferred_phrases, (type(""), type(u"")))
+            for preferred_phrases in preferred_phrases
+        ), "``preferred_phrases`` must be a list of strings"
 
         # See https://cloud.google.com/speech/reference/rest/v1/RecognitionConfig
-        flac_data = audio_data.get_flac_data(
-            convert_rate=None if 8000 <= audio_data.sample_rate <= 48000 else max(8000, min(audio_data.sample_rate, 48000)),  # audio sample rate must be between 8 kHz and 48 kHz inclusive - clamp sample rate into this range
-            convert_width=2  # audio samples must be 16-bit
+        raw_data = audio_data.get_raw_data(
+            # convert_rate=None
+            # if 8000 <= audio_data.sample_rate <= 48000 else max(
+            #     8000, min(audio_data.sample_rate, 48000)
+            # ),  # audio sample rate must be between 8 kHz and 48 kHz inclusive - clamp sample rate into this range
+            # convert_width=2  # audio samples must be 16-bit
         )
 
         try:
@@ -952,26 +1175,45 @@ class Recognizer(AudioSource):
                     f.flush()
                     api_credentials = GoogleCredentials.from_stream(f.name)
 
-            speech_service = build("speech", "v1", credentials=api_credentials, cache_discovery=False)
+            speech_service = build(
+                "speech",
+                "v1",
+                credentials=api_credentials,
+                cache_discovery=False)
         except ImportError:
-            raise RequestError("missing google-api-python-client module: ensure that google-api-python-client is set up correctly.")
+            raise RequestError(
+                "missing google-api-python-client module: ensure that google-api-python-client is set up correctly."
+            )
 
-        speech_config = {"encoding": "FLAC", "sampleRateHertz": audio_data.sample_rate, "languageCode": language}
+        speech_config = {
+            "encoding": "LINEAR16",
+            "sampleRateHertz": audio_data.sample_rate,
+            "languageCode": language
+        }
         if preferred_phrases is not None:
             speech_config["speechContexts"] = [{"phrases": preferred_phrases}]
         if show_all:
-            speech_config["enableWordTimeOffsets"] = True  # some useful extra options for when we want all the output
-        request = speech_service.speech().recognize(body={"audio": {"content": base64.b64encode(flac_data).decode("utf8")}, "config": speech_config})
+            speech_config[
+                "enableWordTimeOffsets"] = True  # some useful extra options for when we want all the output
+        request = speech_service.speech().recognize(
+            body={
+                "audio": {
+                    "content": base64.b64encode(raw_data).decode("utf8")
+                },
+                "config": speech_config
+            })
 
         try:
             response = request.execute()
         except googleapiclient.errors.HttpError as e:
             raise RequestError(e)
         except URLError as e:
-            raise RequestError("recognition connection failed: {0}".format(e.reason))
+            raise RequestError("recognition connection failed: {0}".format(
+                e.reason))
 
         if show_all: return response
-        if "results" not in response or len(response["results"]) == 0: raise UnknownValueError()
+        if "results" not in response or len(response["results"]) == 0:
+            raise UnknownValueError()
         transcript = ""
         for result in response["results"]:
             transcript += result["alternatives"][0]["transcript"].strip() + " "
@@ -996,26 +1238,37 @@ class Recognizer(AudioSource):
         assert isinstance(key, str), "``key`` must be a string"
 
         wav_data = audio_data.get_wav_data(
-            convert_rate=None if audio_data.sample_rate >= 8000 else 8000,  # audio samples must be at least 8 kHz
+            convert_rate=None if audio_data.sample_rate >= 8000 else
+            8000,  # audio samples must be at least 8 kHz
             convert_width=2  # audio samples should be 16-bit
         )
         url = "https://api.wit.ai/speech?v=20160526"
-        request = Request(url, data=wav_data, headers={"Authorization": "Bearer {}".format(key), "Content-Type": "audio/wav"})
+        request = Request(
+            url,
+            data=wav_data,
+            headers={
+                "Authorization": "Bearer {}".format(key),
+                "Content-Type": "audio/wav"
+            })
         try:
             response = urlopen(request, timeout=self.operation_timeout)
         except HTTPError as e:
-            raise RequestError("recognition request failed: {}".format(e.reason))
+            raise RequestError("recognition request failed: {}".format(
+                e.reason))
         except URLError as e:
-            raise RequestError("recognition connection failed: {}".format(e.reason))
+            raise RequestError("recognition connection failed: {}".format(
+                e.reason))
         response_text = response.read().decode("utf-8")
         result = json.loads(response_text)
 
         # return results
         if show_all: return result
-        if "_text" not in result or result["_text"] is None: raise UnknownValueError()
+        if "_text" not in result or result["_text"] is None:
+            raise UnknownValueError()
         return result["_text"]
 
-    def recognize_bing(self, audio_data, key, language="en-US", show_all=False):
+    def recognize_bing(self, audio_data, key, language="en-US",
+                       show_all=False):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Microsoft Bing Speech API.
 
@@ -1033,7 +1286,9 @@ class Recognizer(AudioSource):
         assert isinstance(key, str), "``key`` must be a string"
         assert isinstance(language, str), "``language`` must be a string"
 
-        access_token, expire_time = getattr(self, "bing_cached_access_token", None), getattr(self, "bing_cached_access_token_expiry", None)
+        access_token, expire_time = getattr(
+            self, "bing_cached_access_token", None), getattr(
+                self, "bing_cached_access_token_expiry", None)
         allow_caching = True
         try:
             from time import monotonic  # we need monotonic time to avoid being affected by system clock changes, but this is only available in Python 3.3+
@@ -1043,24 +1298,32 @@ class Recognizer(AudioSource):
             except (ImportError, RuntimeError):
                 expire_time = None  # monotonic time not available, don't cache access tokens
                 allow_caching = False  # don't allow caching, since monotonic time isn't available
-        if expire_time is None or monotonic() > expire_time:  # caching not enabled, first credential request, or the access token from the previous one expired
+        if expire_time is None or monotonic(
+        ) > expire_time:  # caching not enabled, first credential request, or the access token from the previous one expired
             # get an access token using OAuth
             credential_url = "https://api.cognitive.microsoft.com/sts/v1.0/issueToken"
-            credential_request = Request(credential_url, data=b"", headers={
-                "Content-type": "application/x-www-form-urlencoded",
-                "Content-Length": "0",
-                "Ocp-Apim-Subscription-Key": key,
-            })
+            credential_request = Request(
+                credential_url,
+                data=b"",
+                headers={
+                    "Content-type": "application/x-www-form-urlencoded",
+                    "Content-Length": "0",
+                    "Ocp-Apim-Subscription-Key": key,
+                })
 
             if allow_caching:
                 start_time = monotonic()
 
             try:
-                credential_response = urlopen(credential_request, timeout=60)  # credential response can take longer, use longer timeout instead of default one
+                credential_response = urlopen(
+                    credential_request, timeout=60
+                )  # credential response can take longer, use longer timeout instead of default one
             except HTTPError as e:
-                raise RequestError("credential request failed: {}".format(e.reason))
+                raise RequestError("credential request failed: {}".format(
+                    e.reason))
             except URLError as e:
-                raise RequestError("credential connection failed: {}".format(e.reason))
+                raise RequestError("credential connection failed: {}".format(
+                    e.reason))
             access_token = credential_response.read().decode("utf-8")
 
             if allow_caching:
@@ -1073,42 +1336,65 @@ class Recognizer(AudioSource):
             convert_width=2  # audio samples should be 16-bit
         )
 
-        url = "https://speech.platform.bing.com/speech/recognition/interactive/cognitiveservices/v1?{}".format(urlencode({
-            "language": language,
-            "locale": language,
-            "requestid": uuid.uuid4(),
-        }))
+        url = "https://speech.platform.bing.com/speech/recognition/interactive/cognitiveservices/v1?{}".format(
+            urlencode({
+                "language": language,
+                "locale": language,
+                "requestid": uuid.uuid4(),
+            }))
 
-        if sys.version_info >= (3, 6):  # chunked-transfer requests are only supported in the standard library as of Python 3.6+, use it if possible
-            request = Request(url, data=io.BytesIO(wav_data), headers={
-                "Authorization": "Bearer {}".format(access_token),
-                "Content-type": "audio/wav; codec=\"audio/pcm\"; samplerate=16000",
-                "Transfer-Encoding": "chunked",
-            })
+        if sys.version_info >= (
+                3, 6
+        ):  # chunked-transfer requests are only supported in the standard library as of Python 3.6+, use it if possible
+            request = Request(
+                url,
+                data=io.BytesIO(wav_data),
+                headers={
+                    "Authorization":
+                    "Bearer {}".format(access_token),
+                    "Content-type":
+                    "audio/wav; codec=\"audio/pcm\"; samplerate=16000",
+                    "Transfer-Encoding":
+                    "chunked",
+                })
         else:  # fall back on manually formatting the POST body as a chunked request
-            ascii_hex_data_length = "{:X}".format(len(wav_data)).encode("utf-8")
+            ascii_hex_data_length = "{:X}".format(
+                len(wav_data)).encode("utf-8")
             chunked_transfer_encoding_data = ascii_hex_data_length + b"\r\n" + wav_data + b"\r\n0\r\n\r\n"
-            request = Request(url, data=chunked_transfer_encoding_data, headers={
-                "Authorization": "Bearer {}".format(access_token),
-                "Content-type": "audio/wav; codec=\"audio/pcm\"; samplerate=16000",
-                "Transfer-Encoding": "chunked",
-            })
+            request = Request(
+                url,
+                data=chunked_transfer_encoding_data,
+                headers={
+                    "Authorization":
+                    "Bearer {}".format(access_token),
+                    "Content-type":
+                    "audio/wav; codec=\"audio/pcm\"; samplerate=16000",
+                    "Transfer-Encoding":
+                    "chunked",
+                })
 
         try:
             response = urlopen(request, timeout=self.operation_timeout)
         except HTTPError as e:
-            raise RequestError("recognition request failed: {}".format(e.reason))
+            raise RequestError("recognition request failed: {}".format(
+                e.reason))
         except URLError as e:
-            raise RequestError("recognition connection failed: {}".format(e.reason))
+            raise RequestError("recognition connection failed: {}".format(
+                e.reason))
         response_text = response.read().decode("utf-8")
         result = json.loads(response_text)
 
         # return results
         if show_all: return result
-        if "RecognitionStatus" not in result or result["RecognitionStatus"] != "Success" or "DisplayText" not in result: raise UnknownValueError()
+        if "RecognitionStatus" not in result or result["RecognitionStatus"] != "Success" or "DisplayText" not in result:
+            raise UnknownValueError()
         return result["DisplayText"]
 
-    def recognize_houndify(self, audio_data, client_id, client_key, show_all=False):
+    def recognize_houndify(self,
+                           audio_data,
+                           client_id,
+                           client_key,
+                           show_all=False):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Houndify API.
 
@@ -1127,7 +1413,8 @@ class Recognizer(AudioSource):
         assert isinstance(client_key, str), "``client_key`` must be a string"
 
         wav_data = audio_data.get_wav_data(
-            convert_rate=None if audio_data.sample_rate in [8000, 16000] else 16000,  # audio samples must be 8 kHz or 16 kHz
+            convert_rate=None if audio_data.sample_rate in [8000, 16000] else
+            16000,  # audio samples must be 8 kHz or 16 kHz
             convert_width=2  # audio samples should be 16-bit
         )
         url = "https://api.houndify.com/v1/audio"
@@ -1136,22 +1423,34 @@ class Recognizer(AudioSource):
         request_signature = base64.urlsafe_b64encode(
             hmac.new(
                 base64.urlsafe_b64decode(client_key),
-                user_id.encode("utf-8") + b";" + request_id.encode("utf-8") + request_time.encode("utf-8"),
-                hashlib.sha256
-            ).digest()  # get the HMAC digest as bytes
+                user_id.encode("utf-8") + b";" + request_id.encode("utf-8") +
+                request_time.encode("utf-8"),
+                hashlib.sha256).digest()  # get the HMAC digest as bytes
         ).decode("utf-8")
-        request = Request(url, data=wav_data, headers={
-            "Content-Type": "application/json",
-            "Hound-Request-Info": json.dumps({"ClientID": client_id, "UserID": user_id}),
-            "Hound-Request-Authentication": "{};{}".format(user_id, request_id),
-            "Hound-Client-Authentication": "{};{};{}".format(client_id, request_time, request_signature)
-        })
+        request = Request(
+            url,
+            data=wav_data,
+            headers={
+                "Content-Type":
+                "application/json",
+                "Hound-Request-Info":
+                json.dumps({
+                    "ClientID": client_id,
+                    "UserID": user_id
+                }),
+                "Hound-Request-Authentication":
+                "{};{}".format(user_id, request_id),
+                "Hound-Client-Authentication":
+                "{};{};{}".format(client_id, request_time, request_signature)
+            })
         try:
             response = urlopen(request, timeout=self.operation_timeout)
         except HTTPError as e:
-            raise RequestError("recognition request failed: {}".format(e.reason))
+            raise RequestError("recognition request failed: {}".format(
+                e.reason))
         except URLError as e:
-            raise RequestError("recognition connection failed: {}".format(e.reason))
+            raise RequestError("recognition connection failed: {}".format(
+                e.reason))
         response_text = response.read().decode("utf-8")
         result = json.loads(response_text)
 
@@ -1161,7 +1460,12 @@ class Recognizer(AudioSource):
             raise UnknownValueError()
         return result['Disambiguation']['ChoiceData'][0]['Transcription']
 
-    def recognize_ibm(self, audio_data, username, password, language="en-US", show_all=False):
+    def recognize_ibm(self,
+                      audio_data,
+                      username,
+                      password,
+                      language="en-US",
+                      show_all=False):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the IBM Speech to Text API.
 
@@ -1178,32 +1482,46 @@ class Recognizer(AudioSource):
         assert isinstance(password, str), "``password`` must be a string"
 
         flac_data = audio_data.get_flac_data(
-            convert_rate=None if audio_data.sample_rate >= 16000 else 16000,  # audio samples should be at least 16 kHz
-            convert_width=None if audio_data.sample_width >= 2 else 2  # audio samples should be at least 16-bit
+            convert_rate=None if audio_data.sample_rate >= 16000 else
+            16000,  # audio samples should be at least 16 kHz
+            convert_width=None if audio_data.sample_width >= 2 else
+            2  # audio samples should be at least 16-bit
         )
-        url = "https://stream.watsonplatform.net/speech-to-text/api/v1/recognize?{}".format(urlencode({
-            "profanity_filter": "false",
-            "model": "{}_BroadbandModel".format(language),
-            "inactivity_timeout": -1,  # don't stop recognizing when the audio stream activity stops
-        }))
-        request = Request(url, data=flac_data, headers={
-            "Content-Type": "audio/x-flac",
-            "X-Watson-Learning-Opt-Out": "true",  # prevent requests from being logged, for improved privacy
-        })
-        authorization_value = base64.standard_b64encode("{}:{}".format(username, password).encode("utf-8")).decode("utf-8")
-        request.add_header("Authorization", "Basic {}".format(authorization_value))
+        url = "https://stream.watsonplatform.net/speech-to-text/api/v1/recognize?{}".format(
+            urlencode({
+                "profanity_filter": "false",
+                "model": "{}_BroadbandModel".format(language),
+                "inactivity_timeout":
+                -1,  # don't stop recognizing when the audio stream activity stops
+            }))
+        request = Request(
+            url,
+            data=flac_data,
+            headers={
+                "Content-Type": "audio/x-flac",
+                "X-Watson-Learning-Opt-Out":
+                "true",  # prevent requests from being logged, for improved privacy
+            })
+        authorization_value = base64.standard_b64encode(
+            "{}:{}".format(username, password).encode("utf-8")).decode("utf-8")
+        request.add_header("Authorization",
+                           "Basic {}".format(authorization_value))
         try:
             response = urlopen(request, timeout=self.operation_timeout)
         except HTTPError as e:
-            raise RequestError("recognition request failed: {}".format(e.reason))
+            raise RequestError("recognition request failed: {}".format(
+                e.reason))
         except URLError as e:
-            raise RequestError("recognition connection failed: {}".format(e.reason))
+            raise RequestError("recognition connection failed: {}".format(
+                e.reason))
         response_text = response.read().decode("utf-8")
         result = json.loads(response_text)
 
         # return results
         if show_all: return result
-        if "results" not in result or len(result["results"]) < 1 or "alternatives" not in result["results"][0]:
+        if "results" not in result or len(
+                result["results"]
+        ) < 1 or "alternatives" not in result["results"][0]:
             raise UnknownValueError()
 
         transcription = []
@@ -1217,7 +1535,11 @@ class Recognizer(AudioSource):
     lasttfgraph = ''
     tflabels = None
 
-    def recognize_tensorflow(self, audio_data, tensor_graph='tensorflow-data/conv_actions_frozen.pb', tensor_label='tensorflow-data/conv_actions_labels.txt'):
+    def recognize_tensorflow(
+            self,
+            audio_data,
+            tensor_graph='tensorflow-data/conv_actions_frozen.pb',
+            tensor_label='tensorflow-data/conv_actions_labels.txt'):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance).
 
@@ -1226,13 +1548,17 @@ class Recognizer(AudioSource):
         Path to Tensor Labels file loaded from ``tensor_label``.
         """
         assert isinstance(audio_data, AudioData), "Data must be audio data"
-        assert isinstance(tensor_graph, str), "``tensor_graph`` must be a string"
-        assert isinstance(tensor_label, str), "``tensor_label`` must be a string"
+        assert isinstance(tensor_graph,
+                          str), "``tensor_graph`` must be a string"
+        assert isinstance(tensor_label,
+                          str), "``tensor_label`` must be a string"
 
         try:
             import tensorflow as tf
         except ImportError:
-            raise RequestError("missing tensorflow module: ensure that tensorflow is set up correctly.")
+            raise RequestError(
+                "missing tensorflow module: ensure that tensorflow is set up correctly."
+            )
 
         if not (tensor_graph == self.lasttfgraph):
             self.lasttfgraph = tensor_graph
@@ -1243,17 +1569,18 @@ class Recognizer(AudioSource):
                 graph_def.ParseFromString(f.read())
                 tf.import_graph_def(graph_def, name='')
             # load labels
-            self.tflabels = [line.rstrip() for line in tf.gfile.GFile(tensor_label)]
+            self.tflabels = [
+                line.rstrip() for line in tf.gfile.GFile(tensor_label)
+            ]
 
-        wav_data = audio_data.get_wav_data(
-            convert_rate=16000, convert_width=2
-        )
+        wav_data = audio_data.get_wav_data(convert_rate=16000, convert_width=2)
 
         with tf.Session() as sess:
             input_layer_name = 'wav_data:0'
             output_layer_name = 'labels_softmax:0'
             softmax_tensor = sess.graph.get_tensor_by_name(output_layer_name)
-            predictions, = sess.run(softmax_tensor, {input_layer_name: wav_data})
+            predictions, = sess.run(softmax_tensor,
+                                    {input_layer_name: wav_data})
 
             # Sort labels in order of confidence
             top_k = predictions.argsort()[-1:][::-1]
@@ -1261,8 +1588,15 @@ class Recognizer(AudioSource):
                 human_string = self.tflabels[node_id]
                 return human_string
 
-    def recognize_amazon(self, audio_data, bot_name, bot_alias, user_id,
-                         content_type="audio/l16; rate=16000; channels=1", access_key_id=None, secret_access_key=None, region=None):
+    def recognize_amazon(self,
+                         audio_data,
+                         bot_name,
+                         bot_alias,
+                         user_id,
+                         content_type="audio/l16; rate=16000; channels=1",
+                         access_key_id=None,
+                         secret_access_key=None,
+                         region=None):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance).
 
@@ -1273,27 +1607,39 @@ class Recognizer(AudioSource):
         assert isinstance(bot_name, str), "``bot_name`` must be a string"
         assert isinstance(bot_alias, str), "``bot_alias`` must be a string"
         assert isinstance(user_id, str), "``user_id`` must be a string"
-        assert isinstance(content_type, str), "``content_type`` must be a string"
-        assert access_key_id is None or isinstance(access_key_id, str), "``access_key_id`` must be a string"
-        assert secret_access_key is None or isinstance(secret_access_key, str), "``secret_access_key`` must be a string"
-        assert region is None or isinstance(region, str), "``region`` must be a string"
+        assert isinstance(content_type,
+                          str), "``content_type`` must be a string"
+        assert access_key_id is None or isinstance(
+            access_key_id, str), "``access_key_id`` must be a string"
+        assert secret_access_key is None or isinstance(
+            secret_access_key, str), "``secret_access_key`` must be a string"
+        assert region is None or isinstance(region,
+                                            str), "``region`` must be a string"
 
         try:
             import boto3
         except ImportError:
-            raise RequestError("missing boto3 module: ensure that boto3 is set up correctly.")
+            raise RequestError(
+                "missing boto3 module: ensure that boto3 is set up correctly.")
 
-        client = boto3.client('lex-runtime', aws_access_key_id=access_key_id,
-                              aws_secret_access_key=secret_access_key,
-                              region_name=region)
+        client = boto3.client(
+            'lex-runtime',
+            aws_access_key_id=access_key_id,
+            aws_secret_access_key=secret_access_key,
+            region_name=region)
 
         raw_data = audio_data.get_raw_data(
-            convert_rate=16000, convert_width=2
+            # convert_rate=16000, convert_width=2
         )
 
         accept = "text/plain; charset=utf-8"
-        response = client.post_content(botName=bot_name, botAlias=bot_alias, userId=user_id,
-                                       contentType=content_type, accept=accept, inputStream=raw_data)
+        response = client.post_content(
+            botName=bot_name,
+            botAlias=bot_alias,
+            userId=user_id,
+            contentType=content_type,
+            accept=accept,
+            inputStream=raw_data)
 
         if not response["inputTranscript"]:
             raise UnknownValueError()
@@ -1305,18 +1651,26 @@ def get_flac_converter():
     """Returns the absolute path of a FLAC converter executable, or raises an OSError if none can be found."""
     flac_converter = shutil_which("flac")  # check for installed version first
     if flac_converter is None:  # flac utility is not installed
-        base_path = os.path.dirname(os.path.abspath(__file__))  # directory of the current module file, where all the FLAC bundled binaries are stored
+        base_path = os.path.dirname(
+            os.path.abspath(__file__)
+        )  # directory of the current module file, where all the FLAC bundled binaries are stored
         system, machine = platform.system(), platform.machine()
-        if system == "Windows" and machine in {"i686", "i786", "x86", "x86_64", "AMD64"}:
+        if system == "Windows" and machine in {
+                "i686", "i786", "x86", "x86_64", "AMD64"
+        }:
             flac_converter = os.path.join(base_path, "flac-win32.exe")
-        elif system == "Darwin" and machine in {"i686", "i786", "x86", "x86_64", "AMD64"}:
+        elif system == "Darwin" and machine in {
+                "i686", "i786", "x86", "x86_64", "AMD64"
+        }:
             flac_converter = os.path.join(base_path, "flac-mac")
         elif system == "Linux" and machine in {"i686", "i786", "x86"}:
             flac_converter = os.path.join(base_path, "flac-linux-x86")
         elif system == "Linux" and machine in {"x86_64", "AMD64"}:
             flac_converter = os.path.join(base_path, "flac-linux-x86_64")
         else:  # no FLAC converter available
-            raise OSError("FLAC conversion utility not available - consider installing the FLAC command line application by running `apt-get install flac` or your operating system's equivalent")
+            raise OSError(
+                "FLAC conversion utility not available - consider installing the FLAC command line application by running `apt-get install flac` or your operating system's equivalent"
+            )
 
     # mark FLAC converter as executable if possible
     try:
@@ -1329,7 +1683,8 @@ def get_flac_converter():
             if 'Linux' in platform.system():
                 os.sync() if sys.version_info >= (3, 3) else os.system('sync')
 
-    except OSError: pass
+    except OSError:
+        pass
 
     return flac_converter
 
@@ -1345,6 +1700,7 @@ def shutil_which(pgm):
 
 class PortableNamedTemporaryFile(object):
     """Limited replacement for ``tempfile.NamedTemporaryFile``, except unlike ``tempfile.NamedTemporaryFile``, the file can be opened again while it's currently open, even on Windows."""
+
     def __init__(self, mode="w+b"):
         self.mode = mode
 
@@ -1379,18 +1735,44 @@ class PortableNamedTemporaryFile(object):
 WavFile = AudioFile  # WavFile was renamed to AudioFile in 3.4.1
 
 
-def recognize_api(self, audio_data, client_access_token, language="en", session_id=None, show_all=False):
+def recognize_api(self,
+                  audio_data,
+                  client_access_token,
+                  language="en",
+                  session_id=None,
+                  show_all=False):
     wav_data = audio_data.get_wav_data(convert_rate=16000, convert_width=2)
     url = "https://api.api.ai/v1/query"
     while True:
         boundary = uuid.uuid4().hex
         if boundary.encode("utf-8") not in wav_data: break
     if session_id is None: session_id = uuid.uuid4().hex
-    data = b"--" + boundary.encode("utf-8") + b"\r\n" + b"Content-Disposition: form-data; name=\"request\"\r\n" + b"Content-Type: application/json\r\n" + b"\r\n" + b"{\"v\": \"20150910\", \"sessionId\": \"" + session_id.encode("utf-8") + b"\", \"lang\": \"" + language.encode("utf-8") + b"\"}\r\n" + b"--" + boundary.encode("utf-8") + b"\r\n" + b"Content-Disposition: form-data; name=\"voiceData\"; filename=\"audio.wav\"\r\n" + b"Content-Type: audio/wav\r\n" + b"\r\n" + wav_data + b"\r\n" + b"--" + boundary.encode("utf-8") + b"--\r\n"
-    request = Request(url, data=data, headers={"Authorization": "Bearer {}".format(client_access_token), "Content-Length": str(len(data)), "Expect": "100-continue", "Content-Type": "multipart/form-data; boundary={}".format(boundary)})
-    try: response = urlopen(request, timeout=10)
-    except HTTPError as e: raise RequestError("recognition request failed: {}".format(e.reason))
-    except URLError as e: raise RequestError("recognition connection failed: {}".format(e.reason))
+    data = b"--" + boundary.encode(
+        "utf-8"
+    ) + b"\r\n" + b"Content-Disposition: form-data; name=\"request\"\r\n" + b"Content-Type: application/json\r\n" + b"\r\n" + b"{\"v\": \"20150910\", \"sessionId\": \"" + session_id.encode(
+        "utf-8"
+    ) + b"\", \"lang\": \"" + language.encode(
+        "utf-8"
+    ) + b"\"}\r\n" + b"--" + boundary.encode(
+        "utf-8"
+    ) + b"\r\n" + b"Content-Disposition: form-data; name=\"voiceData\"; filename=\"audio.wav\"\r\n" + b"Content-Type: audio/wav\r\n" + b"\r\n" + wav_data + b"\r\n" + b"--" + boundary.encode(
+        "utf-8") + b"--\r\n"
+    request = Request(
+        url,
+        data=data,
+        headers={
+            "Authorization": "Bearer {}".format(client_access_token),
+            "Content-Length": str(len(data)),
+            "Expect": "100-continue",
+            "Content-Type": "multipart/form-data; boundary={}".format(boundary)
+        })
+    try:
+        response = urlopen(request, timeout=10)
+    except HTTPError as e:
+        raise RequestError("recognition request failed: {}".format(e.reason))
+    except URLError as e:
+        raise RequestError("recognition connection failed: {}".format(
+            e.reason))
     response_text = response.read().decode("utf-8")
     result = json.loads(response_text)
     if show_all: return result
@@ -1399,4 +1781,6 @@ def recognize_api(self, audio_data, client_access_token, language="en", session_
     return result["result"]["resolvedQuery"]
 
 
-Recognizer.recognize_api = classmethod(recognize_api)  # API.AI Speech Recognition is deprecated/not recommended as of 3.5.0, and currently is only optionally available for paid plans
+Recognizer.recognize_api = classmethod(
+    recognize_api
+)  # API.AI Speech Recognition is deprecated/not recommended as of 3.5.0, and currently is only optionally available for paid plans

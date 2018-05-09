@@ -1,21 +1,23 @@
 #!/usr/bin/env python3
 
-import sys
 import os
 import stat
-
-from setuptools import setup
-from setuptools.command.install import install
+import sys
 from distutils import log
 
 import speech_recognition
+from setuptools import setup
+from setuptools.command.install import install
 
 if sys.version_info < (2, 6):
-    print("THIS MODULE REQUIRES PYTHON 2.6, 2.7, OR 3.3+. YOU ARE CURRENTLY USING PYTHON {0}".format(sys.version))
+    print(
+        "THIS MODULE REQUIRES PYTHON 2.6, 2.7, OR 3.3+. YOU ARE CURRENTLY USING PYTHON {0}".
+        format(sys.version))
     sys.exit(1)
 
-
-FILES_TO_MARK_EXECUTABLE = ["flac-linux-x86", "flac-linux-x86_64", "flac-mac", "flac-win32.exe"]
+FILES_TO_MARK_EXECUTABLE = [
+    "flac-linux-x86", "flac-linux-x86_64", "flac-mac", "flac-win32.exe"
+]
 
 
 class InstallWithExtraSteps(install):
@@ -25,14 +27,16 @@ class InstallWithExtraSteps(install):
         # mark the FLAC executables as executable by all users (this fixes occasional issues when file permissions get messed up)
         for output_path in self.get_outputs():
             if os.path.basename(output_path) in FILES_TO_MARK_EXECUTABLE:
-                log.info("setting executable permissions on {}".format(output_path))
+                log.info(
+                    "setting executable permissions on {}".format(output_path))
                 stat_info = os.stat(output_path)
                 os.chmod(
                     output_path,
-                    stat_info.st_mode |
-                    stat.S_IRUSR | stat.S_IXUSR |  # owner can read/execute
+                    stat_info.st_mode | stat.S_IRUSR | stat.S_IXUSR
+                    |  # owner can read/execute
                     stat.S_IRGRP | stat.S_IXGRP |  # group can read/execute
-                    stat.S_IROTH | stat.S_IXOTH  # everyone else can read/execute
+                    stat.S_IROTH
+                    | stat.S_IXOTH  # everyone else can read/execute
                 )
 
 
@@ -49,7 +53,8 @@ setup(
     description=speech_recognition.__doc__,
     long_description=open("README.rst").read(),
     license=speech_recognition.__license__,
-    keywords="speech recognition voice sphinx google wit bing api houndify ibm snowboy",
+    keywords=
+    "speech recognition voice sphinx google wit bing api houndify ibm snowboy amazon",
     url="https://github.com/Uberi/speech_recognition#readme",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
