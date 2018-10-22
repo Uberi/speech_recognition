@@ -12,19 +12,19 @@ By default, SpeechRecognition's Sphinx functionality supports only US English. A
 
 To install a language pack, download the ZIP archives and extract them directly into the module install directory (you can find the module install directory by running ``python -c "import speech_recognition as sr, os.path as p; print(p.dirname(sr.__file__))"``).
 
-Here is a simple Bash script to install all of them:
+Here is a simple Bash script to install all of them, assuming you've downloaded all three ZIP files into your current directory:
 
 .. code:: bash
 
     #!/usr/bin/env bash
     SR_LIB=$(python -c "import speech_recognition as sr, os.path as p; print(p.dirname(sr.__file__))")
-    sudo apt-get install --yes wget unzip
-    sudo wget https://db.tt/tVNcZXao -O "$SR_LIB/fr-FR.zip"
-    sudo unzip -o "$SR_LIB/fr-FR.zip" -d "$SR_LIB"
+    sudo apt-get install --yes unzip
+    sudo unzip -o fr-FR.zip -d "$SR_LIB"
     sudo chmod --recursive a+r "$SR_LIB/fr-FR/"
-    sudo wget https://db.tt/2YQVXmEk -O "$SR_LIB/zh-CN.zip"
-    sudo unzip -o "$SR_LIB/zh-CN.zip" -d "$SR_LIB"
+    sudo unzip -o zh-CN.zip -d "$SR_LIB"
     sudo chmod --recursive a+r "$SR_LIB/zh-CN/"
+    sudo unzip -o it-IT.zip -d "$SR_LIB"
+    sudo chmod --recursive a+r "$SR_LIB/it-IT/"
 
 Once installed, you can simply specify the language using the ``language`` parameter of ``recognizer_instance.recognize_sphinx``. For example, French would be specified with ``"fr-FR"`` and Mandarin with ``"zh-CN"``.
 
