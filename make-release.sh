@@ -8,5 +8,5 @@ set -o pipefail # for a pipeline, if any of the commands fail with a non-zero ex
 echo "Making release for SpeechRecognition-$1"
 
 python setup.py bdist_wheel
-gpg2 --detach-sign -a dist/SpeechRecognition-$1-*.whl
+gpg --detach-sign -a dist/SpeechRecognition-$1-*.whl
 twine upload dist/SpeechRecognition-$1-*.whl dist/SpeechRecognition-$1-*.whl.asc
