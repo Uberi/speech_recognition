@@ -179,7 +179,7 @@ class Microphone(AudioSource):
                     rate=self.SAMPLE_RATE, frames_per_buffer=self.CHUNK, input=True,
                 )
             )
-        finally:
+        except Exception:
             self.audio.terminate()
         return self
 
