@@ -29,7 +29,8 @@ Speech recognition engine/API support:
 * Google Speech Recognition
 * `Google Cloud Speech API <https://cloud.google.com/speech/>`__
 * `Wit.ai <https://wit.ai/>`__
-* `Microsoft Bing Voice Recognition <https://www.microsoft.com/cognitive-services/en-us/speech-api>`__
+* `Microsoft Bing Voice Recognition (Deprecated) <https://www.microsoft.com/cognitive-services/en-us/speech-api>`__
+* `Microsoft Azure Speech <https://www.microsoft.com/cognitive-services/en-us/speech-api>`__
 * `Houndify API <https://houndify.com/>`__
 * `IBM Speech to Text <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text.html>`__
 * `Snowboy Hotword Detection <https://snowboy.kitt.ai/>`__ (works offline)
