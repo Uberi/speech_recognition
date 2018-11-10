@@ -1048,7 +1048,7 @@ class Recognizer(AudioSource):
                 allow_caching = False  # don't allow caching, since monotonic time isn't available
         if expire_time is None or monotonic() > expire_time:  # caching not enabled, first credential request, or the access token from the previous one expired
             # get an access token using OAuth
-            credential_url = "https://api.cognitive.microsoft.com/sts/v1.0/issueToken"
+            credential_url = "https://westus.api.cognitive.microsoft.com/sts/v1.0/issueToken"
             credential_request = Request(credential_url, data=b"", headers={
                 "Content-type": "application/x-www-form-urlencoded",
                 "Content-Length": "0",
@@ -1076,7 +1076,7 @@ class Recognizer(AudioSource):
             convert_width=2  # audio samples should be 16-bit
         )
 
-        url = "https://speech.platform.bing.com/speech/recognition/interactive/cognitiveservices/v1?{}".format(urlencode({
+        url = "https://westus.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?{}".format(urlencode({
             "language": language,
             "locale": language,
             "requestid": uuid.uuid4(),
