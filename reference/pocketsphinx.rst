@@ -36,7 +36,7 @@ For Windows, it is recommended to install the precompiled Wheel packages in the 
 For Linux and other POSIX systems (like OS X), you'll want to build from source. It should take less than two minutes on a fast machine.
 
 * On any Debian-derived Linux distributions (like Ubuntu and Mint):
-    1. Run ``sudo apt-get install python python-all-dev python-pip build-essential swig git libpulse-dev`` for Python 2, or ``sudo apt-get install python3 python3-all-dev python3-pip build-essential swig git libpulse-dev`` for Python 3.
+    1. Run ``sudo apt-get install python python-all-dev python-pip build-essential swig git libpulse-dev libasound2-dev`` for Python 2, or ``sudo apt-get install python3 python3-all-dev python3-pip build-essential swig git libpulse-dev libasound2-dev`` for Python 3.
     2. Run ``pip install pocketsphinx`` for Python 2, or ``pip3 install pocketsphinx`` for Python 3.
 * On OS X:
     1. Run ``brew install swig git python`` for Python 2, or ``brew install swig git python3`` for Python 3.
