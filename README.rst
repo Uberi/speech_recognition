@@ -128,16 +128,14 @@ Note that the versions available in most package repositories are outdated and w
 
 See `Notes on using PocketSphinx <https://github.com/Uberi/speech_recognition/blob/master/reference/pocketsphinx.rst>`__ for information about installing languages, compiling PocketSphinx, and building language packs from online resources. This document is also included under ``reference/pocketsphinx.rst``.
 
-Google API Client Library for Python (for Google Cloud Speech API users)
+Google Cloud Speech Library for Python (for Google Cloud Speech API users)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-`Google API Client Library for Python <https://developers.google.com/api-client-library/python/>`__ is required if and only if you want to use the Google Cloud Speech API (``recognizer_instance.recognize_google_cloud``).
+`Google Cloud Speech library for Python <https://cloud.google.com/speech-to-text/docs/quickstart>`__ is required if and only if you want to use the Google Cloud Speech API (``recognizer_instance.recognize_google_cloud``).
 
 If not installed, everything in the library will still work, except calling ``recognizer_instance.recognize_google_cloud`` will raise an ``RequestError``.
 
-According to the `official installation instructions <https://developers.google.com/api-client-library/python/start/installation>`__, the recommended way to install this is using `Pip <https://pip.readthedocs.org/>`__: execute ``pip install google-api-python-client`` (replace ``pip`` with ``pip3`` if using Python 3).
-
-Alternatively, you can perform the installation completely offline from the source archives under the ``./third-party/Source code for Google API Client Library for Python and its dependencies/`` directory.
+According to the `official installation instructions <https://cloud.google.com/speech-to-text/docs/quickstart>`__, the recommended way to install this is using `Pip <https://pip.readthedocs.org/>`__: execute ``pip install google-cloud-speech`` (replace ``pip`` with ``pip3`` if using Python 3).
 
 FLAC (for some systems)
 ~~~~~~~~~~~~~~~~~~~~~~~
