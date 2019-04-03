@@ -589,10 +589,15 @@ class Recognizer(AudioSource):
         seconds_per_buffer = float(source.CHUNK) / source.SAMPLE_RATE
         resampling_state = None
 
-        # buffers capable of holding 5 seconds of original and resampled audio
+        # buffers capable of holding 5 seconds of original audio
         five_seconds_buffer_count = int(math.ceil(5 / seconds_per_buffer))
+        # buffers capable of holding 0.5 seconds of resampled audio
+        half_second_buffer_count = int(math.ceil(0.5 / seconds_per_buffer))
         frames = collections.deque(maxlen=five_seconds_buffer_count)
-        resampled_frames = collections.deque(maxlen=five_seconds_buffer_count)
+        resampled_frames = collections.deque(maxlen=half_second_buffer_count)
+        # snowboy check interval
+        check_interval = 0.05
+        last_check = time.time()
         while True:
             elapsed_time += seconds_per_buffer
             if timeout and elapsed_time > timeout:
@@ -605,11 +610,13 @@ class Recognizer(AudioSource):
             # resample audio to the required sample rate
             resampled_buffer, resampling_state = audioop.ratecv(buffer, source.SAMPLE_WIDTH, 1, source.SAMPLE_RATE, snowboy_sample_rate, resampling_state)
             resampled_frames.append(resampled_buffer)
-
-            # run Snowboy on the resampled audio
-            snowboy_result = detector.RunDetection(b"".join(resampled_frames))
-            assert snowboy_result != -1, "Error initializing streams or reading audio data"
-            if snowboy_result > 0: break  # wake word found
+            if time.time() - last_check > check_interval:
+                # run Snowboy on the resampled audio
+                snowboy_result = detector.RunDetection(b"".join(resampled_frames))
+                assert snowboy_result != -1, "Error initializing streams or reading audio data"
+                if snowboy_result > 0: break  # wake word found
+                resampled_frames.clear()
+                last_check = time.time()
 
         return b"".join(frames), elapsed_time
 
