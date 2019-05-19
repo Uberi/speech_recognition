@@ -130,7 +130,7 @@ Note that the versions available in most package repositories are outdated and w
 See `Notes on using PocketSphinx <https://github.com/Uberi/speech_recognition/blob/master/reference/pocketsphinx.rst>`__ for information about installing languages, compiling PocketSphinx, and building language packs from online resources. This document is also included under ``reference/pocketsphinx.rst``.
 
 Google Cloud Speech Library for Python (for Google Cloud Speech API users)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 `Google Cloud Speech library for Python <https://cloud.google.com/speech-to-text/docs/quickstart>`__ is required if and only if you want to use the Google Cloud Speech API (``recognizer_instance.recognize_google_cloud``).
 
