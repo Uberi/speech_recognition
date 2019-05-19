@@ -14,6 +14,7 @@ addons:
     packages:
     - swig
     - libpulse-dev
+    - libasound2-dev
 install:
   - trap 'sleep 3' ERR
   - pip install pocketsphinx monotonic
