@@ -15,6 +15,7 @@ addons:
     - swig
     - libpulse-dev
 install:
+  - trap 'sleep 3' ERR
   - pip install pocketsphinx monotonic
   - pip install flake8 rstcheck
   - pip install -e .
