@@ -10,7 +10,7 @@ import speech_recognition as sr
 class TestSpecialFeatures(unittest.TestCase):
     def setUp(self):
         self.AUDIO_FILE_EN = os.path.join(os.path.dirname(os.path.realpath(__file__)), "english.wav")
-        self.addTypeEqualityFunc(str,self.assertSameWords)
+        self.addTypeEqualityFunc(str, self.assertSameWords)
 
     def test_sphinx_keywords(self):
         r = sr.Recognizer()
