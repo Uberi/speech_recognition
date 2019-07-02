@@ -831,7 +831,7 @@ class Recognizer(AudioSource):
                 fsg = FsgModel(fsg_path, decoder.get_logmath(), 7.5)
             decoder.set_fsg(grammar_name, fsg)
             decoder.set_search(grammar_name)
-        
+
         decoder.start_utt()  # begin utterance processing
         decoder.process_raw(raw_data, False, True)  # process audio data with recognition enabled (no_search = False), as a full utterance (full_utt = True)
         decoder.end_utt()  # stop utterance processing
@@ -957,7 +957,7 @@ class Recognizer(AudioSource):
                 phrases=preferred_phrases
             )]
         if show_all:
-            config['enableWordTimeOffsets'] = True # some useful extra options for when we want all the output
+            config['enableWordTimeOffsets'] = True  # some useful extra options for when we want all the output
 
         opts = {}
         if self.operation_timeout and socket.getdefaulttimeout() is None:

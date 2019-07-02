@@ -16,7 +16,7 @@ class TestRecognition(unittest.TestCase):
     def test_sphinx_english(self):
         r = sr.Recognizer()
         with sr.AudioFile(self.AUDIO_FILE_EN) as source: audio = r.record(source)
-        self.assertEqual(r.recognize_sphinx(audio), "wanted to three")
+        self.assertEqual(r.recognize_sphinx(audio), "one two three")
 
     def test_google_english(self):
         r = sr.Recognizer()
