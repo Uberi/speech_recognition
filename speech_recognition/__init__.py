@@ -907,7 +907,7 @@ class Recognizer(AudioSource):
         if "transcript" not in best_hypothesis: raise UnknownValueError()
         return best_hypothesis["transcript"]
 
-    def recognize_google_cloud(self, audio_data, credentials_json=None, language="en-US", preferred_phrases=None, show_all=False):
+    def recognize_google_cloud(self, audio_data, credentials_json=None, language="en-US", preferred_phrases=None, show_all=False, enable_automatic_punctuation=False):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Google Cloud Speech API.
 
@@ -958,6 +958,9 @@ class Recognizer(AudioSource):
             )]
         if show_all:
             config['enableWordTimeOffsets'] = True  # some useful extra options for when we want all the output
+        # new google cloud speech to text feature: https://cloud.google.com/speech-to-text/docs/reference/rest/v1p1beta1/RecognitionConfig    
+        if enable_automatic_punctuation:
+        	speech_config["enableAutomaticPunctuation"] = True 
 
         opts = {}
         if self.operation_timeout and socket.getdefaulttimeout() is None:
