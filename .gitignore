@@ -10,3 +10,5 @@ zh-CN.zip
 it-IT.zip
 pocketsphinx-python/
 examples/TEST.py
+*.geany
+*.out

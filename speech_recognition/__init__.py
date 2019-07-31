@@ -1291,7 +1291,7 @@ class Recognizer(AudioSource):
             raise UnknownValueError()
         return result['Disambiguation']['ChoiceData'][0]['Transcription']
 
-    def recognize_ibm(self, audio_data, username, password, language="en-US", show_all=False):
+    def recognize_ibm(self, audio_data, key, language="en-US", show_all=False):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the IBM Speech to Text API.
 
@@ -1304,22 +1304,24 @@ class Recognizer(AudioSource):
         Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
         """
         assert isinstance(audio_data, AudioData), "Data must be audio data"
-        assert isinstance(username, str), "``username`` must be a string"
-        assert isinstance(password, str), "``password`` must be a string"
+        assert isinstance(key, str), "``key`` must be a string"
 
         flac_data = audio_data.get_flac_data(
             convert_rate=None if audio_data.sample_rate >= 16000 else 16000,  # audio samples should be at least 16 kHz
             convert_width=None if audio_data.sample_width >= 2 else 2  # audio samples should be at least 16-bit
         )
-        url = "https://stream.watsonplatform.net/speech-to-text/api/v1/recognize?{}".format(urlencode({
-            "profanity_filter": "false",
-            "model": "{}_BroadbandModel".format(language),
-            "inactivity_timeout": -1,  # don't stop recognizing when the audio stream activity stops
-        }))
+        # url = "https://stream.watsonplatform.net/speech-to-text/api/v1/recognize?{}".format(urlencode({
+            # "profanity_filter": "false",
+            # "model": "{}_BroadbandModel".format(language),
+            # "inactivity_timeout": -1,  # don't stop recognizing when the audio stream activity stops
+        # }))
+        url = "https://gateway-wdc.watsonplatform.net/speech-to-text/api/v1/recognize"
         request = Request(url, data=flac_data, headers={
             "Content-Type": "audio/x-flac",
-            "X-Watson-Learning-Opt-Out": "true",  # prevent requests from being logged, for improved privacy
         })
+        request.get_method = lambda: 'POST'
+        username = 'apikey'
+        password = key
         authorization_value = base64.standard_b64encode("{}:{}".format(username, password).encode("utf-8")).decode("utf-8")
         request.add_header("Authorization", "Basic {}".format(authorization_value))
         try:
