@@ -1310,11 +1310,6 @@ class Recognizer(AudioSource):
             convert_rate=None if audio_data.sample_rate >= 16000 else 16000,  # audio samples should be at least 16 kHz
             convert_width=None if audio_data.sample_width >= 2 else 2  # audio samples should be at least 16-bit
         )
-        # url = "https://stream.watsonplatform.net/speech-to-text/api/v1/recognize?{}".format(urlencode({
-            # "profanity_filter": "false",
-            # "model": "{}_BroadbandModel".format(language),
-            # "inactivity_timeout": -1,  # don't stop recognizing when the audio stream activity stops
-        # }))
         url = "https://gateway-wdc.watsonplatform.net/speech-to-text/api/v1/recognize"
         request = Request(url, data=flac_data, headers={
             "Content-Type": "audio/x-flac",
