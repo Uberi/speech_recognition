@@ -20,11 +20,11 @@ Here is a simple Bash script to install all of them, assuming you've downloaded 
     SR_LIB=$(python -c "import speech_recognition as sr, os.path as p; print(p.dirname(sr.__file__))")
     sudo apt-get install --yes unzip
     sudo unzip -o fr-FR.zip -d "$SR_LIB"
-    sudo chmod --recursive a+r "$SR_LIB/fr-FR/"
+    sudo chmod --recursive a+r "$SR_LIB/pocketsphinx-data/fr-FR/"
     sudo unzip -o zh-CN.zip -d "$SR_LIB"
-    sudo chmod --recursive a+r "$SR_LIB/zh-CN/"
+    sudo chmod --recursive a+r "$SR_LIB/pocketsphinx-data/zh-CN/"
     sudo unzip -o it-IT.zip -d "$SR_LIB"
-    sudo chmod --recursive a+r "$SR_LIB/it-IT/"
+    sudo chmod --recursive a+r "$SR_LIB/pocketsphinx-data/it-IT/"
 
 Once installed, you can simply specify the language using the ``language`` parameter of ``recognizer_instance.recognize_sphinx``. For example, French would be specified with ``"fr-FR"`` and Mandarin with ``"zh-CN"``.
 
