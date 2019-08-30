@@ -1291,57 +1291,83 @@ class Recognizer(AudioSource):
             raise UnknownValueError()
         return result['Disambiguation']['ChoiceData'][0]['Transcription']
 
-    def recognize_amazon(self,
-                         audio_data,
-                         bot_name,
-                         bot_alias,
-                         user_id,
-                         content_type="audio/l16; rate=16000; channels=1",
-                         access_key_id=None,
-                         secret_access_key=None,
-                         region=None):
+    def recognize_amazon(self, audio_data, bucket_name=None, job_name=None, access_key_id=None, secret_access_key=None, region=None):
         """
-        Performs speech recognition on ``audio_data`` (an ``AudioData`` instance).
+        Performs speech recognition on ``audio_data`` (an ``AudioData`` instance) using Amazon Transcribe.
+        https://aws.amazon.com/transcribe/
         If access_key_id or secret_access_key is not set it will go through the list in the link below
         http://boto3.readthedocs.io/en/latest/guide/configuration.html#configuring-credentials
         """
         assert isinstance(audio_data, AudioData), "Data must be audio data"
-        assert isinstance(bot_name, str), "``bot_name`` must be a string"
-        assert isinstance(bot_alias, str), "``bot_alias`` must be a string"
-        assert isinstance(user_id, str), "``user_id`` must be a string"
-        assert isinstance(content_type, str), "``content_type`` must be a string"
         assert access_key_id is None or isinstance(access_key_id, str), "``access_key_id`` must be a string"
         assert secret_access_key is None or isinstance(secret_access_key, str), "``secret_access_key`` must be a string"
         assert region is None or isinstance(region, str), "``region`` must be a string"
+        import uuid
+        bucket_name = bucket_name or str(uuid.uuid4())
+        job_name = job_name or 'job_name'
 
         try:
             import boto3
         except ImportError:
             raise RequestError("missing boto3 module: ensure that boto3 is set up correctly.")
 
-        client = boto3.client(
-            'lex-runtime',
+        transcribe = boto3.client(
+            'transcribe',
             aws_access_key_id=access_key_id,
             aws_secret_access_key=secret_access_key,
             region_name=region)
 
-        wav_data = audio_data.get_wav_data(
-            # convert_rate=16000, convert_width=2
+        s3 = boto3.client('s3', 
+            aws_access_key_id=access_key_id,
+            aws_secret_access_key=secret_access_key,
+            region_name=region)
+
+        session = boto3.Session(
+            aws_access_key_id=access_key_id,
+            aws_secret_access_key=secret_access_key,
+            region_name=region
         )
 
-        accept = "text/plain; charset=utf-8"
-        response = client.post_content(
-            botName=bot_name,
-            botAlias=bot_alias,
-            userId=user_id,
-            contentType=content_type,
-            accept=accept,
-            inputStream=wav_data)
+        # Upload audio data to S3.
+        filename = 'file.wav'
+        s3.create_bucket(Bucket=bucket_name)
+        s3res = session.resource('s3')
+        bucket = s3res.Bucket(bucket_name)
+        wav_data = audio_data.get_wav_data()
+        s3.put_object(Bucket=bucket_name, Key=filename, Body=wav_data)
+        object_acl = s3res.ObjectAcl(bucket_name, filename)
+        object_acl.put(ACL='public-read')
+        job_uri = 'https://%s.s3.amazonaws.com/%s' % (bucket_name, filename)
 
-        if not response["inputTranscript"]:
-            raise UnknownValueError()
+        # Launch the transcription job.
+        try:
+            transcribe.delete_transcription_job(TranscriptionJobName=job_name) # pre-cleanup
+        except:
+            pass
+        transcribe.start_transcription_job(
+            TranscriptionJobName=job_name,
+            Media={'MediaFileUri': job_uri},
+            MediaFormat='wav',
+            LanguageCode='en-US'
+        )
 
-        return response["inputTranscript"]
+        # Wait for job to complete.
+        while True:
+            status = transcribe.get_transcription_job(TranscriptionJobName=job_name)
+            if status['TranscriptionJob']['TranscriptionJobStatus'] in ['COMPLETED', 'FAILED']:
+                break
+            print("Not ready yet...")
+            time.sleep(5)
+
+        # Retrieve transcription JSON containing transcript.
+        transcript_uri = status['TranscriptionJob']['Transcript']['TranscriptFileUri']
+        import urllib.request, json
+        with urllib.request.urlopen(transcript_uri) as json_data:
+            d = json.load(json_data)
+            transcript = d['results']['transcripts'][0]['transcript']
+            transcribe.delete_transcription_job(TranscriptionJobName=job_name) # cleanup
+            return transcript
+            
 
     def recognize_ibm(self, audio_data, key, language="en-US", show_all=False):
         """
