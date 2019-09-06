@@ -20,6 +20,7 @@ import hashlib
 import hmac
 import time
 import uuid
+from pprint import pprint
 
 __author__ = "Anthony Zhang (Uberi)"
 __version__ = "3.8.1"
@@ -884,18 +885,25 @@ class Recognizer(AudioSource):
         except URLError as e:
             raise RequestError("recognition connection failed: {}".format(e.reason))
         response_text = response.read().decode("utf-8")
+        # print('response_text:')
+        # pprint(response_text, indent=4)
 
         # ignore any blank blocks
         actual_result = []
         for line in response_text.split("\n"):
             if not line: continue
-            result = json.loads(line)["result"]
+            result = json.loads(line)["result"]            
+            # print('result1:')
+            # pprint(result, indent=4)
             if len(result) != 0:
                 actual_result = result[0]
                 break
 
         # return results
-        if show_all: return actual_result
+        if show_all:
+            return actual_result
+        print('result2:')
+        pprint(actual_result, indent=4)
         if not isinstance(actual_result, dict) or len(actual_result.get("alternative", [])) == 0: raise UnknownValueError()
 
         if "confidence" in actual_result["alternative"]:
@@ -905,7 +913,10 @@ class Recognizer(AudioSource):
             # when there is no confidence available, we arbitrarily choose the first hypothesis.
             best_hypothesis = actual_result["alternative"][0]
         if "transcript" not in best_hypothesis: raise UnknownValueError()
-        return best_hypothesis["transcript"]
+        # https://cloud.google.com/speech-to-text/docs/basics#confidence-values
+        # "Your code should not require the confidence field as it is not guaranteed to be accurate, or even set, in any of the results."
+        confidence = best_hypothesis.get("confidence", 0.5)
+        return best_hypothesis["transcript"], confidence
 
     def recognize_google_cloud(self, audio_data, credentials_json=None, language="en-US", preferred_phrases=None, show_all=False):
         """
@@ -1017,7 +1028,7 @@ class Recognizer(AudioSource):
         if "_text" not in result or result["_text"] is None: raise UnknownValueError()
         return result["_text"]
 
-    def recognize_azure(self, audio_data, key, language="en-US", result_format="simple", profanity="masked", location="westus", show_all=False):
+    def recognize_azure(self, audio_data, key, language="en-US", profanity="masked", location="westus", show_all=False):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Microsoft Azure Speech API.
 
@@ -1033,9 +1044,10 @@ class Recognizer(AudioSource):
         """
         assert isinstance(audio_data, AudioData), "Data must be audio data"
         assert isinstance(key, str), "``key`` must be a string"
-        assert isinstance(result_format, str), "``format`` must be a string"
+        # assert isinstance(result_format, str), "``format`` must be a string" # simple|detailed
         assert isinstance(language, str), "``language`` must be a string"
 
+        result_format = 'detailed'
         access_token, expire_time = getattr(self, "azure_cached_access_token", None), getattr(self, "azure_cached_access_token_expiry", None)
         allow_caching = True
         try:
@@ -1107,9 +1119,13 @@ class Recognizer(AudioSource):
         result = json.loads(response_text)
 
         # return results
-        if show_all: return result
-        if "RecognitionStatus" not in result or result["RecognitionStatus"] != "Success" or "DisplayText" not in result: raise UnknownValueError()
-        return result["DisplayText"]
+        print('result:')
+        pprint(result, indent=4)
+        if show_all:
+            return result
+        if "RecognitionStatus" not in result or result["RecognitionStatus"] != "Success" or "NBest" not in result:
+            raise UnknownValueError()
+        return result['NBest'][0]["Display"], result['NBest'][0]["Confidence"]
 
     def recognize_bing(self, audio_data, key, language="en-US", show_all=False):
         """
@@ -1287,9 +1303,11 @@ class Recognizer(AudioSource):
 
         # return results
         if show_all: return result
+        print('result:')
+        pprint(result, indent=4)
         if "Disambiguation" not in result or result["Disambiguation"] is None:
             raise UnknownValueError()
-        return result['Disambiguation']['ChoiceData'][0]['Transcription']
+        return result['Disambiguation']['ChoiceData'][0]['Transcription'], result['Disambiguation']['ChoiceData'][0]['ConfidenceScore']
 
     def recognize_amazon(self, audio_data, bucket_name=None, job_name=None, access_key_id=None, secret_access_key=None, region=None):
         """
@@ -1304,7 +1322,7 @@ class Recognizer(AudioSource):
         assert region is None or isinstance(region, str), "``region`` must be a string"
         import uuid
         bucket_name = bucket_name or str(uuid.uuid4())
-        job_name = job_name or 'job_name'
+        job_name = job_name or str(uuid.uuid4())
 
         try:
             import boto3
@@ -1364,9 +1382,15 @@ class Recognizer(AudioSource):
         import urllib.request, json
         with urllib.request.urlopen(transcript_uri) as json_data:
             d = json.load(json_data)
+            print('result:')
+            pprint(d, indent=4)
+            confidences = []
+            for item in d['results']['items']:
+                confidences.append(float(item['alternatives'][0]['confidence']))
+            confidence = sum(confidences)/float(len(confidences))
             transcript = d['results']['transcripts'][0]['transcript']
             transcribe.delete_transcription_job(TranscriptionJobName=job_name) # cleanup
-            return transcript
+            return transcript, confidence
             
 
     def recognize_ibm(self, audio_data, key, language="en-US", show_all=False):
@@ -1407,17 +1431,23 @@ class Recognizer(AudioSource):
         result = json.loads(response_text)
 
         # return results
-        if show_all: return result
+        if show_all:
+            return result
+        print('result:')
+        pprint(result, indent=4)
         if "results" not in result or len(result["results"]) < 1 or "alternatives" not in result["results"][0]:
             raise UnknownValueError()
 
         transcription = []
+        confidence = None
         for utterance in result["results"]:
             if "alternatives" not in utterance: raise UnknownValueError()
             for hypothesis in utterance["alternatives"]:
                 if "transcript" in hypothesis:
                     transcription.append(hypothesis["transcript"])
-        return "\n".join(transcription)
+                    confidence = hypothesis["confidence"]
+                    break
+        return "\n".join(transcription), confidence
 
     lasttfgraph = ''
     tflabels = None
