@@ -44,6 +44,12 @@ class RequestError(Exception): pass
 class UnknownValueError(Exception): pass
 
 
+class TranscriptionNotReady(Exception): pass
+
+
+class TranscriptionFailed(Exception): pass
+
+
 class AudioSource(object):
     def __init__(self):
         raise NotImplementedError("this is an abstract class")
@@ -1309,20 +1315,26 @@ class Recognizer(AudioSource):
             raise UnknownValueError()
         return result['Disambiguation']['ChoiceData'][0]['Transcription'], result['Disambiguation']['ChoiceData'][0]['ConfidenceScore']
 
-    def recognize_amazon(self, audio_data, bucket_name=None, job_name=None, access_key_id=None, secret_access_key=None, region=None):
+    def recognize_amazon(self, audio_data, bucket_name=None, access_key_id=None, secret_access_key=None, region=None, job_name=None, file_key=None):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance) using Amazon Transcribe.
         https://aws.amazon.com/transcribe/
         If access_key_id or secret_access_key is not set it will go through the list in the link below
         http://boto3.readthedocs.io/en/latest/guide/configuration.html#configuring-credentials
         """
-        assert isinstance(audio_data, AudioData), "Data must be audio data"
         assert access_key_id is None or isinstance(access_key_id, str), "``access_key_id`` must be a string"
         assert secret_access_key is None or isinstance(secret_access_key, str), "``secret_access_key`` must be a string"
         assert region is None or isinstance(region, str), "``region`` must be a string"
+        import traceback
         import uuid
-        bucket_name = bucket_name or str(uuid.uuid4())
-        job_name = job_name or str(uuid.uuid4())
+        import multiprocessing
+        from botocore.exceptions import ClientError
+        proc = multiprocessing.current_process()
+
+        check_existing = audio_data is None and job_name
+
+        bucket_name = bucket_name or ('%s-%s' % (str(uuid.uuid4()), proc.pid))
+        job_name = job_name or ('%s-%s' % (str(uuid.uuid4()), proc.pid))
 
         try:
             import boto3
@@ -1347,51 +1359,133 @@ class Recognizer(AudioSource):
         )
 
         # Upload audio data to S3.
-        filename = 'file.wav'
-        s3.create_bucket(Bucket=bucket_name)
+        filename = '%s.wav' % job_name
+        try:
+            # Bucket creation fails surprisingly often, even if the bucket exists.
+            # print('Attempting to create bucket %s...' % bucket_name)
+            s3.create_bucket(Bucket=bucket_name)
+        except ClientError as exc:
+            print('Error creating bucket %s: %s' % (bucket_name, exc))
         s3res = session.resource('s3')
         bucket = s3res.Bucket(bucket_name)
-        wav_data = audio_data.get_wav_data()
-        s3.put_object(Bucket=bucket_name, Key=filename, Body=wav_data)
-        object_acl = s3res.ObjectAcl(bucket_name, filename)
-        object_acl.put(ACL='public-read')
+        if audio_data is not None:
+            print('Uploading audio data...')
+            wav_data = audio_data.get_wav_data()
+            s3.put_object(Bucket=bucket_name, Key=filename, Body=wav_data)
+            object_acl = s3res.ObjectAcl(bucket_name, filename)
+            object_acl.put(ACL='public-read')
+        else:
+            print('Skipping audio upload.')
         job_uri = 'https://%s.s3.amazonaws.com/%s' % (bucket_name, filename)
 
-        # Launch the transcription job.
-        try:
-            transcribe.delete_transcription_job(TranscriptionJobName=job_name) # pre-cleanup
-        except:
-            pass
-        transcribe.start_transcription_job(
-            TranscriptionJobName=job_name,
-            Media={'MediaFileUri': job_uri},
-            MediaFormat='wav',
-            LanguageCode='en-US'
-        )
+        if check_existing:
 
-        # Wait for job to complete.
-        while True:
-            status = transcribe.get_transcription_job(TranscriptionJobName=job_name)
-            if status['TranscriptionJob']['TranscriptionJobStatus'] in ['COMPLETED', 'FAILED']:
-                break
-            print("Not ready yet...")
-            time.sleep(5)
-
-        # Retrieve transcription JSON containing transcript.
-        transcript_uri = status['TranscriptionJob']['Transcript']['TranscriptFileUri']
-        import urllib.request, json
-        with urllib.request.urlopen(transcript_uri) as json_data:
-            d = json.load(json_data)
-            print('result:')
-            pprint(d, indent=4)
-            confidences = []
-            for item in d['results']['items']:
-                confidences.append(float(item['alternatives'][0]['confidence']))
-            confidence = sum(confidences)/float(len(confidences))
-            transcript = d['results']['transcripts'][0]['transcript']
-            transcribe.delete_transcription_job(TranscriptionJobName=job_name) # cleanup
-            return transcript, confidence
+            # Wait for job to complete.
+            try:
+                status = transcribe.get_transcription_job(TranscriptionJobName=job_name)
+            except ClientError as exc:
+                print('!'*80)
+                print('Error getting job:', exc.response)
+                if exc.response['Error']['Code'] == 'BadRequestException' and "The requested job couldn't be found" in str(exc):
+                    # Some error caused the job we recorded to not exist on AWS.
+                    # Likely we were interrupted right after retrieving and deleting the job but before recording the transcript.
+                    # Reset and try again later.
+                    exc = TranscriptionNotReady()
+                    exc.job_name = None
+                    exc.file_key = None
+                    raise exc
+                else:
+                    # Some other error happened, so re-raise.
+                    raise
             
+            job = status['TranscriptionJob']
+            print('status0:')
+            pprint(status, indent=4)
+            if job['TranscriptionJobStatus'] in ['COMPLETED'] and 'TranscriptFileUri' in job['Transcript']:
+
+                # Retrieve transcription JSON containing transcript.
+                transcript_uri = job['Transcript']['TranscriptFileUri']
+                import urllib.request, json
+                with urllib.request.urlopen(transcript_uri) as json_data:
+                    d = json.load(json_data)
+                    print('result:')
+                    pprint(d, indent=4)
+                    confidences = []
+                    for item in d['results']['items']:
+                        confidences.append(float(item['alternatives'][0]['confidence']))
+                    confidence = 0.5
+                    if confidences:
+                        confidence = sum(confidences)/float(len(confidences))
+                    transcript = d['results']['transcripts'][0]['transcript']
+
+                    # Delete job.
+                    try:
+                        transcribe.delete_transcription_job(TranscriptionJobName=job_name) # cleanup
+                    except Exception as exc:
+                        print('Warning, could not clean up transcription: %s' % exc)
+                        traceback.print_exc()
+
+                    # Delete S3 file.
+                    s3.delete_object(Bucket=bucket_name, Key=filename)
+
+                    return transcript, confidence
+            elif job['TranscriptionJobStatus'] in ['FAILED']:
+            
+                # Delete job.
+                try:
+                    transcribe.delete_transcription_job(TranscriptionJobName=job_name) # cleanup
+                except Exception as exc:
+                    print('Warning, could not clean up transcription: %s' % exc)
+                    traceback.print_exc()
+
+                # Delete S3 file.
+                s3.delete_object(Bucket=bucket_name, Key=filename)
+                
+                exc = TranscriptionFailed()
+                exc.job_name = None
+                exc.file_key = None
+                raise exc
+            else:
+                # Keep waiting.
+                print('Keep waiting.')
+                exc = TranscriptionNotReady()
+                exc.job_name = job_name
+                exc.file_key = None
+                raise exc
+
+        else:
+
+            # Launch the transcription job.
+            # try:
+                # transcribe.delete_transcription_job(TranscriptionJobName=job_name) # pre-cleanup
+            # except:
+                # # It's ok if this fails because the job hopefully doesn't exist yet.
+                # pass
+            try:
+                transcribe.start_transcription_job(
+                    TranscriptionJobName=job_name,
+                    Media={'MediaFileUri': job_uri},
+                    MediaFormat='wav',
+                    LanguageCode='en-US'
+                )
+                exc = TranscriptionNotReady()
+                exc.job_name = job_name
+                exc.file_key = None
+                raise exc
+            except ClientError as exc:
+                print('!'*80)
+                print('Error starting job:', exc.response)
+                if exc.response['Error']['Code'] == 'LimitExceededException':
+                    # Could not start job. Cancel everything.
+                    s3.delete_object(Bucket=bucket_name, Key=filename)
+                    exc = TranscriptionNotReady()
+                    exc.job_name = None
+                    exc.file_key = None
+                    raise exc
+                else:
+                    # Some other error happened, so re-raise.
+                    raise
+
 
     def recognize_ibm(self, audio_data, key, language="en-US", show_all=False):
         """
