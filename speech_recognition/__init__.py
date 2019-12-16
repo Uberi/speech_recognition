@@ -865,7 +865,7 @@ class Recognizer(AudioSource):
             language_directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), "deepspeech-data", language)
             if not os.path.isdir(language_directory):
                 raise RequestError("missing DeepSpeech language data directory: \"{}\"".format(language_directory))
-            prot_buffer_file = os.path.join(language_directory, "output_graph.pb")
+            prot_buffer_file = os.path.join(language_directory, "output_graph.pbmm")
             language_model_file = os.path.join(language_directory, "lm.binary")
             trie_file = os.path.join(language_directory, "trie")
         if not os.path.isfile(prot_buffer_file):
@@ -889,18 +889,7 @@ class Recognizer(AudioSource):
         # obtain audio data
         raw_data = audio_data.get_raw_data(convert_rate=desired_sample_rate, convert_width=2)  # the included language models require audio to be 16-bit mono 16 kHz in little-endian format
 
-        """
-        We still need to fix up the input to ds.sttWithMetadata!!!
-        The python client does the following:
-
-            fin = wave.open(args.audio, 'rb')
-            fs = fin.getframerate()
-            audio = np.frombuffer(fin.readframes(fin.getnframes()), np.int16)
-            fin.close()
-            ds.sttWithMetadata(audio)
-        """
-
-        recognized_metadata = ds.sttWithMetadata(raw_data)
+        recognized_metadata = ds.sttWithMetadata(np.frombuffer(raw_data, np.int16))
         recognized_string = ''.join(item.character for item in recognized_metadata.items)
 
 
