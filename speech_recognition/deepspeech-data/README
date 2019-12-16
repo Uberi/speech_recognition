@@ -1,0 +1,13 @@
+Directory for deepspeech data
+
+- get the deepspeech model file from
+  https://github.com/mozilla/DeepSpeech/releases/download/v0.6.0/deepspeech-0.6.0-models.tar.gz
+
+- put the contained files
+	lm.binary
+	trie
+	output_graph.pbmm
+  into the en-US directory.
+
+Further languages can be added to respectives directories named after language codes.
+
