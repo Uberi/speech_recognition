@@ -6,7 +6,7 @@ Directory for deepspeech data
 - put the contained files
 	lm.binary
 	trie
-	output_graph.pbmm
+	output_graph.pb
   into the en-US directory.
 
 Further languages can be added to respectives directories named after language codes.

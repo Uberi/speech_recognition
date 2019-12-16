@@ -865,7 +865,7 @@ class Recognizer(AudioSource):
             language_directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), "deepspeech-data", language)
             if not os.path.isdir(language_directory):
                 raise RequestError("missing DeepSpeech language data directory: \"{}\"".format(language_directory))
-            prot_buffer_file = os.path.join(language_directory, "output_graph.pbmm")
+            prot_buffer_file = os.path.join(language_directory, "output_graph.pb")
             language_model_file = os.path.join(language_directory, "lm.binary")
             trie_file = os.path.join(language_directory, "trie")
         if not os.path.isfile(prot_buffer_file):
