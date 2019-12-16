@@ -854,6 +854,7 @@ class Recognizer(AudioSource):
         # import the DeepSpeech speech recognition module
         try:
             from deepspeech import Model, printVersions
+            import numpy as np
 
         except ImportError:
             raise RequestError("missing DeepSpeech module: ensure that DeepSpeech is set up correctly.")
@@ -883,10 +884,21 @@ class Recognizer(AudioSource):
         ds = Model(prot_buffer_file, beam_width)
         desired_sample_rate = ds.sampleRate()
         # load language model data
-        ds.enableDecoderWithLM(lm, trie, lm_alpha, lm_beta)
+        ds.enableDecoderWithLM(language_model_file, trie_file, lm_alpha, lm_beta)
 
         # obtain audio data
         raw_data = audio_data.get_raw_data(convert_rate=desired_sample_rate, convert_width=2)  # the included language models require audio to be 16-bit mono 16 kHz in little-endian format
+
+        """
+        We still need to fix up the input to ds.sttWithMetadata!!!
+        The python client does the following:
+
+            fin = wave.open(args.audio, 'rb')
+            fs = fin.getframerate()
+            audio = np.frombuffer(fin.readframes(fin.getnframes()), np.int16)
+            fin.close()
+            ds.sttWithMetadata(audio)
+        """
 
         recognized_metadata = ds.sttWithMetadata(raw_data)
         recognized_string = ''.join(item.character for item in recognized_metadata.items)
