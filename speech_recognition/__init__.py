@@ -847,34 +847,11 @@ class Recognizer(AudioSource):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using Mozilla's DeepSpeech.
         """
-
-        """
-        WORK IN PROGRESS NOTHING ACTUALLY WORKING TILL NOW
-        BASIC CODE FROM https://github.com/mozilla/DeepSpeech/blob/v0.6.0/native_client/python/client.py
-        from deepspeech import Model, printVersions
-        # load model
-        ds = Model(args.model, args.beam_width)
-        desired_sample_rate = ds.sampleRate()
-        # load language model data
-        ds.enableDecoderWithLM(args.lm, args.trie, args.lm_alpha, args.lm_beta)
-        fin = wave.open(args.audio, 'rb')
-        fs = fin.getframerate()
-        if fs != desired_sample_rate:
-            print('Warning: original sample rate ({}) is different than {}hz. Resampling might produce erratic speech recognition.'.format(fs, desired_sample_rate), file=sys.stderr)
-            fs, audio = convert_samplerate(args.audio, desired_sample_rate)
-        else:
-            audio = np.frombuffer(fin.readframes(fin.getnframes()), np.int16)
-        audio_length = fin.getnframes() * (1/fs)
-        fin.close()
-        metadata_to_string(ds.sttWithMetadata(audio))
-        
-        # metadata_to_string is in the same source file
-        """
         assert isinstance(audio_data, AudioData), "``audio_data`` must be audio data"
         assert isinstance(language, str) or (isinstance(language, tuple) and len(language) == 3), "``language`` must be a string or 3-tuple of Sphinx data file paths of the form ``(acoustic_parameters, language_model, phoneme_dictionary)``"
         assert keyword_entries is None or all(isinstance(keyword, (type(""), type(u""))) and 0 <= sensitivity <= 1 for keyword, sensitivity in keyword_entries), "``keyword_entries`` must be ``None`` or a list of pairs of strings and numbers between 0 and 1"
 
-        # import the PocketSphinx speech recognition module
+        # import the DeepSpeech speech recognition module
         try:
             from deepspeech import Model, printVersions
 
@@ -887,24 +864,23 @@ class Recognizer(AudioSource):
             language_directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), "deepspeech-data", language)
             if not os.path.isdir(language_directory):
                 raise RequestError("missing DeepSpeech language data directory: \"{}\"".format(language_directory))
-            acoustic_parameters_directory = os.path.join(language_directory, "acoustic-model") #TODO
-            language_model_file = os.path.join(language_directory, "language-model.lm.bin") #TODO
-            phoneme_dictionary_file = os.path.join(language_directory, "pronounciation-dictionary.dict") #TODO
-        else:  # 3-tuple of Sphinx data file paths # TODO can we do the same?
-            acoustic_parameters_directory, language_model_file, phoneme_dictionary_file = language
-        if not os.path.isdir(acoustic_parameters_directory):
-            raise RequestError("missing PocketSphinx language model parameters directory: \"{}\"".format(acoustic_parameters_directory))
+            prot_buffer_file = os.path.join(language_directory, "output_graph.pbmm")
+            language_model_file = os.path.join(language_directory, "lm.binary")
+            trie_file = os.path.join(language_directory, "trie")
+        if not os.path.isfile(prot_buffer_file):
+            raise RequestError("missing DeepSpeech model protocol buffer file: \"{}\"".format(prot_buffer_file))
         if not os.path.isfile(language_model_file):
-            raise RequestError("missing PocketSphinx language model file: \"{}\"".format(language_model_file))
-        if not os.path.isfile(phoneme_dictionary_file):
-            raise RequestError("missing PocketSphinx phoneme dictionary file: \"{}\"".format(phoneme_dictionary_file))
+            raise RequestError("missing DeepSpeech language model file: \"{}\"".format(language_model_file))
+        if not os.path.isfile(trie_file):
+            raise RequestError("missing DeepSpeech trie file: \"{}\"".format(trie_file))
 
-        lm = ???
-        trie = ???
-        lm_alpha = ???
-        lm_beta = ???
+        # default values as used in above example file
+        beam_width = 500
+        lm_alpha = 0.75
+        lm_beta = 1.85
+
         # create decoder object
-        ds = Model(args.model, args.beam_width)
+        ds = Model(prot_buffer_file, beam_width)
         desired_sample_rate = ds.sampleRate()
         # load language model data
         ds.enableDecoderWithLM(lm, trie, lm_alpha, lm_beta)
@@ -913,7 +889,8 @@ class Recognizer(AudioSource):
         raw_data = audio_data.get_raw_data(convert_rate=desired_sample_rate, convert_width=2)  # the included language models require audio to be 16-bit mono 16 kHz in little-endian format
 
         recognized_metadata = ds.sttWithMetadata(raw_data)
-        recognized_string = metadata_to_string(recognized_metadata)
+        recognized_string = ''.join(item.character for item in recognized_metadata.items)
+
 
         if show_all: return recognized_metadata
 
