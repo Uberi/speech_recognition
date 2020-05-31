@@ -515,7 +515,6 @@ class DeepSpeechModel():
         """
         try:
             import deepspeech
-
         except ImportError:
             raise RequestError("missing DeepSpeech module: ensure that DeepSpeech is set up correctly.")
         except ValueError:
@@ -905,6 +904,13 @@ class Recognizer(AudioSource):
             import numpy as np
         except ImportError:
             raise RequestError("missing numpy module.")
+
+        try:
+            import deepspeech
+        except ImportError:
+            raise RequestError("missing DeepSpeech module: ensure that DeepSpeech is set up correctly.")
+        except ValueError:
+            raise RequestError("bad DeepSpeech installation; try reinstalling DeepSpeech version 0.7.0 or better.")
         
         if model_file is None:
             if isinstance(language, str):  # directory containing language data
