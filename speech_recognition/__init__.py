@@ -22,7 +22,7 @@ import time
 import uuid
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "3.8.1.fossasia-3"
+__version__ = "3.8.1.fossasia-4"
 __license__ = "BSD"
 
 try:  # attempt to use the Python 2 modules
@@ -893,7 +893,7 @@ class Recognizer(AudioSource):
         if hypothesis is not None: return hypothesis.hypstr
         raise UnknownValueError()  # no transcriptions available
 
-    def recognize_deepspeech(self, audio_data, language="en-US", show_all=False, ds_beamwidth=None, ds_lm_alpha=None, ds_lm_beta=None, model_file=None, scorer_file=None):
+    def recognize_deepspeech(self, audio_data, language="en-US", show_all=False, ds_beamwidth=None, ds_lm_alpha=None, ds_lm_beta=None, model_file=None, scorer_file=None, model_base_dir=None):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using Mozilla's DeepSpeech.
         """
@@ -913,17 +913,22 @@ class Recognizer(AudioSource):
             raise RequestError("bad DeepSpeech installation; try reinstalling DeepSpeech version 0.7.0 or better.")
         
         if model_file is None:
-            if isinstance(language, str):  # directory containing language data
-                language_directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), "deepspeech-data", language)
-                if not os.path.isdir(language_directory):
-                    raise RequestError("missing DeepSpeech language data directory: \"{}\"".format(language_directory))
-                DSversion = deepspeech.version()
-                # use the tflite version on arm architectures
-                if os.uname()[4][:3] == 'arm':
-                    model_file = os.path.join(language_directory, "deepspeech-{}-models.tflite".format(DSversion))
+            used_base_dir = model_base_dir
+            if used_base_dir is None:
+                if isinstance(language, str):  # directory containing language data
+                    language_directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), "deepspeech-data", language)
+                    if not os.path.isdir(language_directory):
+                        raise RequestError("missing DeepSpeech language data directory: \"{}\"".format(language_directory))
+                    used_base_dir = language_directory
                 else:
-                    model_file = os.path.join(language_directory, "deepspeech-{}-models.pbmm".format(DSversion))
-                scorer_file = os.path.join(language_directory, "deepspeech-{}-models.scorer".format(DSversion))
+                    raise RequestError(f"cannot find DeepSpeech data")
+            DSversion = deepspeech.version()
+            # use the tflite version on arm architectures
+            if os.uname()[4][:3] == 'arm':
+                model_file = os.path.join(used_base_dir, "deepspeech-{}-models.tflite".format(DSversion))
+            else:
+                model_file = os.path.join(used_base_dir, "deepspeech-{}-models.pbmm".format(DSversion))
+            scorer_file = os.path.join(used_base_dir, "deepspeech-{}-models.scorer".format(DSversion))
         if not os.path.isfile(model_file):
             raise RequestError("missing DeepSpeech model file: \"{}\"".format(model_file))
         # we might have scorer_file=None because model_file was given but not
