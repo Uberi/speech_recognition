@@ -1402,7 +1402,6 @@ class Recognizer(AudioSource):
             exit (1)
         
         assert isinstance(audio_data, AudioData), "Data must be audio data"
-        import pyaudio
         
         if not hasattr(self, 'vosk_model'):
             self.vosk_model = Model()
