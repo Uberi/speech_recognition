@@ -88,6 +88,7 @@ To use all of the functionality of the library, you should have:
 * **PocketSphinx** (required only if you need to use the Sphinx recognizer, ``recognizer_instance.recognize_sphinx``)
 * **Google API Client Library for Python** (required only if you need to use the Google Cloud Speech API, ``recognizer_instance.recognize_google_cloud``)
 * **FLAC encoder** (required only if the system is not x86-based Windows/Linux/OS X)
+* **Vosk** (required only if you need to use Vosk API speech recognition ``recognizer_instance.recognize_vosk``)
 
 The following requirements are optional, but can improve or extend functionality in some situations:
 
