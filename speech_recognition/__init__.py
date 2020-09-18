@@ -25,6 +25,9 @@ __author__ = "Anthony Zhang (Uberi)"
 __version__ = "3.8.1"
 __license__ = "BSD"
 
+# model for Vosk
+modelVosk = Model("model")
+
 try:  # attempt to use the Python 2 modules
     from urllib import urlencode
     from urllib2 import Request, urlopen, URLError, HTTPError
@@ -1400,8 +1403,7 @@ class Recognizer(AudioSource):
 
         import pyaudio
 
-        model = Model("model")
-        rec = KaldiRecognizer(model, 16000)
+        rec = KaldiRecognizer(modelVosk, 16000)
 
         p = pyaudio.PyAudio()
         stream = p.open(format=pyaudio.paInt16, channels=1, rate=16000, input=True, frames_per_buffer=8000)
