@@ -34,6 +34,8 @@ Speech recognition engine/API support:
 * `Houndify API <https://houndify.com/>`__
 * `IBM Speech to Text <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text.html>`__
 * `Snowboy Hotword Detection <https://snowboy.kitt.ai/>`__ (works offline)
+* `Tensorflow <https://www.tensorflow.org/>`__
+* `Vosk API <https://github.com/alphacep/vosk-api/>`__ (works offline)
 
 **Quickstart:** ``pip install SpeechRecognition``. See the "Installing" section for more details.
 
