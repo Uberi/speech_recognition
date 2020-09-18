@@ -1390,7 +1390,8 @@ class Recognizer(AudioSource):
             for node_id in top_k:
                 human_string = self.tflabels[node_id]
                 return human_string
-
+    def recognize_vosk(self, audio_data, language='en'):
+        from vosk import Model, KaldiRecognizer
 
 def get_flac_converter():
     """Returns the absolute path of a FLAC converter executable, or raises an OSError if none can be found."""
