@@ -1404,6 +1404,11 @@ class Recognizer(AudioSource):
         assert isinstance(audio_data, AudioData), "Data must be audio data"
         import pyaudio
         
+        if not hasattr(self, 'vosk_model'):
+            self.vosk_model = Model()
+
+        rec = KaldiRecognizer(self.vosk_model, 16000);
+        
         rec.AcceptWaveform(audio_data.get_raw_data(convert_rate=16000, convert_width=2));
         finalRecognition = rec.FinalResult()
         
