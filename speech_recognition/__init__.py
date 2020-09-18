@@ -1395,7 +1395,7 @@ class Recognizer(AudioSource):
         from vosk import Model, KaldiRecognizer
         
         assert isinstance(audio_data, AudioData), "Data must be audio data"
-        assert isinstance(language, AudioData), "Language data"
+        assert isinstance(language, str), "Language data"
         
         if not hasattr(self, 'vosk_model'):
             if not os.path.exists("model"):
