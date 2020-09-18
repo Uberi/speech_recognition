@@ -25,9 +25,6 @@ __author__ = "Anthony Zhang (Uberi)"
 __version__ = "3.8.1"
 __license__ = "BSD"
 
-# model for Vosk
-modelVosk = Model("model")
-
 try:  # attempt to use the Python 2 modules
     from urllib import urlencode
     from urllib2 import Request, urlopen, URLError, HTTPError
