@@ -1400,29 +1400,13 @@ class Recognizer(AudioSource):
         if not os.path.exists("model"):
             return "Please download the model from https://github.com/alphacep/vosk-api/blob/master/doc/models.md and unpack as 'model' in the current folder."
             exit (1)
-
+        
+        assert isinstance(audio_data, AudioData), "Data must be audio data"
         import pyaudio
-
-        rec = KaldiRecognizer(modelVosk, 16000)
-
-        p = pyaudio.PyAudio()
-        stream = p.open(format=pyaudio.paInt16, channels=1, rate=16000, input=True, frames_per_buffer=8000)
-        stream.start_stream()
-
-        while True:
-            data = stream.read(4000)
-            if len(data) == 0:
-                break
-            if rec.AcceptWaveform(data):
-                #bottom lines are for debugging
-                #print(rec.Result())
-                break
-            else:
-                #bottom lines are for debugging
-                #print(rec.PartialResult())
-                break
-
+        
+        rec.AcceptWaveform(audio_data.get_raw_data(convert_rate=16000, convert_width=2));
         finalRecognition = rec.FinalResult()
+        
         return finalRecognition
 
 def get_flac_converter():
