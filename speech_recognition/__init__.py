@@ -22,6 +22,8 @@ import time
 import uuid
 from pprint import pprint
 
+import requests
+
 __author__ = "Anthony Zhang (Uberi)"
 __version__ = "3.8.1"
 __license__ = "BSD"
@@ -1486,6 +1488,78 @@ class Recognizer(AudioSource):
                     # Some other error happened, so re-raise.
                     raise
 
+    def recognize_assemblyai(self, audio_data, api_token, job_name=None, **kwargs):
+        """
+        Wraps the AssemblyAI STT service.
+        https://www.assemblyai.com/
+        """
+
+        def read_file(filename, chunk_size=5242880):
+            with open(filename, 'rb') as _file:
+                while True:
+                    data = _file.read(chunk_size)
+                    if not data:
+                        break
+                    yield data
+
+        check_existing = audio_data is None and job_name
+        if check_existing:
+            # Query status.
+            transciption_id = job_name
+            endpoint = f"https://api.assemblyai.com/v2/transcript/{transciption_id}"
+            headers = {
+                "authorization": api_token,
+            }
+            response = requests.get(endpoint, headers=headers)
+            data = response.json()
+            print(data)
+            status = data['status']
+
+            if status == 'error':
+                # Handle error.
+                exc = TranscriptionFailed()
+                exc.job_name = None
+                exc.file_key = None
+                raise exc
+                # Handle success.
+            elif status == 'completed':
+                confidence = data['confidence']
+                text = data['text']
+                return text, confidence
+
+            # Otherwise keep waiting.
+            print('Keep waiting.')
+            exc = TranscriptionNotReady()
+            exc.job_name = job_name
+            exc.file_key = None
+            raise exc
+        else:
+            # Upload file.
+            headers = {'authorization': api_token}
+            response = requests.post('https://api.assemblyai.com/v2/upload',
+                                     headers=headers,
+                                     data=read_file(audio_data))
+            print(response.json())
+            upload_url = response.json()['upload_url']
+            print('upload_url:', upload_url)
+
+            # Queue file for transcription.
+            endpoint = "https://api.assemblyai.com/v2/transcript"
+            json = {
+              "audio_url": upload_url
+            }
+            headers = {
+                "authorization": api_token,
+                "content-type": "application/json"
+            }
+            response = requests.post(endpoint, json=json, headers=headers)
+            data = response.json()
+            print(data)
+            transciption_id = data['id']
+            exc = TranscriptionNotReady()
+            exc.job_name = transciption_id
+            exc.file_key = None
+            raise exc
 
     def recognize_ibm(self, audio_data, key, language="en-US", show_all=False):
         """
