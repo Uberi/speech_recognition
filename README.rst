@@ -1,4 +1,4 @@
-SpeechRecognition
+SpeechRecognition Technology.
 =================
 
 .. image:: https://img.shields.io/pypi/v/SpeechRecognition.svg
@@ -104,7 +104,7 @@ PyAudio (for microphone users)
 
 `PyAudio <http://people.csail.mit.edu/hubert/pyaudio/#downloads>`__ is required if and only if you want to use microphone input (``Microphone``). PyAudio version 0.2.11+ is required, as earlier versions have known memory management bugs when recording from microphones in certain situations.
 
-If not installed, everything in the library will still work, except attempting to instantiate a ``Microphone`` object will raise an ``AttributeError``.
+If not installed, everything in the library will still work, except attempting to initiate the ``Microphone`` object will raise an ``AttributeError``.
 
 The installation instructions on the PyAudio website are quite good - for convenience, they are summarized below:
 
@@ -159,7 +159,7 @@ To install, use `Pip <https://pip.readthedocs.org/>`__: execute ``pip install mo
 Troubleshooting
 ---------------
 
-The recognizer tries to recognize speech even when I'm not speaking, or after I'm done speaking.
+The recognizer will keep trying to recognize speech even when I'm not speaking, or after I'm done speaking.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Try increasing the ``recognizer_instance.energy_threshold`` property. This is basically how sensitive the recognizer is to when recognition should start. Higher values mean that it will be less sensitive, which is useful if you are in a loud room.
