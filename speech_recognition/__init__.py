@@ -441,7 +441,7 @@ class AudioData(object):
         sample_rate = self.sample_rate if convert_rate is None else convert_rate
         sample_width = self.sample_width if convert_width is None else convert_width
 
-        # the AIFF format is big-endian, so we need to covnert the little-endian raw data to big-endian
+        # the AIFF format is big-endian, so we need to convert the little-endian raw data to big-endian
         if hasattr(audioop, "byteswap"):  # ``audioop.byteswap`` was only added in Python 3.4
             raw_data = audioop.byteswap(raw_data, sample_width)
         else:  # manually reverse the bytes of each sample, which is slower but works well enough as a fallback
