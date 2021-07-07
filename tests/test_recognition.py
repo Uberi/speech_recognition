@@ -22,7 +22,7 @@ class TestRecognition(unittest.TestCase):
     def test_google_english(self):
         r = sr.Recognizer()
         with sr.AudioFile(self.AUDIO_FILE_EN) as source: audio = r.record(source)
-        self.assertIn(r.recognize_google(audio), ["1 2 3", "one two three"])
+        self.assertIn(r.recognize_google(audio), ["1 2 3", "one two three", "123"])
 
     @unittest.skipIf("SKIP_ONLINE" in os.environ, "online tests disabled")
     def test_google_french(self):
