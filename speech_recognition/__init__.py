@@ -922,8 +922,6 @@ class Recognizer(AudioSource):
         Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the credentials aren't valid, or if there is no Internet connection.
         """
         assert isinstance(audio_data, AudioData), "``audio_data`` must be audio data"
-        if credentials_json is None:
-            assert os.environ.get('GOOGLE_APPLICATION_CREDENTIALS') is not None
         assert isinstance(language, str), "``language`` must be a string"
         assert preferred_phrases is None or all(isinstance(preferred_phrases, (type(""), type(u""))) for preferred_phrases in preferred_phrases), "``preferred_phrases`` must be a list of strings"
 
