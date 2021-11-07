@@ -71,4 +71,5 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Multimedia :: Sound/Audio :: Speech",
     ],
+    install_requires=['requests>=2.26.0'],
 )

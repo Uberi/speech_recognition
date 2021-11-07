@@ -22,7 +22,10 @@ import time
 import uuid
 from pprint import pprint
 
-import requests
+try:
+    import requests
+except ImportError:
+    pass
 
 __author__ = "Anthony Zhang (Uberi)"
 __version__ = "3.8.1"
