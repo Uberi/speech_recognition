@@ -1512,7 +1512,7 @@ class Recognizer(AudioSource):
             }
             response = requests.get(endpoint, headers=headers)
             data = response.json()
-            print(data)
+            print('Raw response: %s' % data)
             status = data['status']
 
             if status == 'error':
