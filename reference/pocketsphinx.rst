@@ -6,9 +6,9 @@ Installing other languages
 
 By default, SpeechRecognition's Sphinx functionality supports only US English. Additional language packs are also available, but not included due to the files being too large:
 
-* `International French <https://drive.google.com/open?id=0Bw_EqP-hnaFNN2FlQ21RdnVZSVE>`__
-* `Mandarin Chinese <https://drive.google.com/open?id=0Bw_EqP-hnaFNSWdqdm5maWZtTGc>`__
-* `Italian <https://drive.google.com/open?id=0Bw_EqP-hnaFNSXUtMm8tRkdUejg>`__
+* `International French <https://drive.google.com/file/d/0Bw_EqP-hnaFNN2FlQ21RdnVZSVE/view?usp=sharing&resourcekey=0-CEkuW10BcLuDdDnKDbzO4w>`__
+* `Mandarin Chinese <https://drive.google.com/file/d/0Bw_EqP-hnaFNSWdqdm5maWZtTGc/view?usp=sharing&resourcekey=0-AYS4yrQJO-ieZqyo0g6h3g>`__
+* `Italian <https://drive.google.com/file/d/0Bw_EqP-hnaFNSXUtMm8tRkdUejg/view?usp=sharing&resourcekey=0-9IOo0qEMHOAR3z6rzIqgBg>`__
 
 To install a language pack, download the ZIP archives and extract them directly into the module install directory (you can find the module install directory by running ``python -c "import speech_recognition as sr, os.path as p; print(p.dirname(sr.__file__))"``).
 
