@@ -666,6 +666,26 @@ class Recognizer(AudioSource):
             if entry.get("Grade") == "accept" and "ResultText" in entry:
                 return entry["ResultText"]
         raise UnknownValueError() # no transcriptions available
+        
+    def recognize_vosk(self, audio_data, language='en'):
+        from vosk import Model, KaldiRecognizer
+        
+        assert isinstance(audio_data, AudioData), "Data must be audio data"
+        
+        if not hasattr(self, 'vosk_model'):
+            if not os.path.exists("model"):
+                return "Please download the model from https://github.com/alphacep/vosk-api/blob/master/doc/models.md and unpack as 'model' in the current folder."
+                exit (1)
+            self.vosk_model = Model("model")
+
+        rec = KaldiRecognizer(self.vosk_model, 16000);
+        
+        rec.AcceptWaveform(audio_data.get_raw_data(convert_rate=16000, convert_width=2));
+        finalRecognition = json.loads(rec.FinalResult())
+        if finalRecognition['text'] == '' :
+            return ''
+        else:
+            return finalRecognition['text']
 
 def shutil_which(pgm):
     """
