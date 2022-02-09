@@ -34,6 +34,8 @@ Speech recognition engine/API support:
 * `Houndify API <https://houndify.com/>`__
 * `IBM Speech to Text <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text.html>`__
 * `Snowboy Hotword Detection <https://snowboy.kitt.ai/>`__ (works offline)
+* `Tensorflow <https://www.tensorflow.org/>`__
+* `Vosk API <https://github.com/alphacep/vosk-api/>`__ (works offline)
 
 **Quickstart:** ``pip install SpeechRecognition``. See the "Installing" section for more details.
 
@@ -51,6 +53,8 @@ Library Reference
 The `library reference <https://github.com/Uberi/speech_recognition/blob/master/reference/library-reference.rst>`__ documents every publicly accessible object in the library. This document is also included under ``reference/library-reference.rst``.
 
 See `Notes on using PocketSphinx <https://github.com/Uberi/speech_recognition/blob/master/reference/pocketsphinx.rst>`__ for information about installing languages, compiling PocketSphinx, and building language packs from online resources. This document is also included under ``reference/pocketsphinx.rst``.
+
+You have to install Vosk models for using Vosk. `Here <https://alphacephei.com/vosk/models>`__ are models avaiable. You have to place them in models folder of your project, like "your-project-folder/models/your-vosk-model"
 
 Examples
 --------
@@ -86,6 +90,7 @@ To use all of the functionality of the library, you should have:
 * **PocketSphinx** (required only if you need to use the Sphinx recognizer, ``recognizer_instance.recognize_sphinx``)
 * **Google API Client Library for Python** (required only if you need to use the Google Cloud Speech API, ``recognizer_instance.recognize_google_cloud``)
 * **FLAC encoder** (required only if the system is not x86-based Windows/Linux/OS X)
+* **Vosk** (required only if you need to use Vosk API speech recognition ``recognizer_instance.recognize_vosk``)
 
 The following requirements are optional, but can improve or extend functionality in some situations:
 
@@ -128,6 +133,16 @@ On Linux and other POSIX systems (such as OS X), follow the instructions under "
 Note that the versions available in most package repositories are outdated and will not work with the bundled language data. Using the bundled wheel packages or building from source is recommended.
 
 See `Notes on using PocketSphinx <https://github.com/Uberi/speech_recognition/blob/master/reference/pocketsphinx.rst>`__ for information about installing languages, compiling PocketSphinx, and building language packs from online resources. This document is also included under ``reference/pocketsphinx.rst``.
+
+Vosk (for Vosk users)
+~~~~~~~~~~~~~~~~~~~~~
+Vosk API is **required if and only if you want to use Vosk recognizer** (``recognizer_instance.recognize_vosk``).
+
+You can install it with ``python3 -m pip install vosk``.
+
+You also have to install Vosk Models:
+
+`Here <https://alphacephei.com/vosk/models>`__ are models avaiable for download. You have to place them in models folder of your project, like "your-project-folder/models/your-vosk-model"
 
 Google Cloud Speech Library for Python (for Google Cloud Speech API users)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
