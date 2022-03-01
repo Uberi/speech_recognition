@@ -964,7 +964,7 @@ class Recognizer(AudioSource):
         config = speech.RecognitionConfig(**config)
 
         try:
-            response = client.recognize(config, audio, **opts)
+            response = client.recognize(config=config, audio=audio)
         except GoogleAPICallError as e:
             raise RequestError(e)
         except URLError as e:
