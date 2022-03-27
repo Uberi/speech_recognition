@@ -930,8 +930,6 @@ class Recognizer(AudioSource):
         try:
             import socket
             from google.cloud import speech
-            from google.cloud.speech import enums
-            from google.cloud.speech import types
             from google.api_core.exceptions import GoogleAPICallError
         except ImportError:
             raise RequestError('missing google-cloud-speech module: ensure that google-cloud-speech is set up correctly.')
@@ -945,15 +943,15 @@ class Recognizer(AudioSource):
             convert_rate=None if 8000 <= audio_data.sample_rate <= 48000 else max(8000, min(audio_data.sample_rate, 48000)),  # audio sample rate must be between 8 kHz and 48 kHz inclusive - clamp sample rate into this range
             convert_width=2  # audio samples must be 16-bit
         )
-        audio = types.RecognitionAudio(content=flac_data)
+        audio = speech.RecognitionAudio(content=flac_data)
 
         config = {
-            'encoding': enums.RecognitionConfig.AudioEncoding.FLAC,
+            'encoding': speech.RecognitionConfig.AudioEncoding.FLAC,
             'sample_rate_hertz': audio_data.sample_rate,
             'language_code': language
         }
         if preferred_phrases is not None:
-            config['speechContexts'] = [types.SpeechContext(
+            config['speechContexts'] = [speech.SpeechContext(
                 phrases=preferred_phrases
             )]
         if show_all:
@@ -963,10 +961,10 @@ class Recognizer(AudioSource):
         if self.operation_timeout and socket.getdefaulttimeout() is None:
             opts['timeout'] = self.operation_timeout
 
-        config = types.RecognitionConfig(**config)
+        config = speech.RecognitionConfig(**config)
 
         try:
-            response = client.recognize(config, audio, **opts)
+            response = client.recognize(config=config, audio=audio)
         except GoogleAPICallError as e:
             raise RequestError(e)
         except URLError as e:
