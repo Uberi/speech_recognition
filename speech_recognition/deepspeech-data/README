@@ -1,0 +1,12 @@
+Directory for deepspeech data
+
+Get the following DeepSpeech model files
+	https://github.com/mozilla/DeepSpeech/releases/download/v0.7.0/deepspeech-0.7.0-models.pbmm
+	https://github.com/mozilla/DeepSpeech/releases/download/v0.7.0/deepspeech-0.7.0-models.tflite
+	https://github.com/mozilla/DeepSpeech/releases/download/v0.7.0/deepspeech-0.7.0-models.scorer
+and put them into the
+	en-US
+directory.
+
+Further languages can be added to respectives directories named after language codes.
+

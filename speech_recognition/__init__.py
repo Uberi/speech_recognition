@@ -22,7 +22,7 @@ import time
 import uuid
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "3.8.1"
+__version__ = "3.8.1.fossasia-4"
 __license__ = "BSD"
 
 try:  # attempt to use the Python 2 modules
@@ -496,6 +496,56 @@ class AudioData(object):
         return flac_data
 
 
+class DeepSpeechModel():
+    ds = None
+    model_file = None
+    scorer_file = None
+    beam_width = None
+    lm_alpha = None
+    lm_beta = None
+
+    def __init__(self, model_file, scorer_file=None, beam_width=None, lm_alpha=None, lm_beta=None):
+        """
+        Creates a DeepSpeech model from ``model_file``.
+
+        If ``scorer_file`` is given, initialize the scorer, too.
+
+        If ``beam_width``, ``lm_alpha``, ``lm_beta`` is given, the model parameters for the
+        scorer are set accordingly.
+        """
+        try:
+            import deepspeech
+        except ImportError:
+            raise RequestError("missing DeepSpeech module: ensure that DeepSpeech is set up correctly.")
+        except ValueError:
+            raise RequestError("bad DeepSpeech installation; try reinstalling DeepSpeech version 0.7.0 or better.")
+        
+        # if model is already created and all parameters agree, don't reinit it
+        if DeepSpeechModel.ds is not None and DeepSpeechModel.model_file == model_file and DeepSpeechModel.scorer_file == scorer_file and DeepSpeechModel.beam_width == beam_width and DeepSpeechModel.lm_alpha == lm_alpha and DeepSpeechModel.lm_beta == lm_beta:
+            return
+
+        DeepSpeechModel.model_file = model_file
+        DeepSpeechModel.scorer_file = scorer_file
+        DeepSpeechModel.beam_width = beam_width
+        DeepSpeechModel.lm_alpha = lm_alpha
+        DeepSpeechModel.lm_beta = lm_beta
+        DeepSpeechModel.ds = deepspeech.Model(model_file)
+        if beam_width:
+            DeepSpeechModel.ds.setModelBeamWidth(beam_width)
+        if scorer_file:
+            DeepSpeechModel.ds.enableExternalScorer(scorer_file)
+            if lm_alpha and lm_beta:
+                DeepSpeechModel.ds.setScorerAlphaBeta(lm_alpha, lm_beta)
+
+    def sampleRate(self):
+        return DeepSpeechModel.ds.sampleRate()
+
+    def recognize(self, audio):
+        recognized_metadata = DeepSpeechModel.ds.sttWithMetadata(audio,1).transcripts[0]
+        recognized_string = ''.join(token.text for token in recognized_metadata.tokens)
+        return recognized_string, recognized_metadata
+
+
 class Recognizer(AudioSource):
     def __init__(self):
         """
@@ -842,6 +892,64 @@ class Recognizer(AudioSource):
         hypothesis = decoder.hyp()
         if hypothesis is not None: return hypothesis.hypstr
         raise UnknownValueError()  # no transcriptions available
+
+    def recognize_deepspeech(self, audio_data, language="en-US", show_all=False, ds_beamwidth=None, ds_lm_alpha=None, ds_lm_beta=None, model_file=None, scorer_file=None, model_base_dir=None):
+        """
+        Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using Mozilla's DeepSpeech.
+        """
+        assert isinstance(audio_data, AudioData), "``audio_data`` must be audio data"
+        assert isinstance(language, str) or (isinstance(language, tuple) and len(language) == 3), "``language`` must be a string or 3-tuple of Sphinx data file paths of the form ``(acoustic_parameters, language_model, phoneme_dictionary)``"
+
+        try:
+            import numpy as np
+        except ImportError:
+            raise RequestError("missing numpy module.")
+
+        try:
+            import deepspeech
+        except ImportError:
+            raise RequestError("missing DeepSpeech module: ensure that DeepSpeech is set up correctly.")
+        except ValueError:
+            raise RequestError("bad DeepSpeech installation; try reinstalling DeepSpeech version 0.7.0 or better.")
+        
+        if model_file is None:
+            used_base_dir = model_base_dir
+            if used_base_dir is None:
+                if isinstance(language, str):  # directory containing language data
+                    language_directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), "deepspeech-data", language)
+                    if not os.path.isdir(language_directory):
+                        raise RequestError("missing DeepSpeech language data directory: \"{}\"".format(language_directory))
+                    used_base_dir = language_directory
+                else:
+                    raise RequestError(f"cannot find DeepSpeech data")
+            DSversion = deepspeech.version()
+            # use the tflite version on arm architectures
+            if os.uname()[4][:3] == 'arm':
+                model_file = os.path.join(used_base_dir, "deepspeech-{}-models.tflite".format(DSversion))
+            else:
+                model_file = os.path.join(used_base_dir, "deepspeech-{}-models.pbmm".format(DSversion))
+            scorer_file = os.path.join(used_base_dir, "deepspeech-{}-models.scorer".format(DSversion))
+        if not os.path.isfile(model_file):
+            raise RequestError("missing DeepSpeech model file: \"{}\"".format(model_file))
+        # we might have scorer_file=None because model_file was given but not
+        # scorer_file. In this case we do not use the scorer.
+        if not scorer_file is None and not os.path.isfile(scorer_file):
+            raise RequestError("missing DeepSpeech scorer file: \"{}\"".format(scorer_file))
+
+        # this initializes a new deepspeech model, but the actual model is only loaded once
+        ds = DeepSpeechModel(model_file, scorer_file)
+
+        desired_sample_rate = ds.sampleRate()
+
+        # obtain audio data
+        # the included language models require audio to be 16-bit mono 16 kHz in little-endian format
+        raw_data = audio_data.get_raw_data(convert_rate=desired_sample_rate, convert_width=2)
+
+        recognized_string, recognized_metadata = ds.recognize(np.frombuffer(raw_data, np.int16))
+
+        if show_all: return recognized_metadata
+
+        return recognized_string
 
     def recognize_google(self, audio_data, key=None, language="en-US", pfilter=0, show_all=False):
         """
