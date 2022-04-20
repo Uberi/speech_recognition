@@ -511,10 +511,10 @@ class Recognizer(AudioSource):
         self.phrase_threshold = 0.3  # minimum seconds of speaking audio before we consider the speaking audio a phrase - values below this are ignored (for filtering out clicks and pops)
         self.non_speaking_duration = 0.5  # seconds of non-speaking audio to keep on both sides of the recording
 
-        self.model_path = None
+        self.model_path = "model"  # path to VOSK model
 
     def add_model_path(self, model_path):
-        """ Set a path to load a speech recognition model. """
+        """ Set a path to load a speech recopgnition model. """
 
         setattr(self, "model_path", model_path)
 
