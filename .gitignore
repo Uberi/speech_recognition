@@ -10,3 +10,11 @@ zh-CN.zip
 it-IT.zip
 pocketsphinx-python/
 examples/TEST.py
+
+# custom
+.idea
+**/.DS_Store
+**/.__pycache__
+tmp/
+tmp/*
+

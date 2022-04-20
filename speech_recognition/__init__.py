@@ -511,6 +511,15 @@ class Recognizer(AudioSource):
         self.phrase_threshold = 0.3  # minimum seconds of speaking audio before we consider the speaking audio a phrase - values below this are ignored (for filtering out clicks and pops)
         self.non_speaking_duration = 0.5  # seconds of non-speaking audio to keep on both sides of the recording
 
+        self.model_path = None
+
+    def add_model_path(self, model_path):
+        """ Set a path to load a speech recognition model. """
+
+        setattr(self, "model_path", model_path)
+
+        pass
+
     def record(self, source, duration=None, offset=None):
         """
         Records up to ``duration`` seconds of audio from ``source`` (an ``AudioSource`` instance) starting at ``offset`` (or at the beginning if not specified) into an ``AudioData`` instance, which it returns.
@@ -1393,12 +1402,12 @@ class Recognizer(AudioSource):
         from vosk import Model, KaldiRecognizer
         
         assert isinstance(audio_data, AudioData), "Data must be audio data"
-        
+
         if not hasattr(self, 'vosk_model'):
-            if not os.path.exists("model"):
+            if not os.path.exists(self.model_path):
                 return "Please download the model from https://github.com/alphacep/vosk-api/blob/master/doc/models.md and unpack as 'model' in the current folder."
                 exit (1)
-            self.vosk_model = Model("model")
+            self.vosk_model = Model(self.model_path)
 
         rec = KaldiRecognizer(self.vosk_model, 16000);
         
