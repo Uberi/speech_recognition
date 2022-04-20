@@ -514,7 +514,7 @@ class Recognizer(AudioSource):
         self.model_path = "model"  # path to VOSK model
 
     def add_model_path(self, model_path):
-        """ Set a path to load a speech recopgnition model. """
+        """ Set a path to load a speech recognition model. """
 
         setattr(self, "model_path", model_path)
 
