@@ -50,7 +50,7 @@ setup(
     long_description=open("README.rst").read(),
     license=speech_recognition.__license__,
     keywords="speech recognition voice sphinx google wit bing api houndify ibm snowboy",
-    url="https://github.com/Hashah2311/speech_recognition#readme",
+    url="https://github.com/Hashah2311/speech_recognition_fork",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
