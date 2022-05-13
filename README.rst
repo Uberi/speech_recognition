@@ -23,6 +23,8 @@ SpeechRecognition
 
 Library for performing speech recognition, with support for several engines and APIs, online and offline.
 
+**Note**: Hi I am Hashah2311, I have forked the orignal project and added system audio source ie now this module can listen system audio as well, **this is not the orignal version**.
+
 **UPDATE 2022-02-09**: Hey everyone! This project started as a tech demo, but these days it needs more time than I have to keep up with all the PRs and issues. Therefore, I'd like to put out an **open invite for collaborators** - just reach out at me@anthonyz.ca if you're interested!
 
 Speech recognition engine/API support:
