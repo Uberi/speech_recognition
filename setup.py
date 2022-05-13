@@ -44,7 +44,7 @@ setup(
     cmdclass={"install": InstallWithExtraSteps},
 
     # PyPI metadata
-    author=Hashah2311,
+    author="Hashah2311",
     author_email="shahharshit063@gmail.com",
     description=speech_recognition.__doc__,
     long_description=open("README.rst").read(),
