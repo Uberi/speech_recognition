@@ -37,20 +37,20 @@ class InstallWithExtraSteps(install):
 
 
 setup(
-    name="SpeechRecognition",
+    name="SpeechRecognitionFork",
     version=speech_recognition.__version__,
     packages=["speech_recognition"],
     include_package_data=True,
     cmdclass={"install": InstallWithExtraSteps},
 
     # PyPI metadata
-    author=speech_recognition.__author__,
-    author_email="azhang9@gmail.com",
+    author=Hashah2311,
+    author_email="shahharshit063@gmail.com",
     description=speech_recognition.__doc__,
     long_description=open("README.rst").read(),
     license=speech_recognition.__license__,
     keywords="speech recognition voice sphinx google wit bing api houndify ibm snowboy",
-    url="https://github.com/Uberi/speech_recognition#readme",
+    url="https://github.com/Hashah2311/speech_recognition#readme",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
