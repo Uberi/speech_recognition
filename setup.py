@@ -37,7 +37,7 @@ class InstallWithExtraSteps(install):
 
 
 setup(
-    name="SpeechRecognitionFork",
+    name="SpeechRecognition_ForkedVersion",
     version=speech_recognition.__version__,
     packages=["speech_recognition"],
     include_package_data=True,
