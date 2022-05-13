@@ -1,8 +1,8 @@
 Metadata-Version: 2.1
 Name: SpeechRecognition-ForkedVersion
-Version: 3.8.2
+Version: 3.8.3
 Summary: Library for performing speech recognition, with support for several engines and APIs, online and offline.
-Home-page: https://github.com/Hashah2311/speech_recognition#readme
+Home-page: https://github.com/Hashah2311/speech_recognition_fork
 Author: Hashah2311
 Author-email: shahharshit063@gmail.com
 License: BSD
@@ -52,6 +52,8 @@ SpeechRecognition
     :alt: Continuous Integration Test Results
 
 Library for performing speech recognition, with support for several engines and APIs, online and offline.
+
+**Note**: Hi I am Hashah2311, I have forked the orignal project and added system audio source ie now this module can listen system audio as well, **this is not the orignal version**.
 
 **UPDATE 2022-02-09**: Hey everyone! This project started as a tech demo, but these days it needs more time than I have to keep up with all the PRs and issues. Therefore, I'd like to put out an **open invite for collaborators** - just reach out at me@anthonyz.ca if you're interested!
 
