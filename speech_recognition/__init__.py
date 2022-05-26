@@ -24,7 +24,7 @@ from pprint import pprint
 
 try:
     import requests
-except ImportError:
+except (ModuleNotFoundError, ImportError):
     pass
 
 __author__ = "Anthony Zhang (Uberi)"
