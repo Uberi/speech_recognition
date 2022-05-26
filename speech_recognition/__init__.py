@@ -20,6 +20,12 @@ import hashlib
 import hmac
 import time
 import uuid
+from pprint import pprint
+
+try:
+    import requests
+except (ModuleNotFoundError, ImportError):
+    pass
 
 __author__ = "Anthony Zhang (Uberi)"
 __version__ = "3.8.1"
@@ -41,6 +47,12 @@ class RequestError(Exception): pass
 
 
 class UnknownValueError(Exception): pass
+
+
+class TranscriptionNotReady(Exception): pass
+
+
+class TranscriptionFailed(Exception): pass
 
 
 class AudioSource(object):
@@ -884,18 +896,25 @@ class Recognizer(AudioSource):
         except URLError as e:
             raise RequestError("recognition connection failed: {}".format(e.reason))
         response_text = response.read().decode("utf-8")
+        # print('response_text:')
+        # pprint(response_text, indent=4)
 
         # ignore any blank blocks
         actual_result = []
         for line in response_text.split("\n"):
             if not line: continue
-            result = json.loads(line)["result"]
+            result = json.loads(line)["result"]            
+            # print('result1:')
+            # pprint(result, indent=4)
             if len(result) != 0:
                 actual_result = result[0]
                 break
 
         # return results
-        if show_all: return actual_result
+        if show_all:
+            return actual_result
+        print('result2:')
+        pprint(actual_result, indent=4)
         if not isinstance(actual_result, dict) or len(actual_result.get("alternative", [])) == 0: raise UnknownValueError()
 
         if "confidence" in actual_result["alternative"]:
@@ -905,7 +924,10 @@ class Recognizer(AudioSource):
             # when there is no confidence available, we arbitrarily choose the first hypothesis.
             best_hypothesis = actual_result["alternative"][0]
         if "transcript" not in best_hypothesis: raise UnknownValueError()
-        return best_hypothesis["transcript"]
+        # https://cloud.google.com/speech-to-text/docs/basics#confidence-values
+        # "Your code should not require the confidence field as it is not guaranteed to be accurate, or even set, in any of the results."
+        confidence = best_hypothesis.get("confidence", 0.5)
+        return best_hypothesis["transcript"], confidence
 
     def recognize_google_cloud(self, audio_data, credentials_json=None, language="en-US", preferred_phrases=None, show_all=False):
         """
@@ -1015,7 +1037,7 @@ class Recognizer(AudioSource):
         if "_text" not in result or result["_text"] is None: raise UnknownValueError()
         return result["_text"]
 
-    def recognize_azure(self, audio_data, key, language="en-US", result_format="simple", profanity="masked", location="westus", show_all=False):
+    def recognize_azure(self, audio_data, key, language="en-US", profanity="masked", location="westus", show_all=False):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Microsoft Azure Speech API.
 
@@ -1031,9 +1053,10 @@ class Recognizer(AudioSource):
         """
         assert isinstance(audio_data, AudioData), "Data must be audio data"
         assert isinstance(key, str), "``key`` must be a string"
-        assert isinstance(result_format, str), "``format`` must be a string"
+        # assert isinstance(result_format, str), "``format`` must be a string" # simple|detailed
         assert isinstance(language, str), "``language`` must be a string"
 
+        result_format = 'detailed'
         access_token, expire_time = getattr(self, "azure_cached_access_token", None), getattr(self, "azure_cached_access_token_expiry", None)
         allow_caching = True
         try:
@@ -1105,9 +1128,13 @@ class Recognizer(AudioSource):
         result = json.loads(response_text)
 
         # return results
-        if show_all: return result
-        if "RecognitionStatus" not in result or result["RecognitionStatus"] != "Success" or "DisplayText" not in result: raise UnknownValueError()
-        return result["DisplayText"]
+        print('result:')
+        pprint(result, indent=4)
+        if show_all:
+            return result
+        if "RecognitionStatus" not in result or result["RecognitionStatus"] != "Success" or "NBest" not in result:
+            raise UnknownValueError()
+        return result['NBest'][0]["Display"], result['NBest'][0]["Confidence"]
 
     def recognize_bing(self, audio_data, key, language="en-US", show_all=False):
         """
@@ -1285,11 +1312,257 @@ class Recognizer(AudioSource):
 
         # return results
         if show_all: return result
+        print('result:')
+        pprint(result, indent=4)
         if "Disambiguation" not in result or result["Disambiguation"] is None:
             raise UnknownValueError()
-        return result['Disambiguation']['ChoiceData'][0]['Transcription']
+        return result['Disambiguation']['ChoiceData'][0]['Transcription'], result['Disambiguation']['ChoiceData'][0]['ConfidenceScore']
 
-    def recognize_ibm(self, audio_data, username, password, language="en-US", show_all=False):
+    def recognize_amazon(self, audio_data, bucket_name=None, access_key_id=None, secret_access_key=None, region=None, job_name=None, file_key=None):
+        """
+        Performs speech recognition on ``audio_data`` (an ``AudioData`` instance) using Amazon Transcribe.
+        https://aws.amazon.com/transcribe/
+        If access_key_id or secret_access_key is not set it will go through the list in the link below
+        http://boto3.readthedocs.io/en/latest/guide/configuration.html#configuring-credentials
+        """
+        assert access_key_id is None or isinstance(access_key_id, str), "``access_key_id`` must be a string"
+        assert secret_access_key is None or isinstance(secret_access_key, str), "``secret_access_key`` must be a string"
+        assert region is None or isinstance(region, str), "``region`` must be a string"
+        import traceback
+        import uuid
+        import multiprocessing
+        from botocore.exceptions import ClientError
+        proc = multiprocessing.current_process()
+
+        check_existing = audio_data is None and job_name
+
+        bucket_name = bucket_name or ('%s-%s' % (str(uuid.uuid4()), proc.pid))
+        job_name = job_name or ('%s-%s' % (str(uuid.uuid4()), proc.pid))
+
+        try:
+            import boto3
+        except ImportError:
+            raise RequestError("missing boto3 module: ensure that boto3 is set up correctly.")
+
+        transcribe = boto3.client(
+            'transcribe',
+            aws_access_key_id=access_key_id,
+            aws_secret_access_key=secret_access_key,
+            region_name=region)
+
+        s3 = boto3.client('s3', 
+            aws_access_key_id=access_key_id,
+            aws_secret_access_key=secret_access_key,
+            region_name=region)
+
+        session = boto3.Session(
+            aws_access_key_id=access_key_id,
+            aws_secret_access_key=secret_access_key,
+            region_name=region
+        )
+
+        # Upload audio data to S3.
+        filename = '%s.wav' % job_name
+        try:
+            # Bucket creation fails surprisingly often, even if the bucket exists.
+            # print('Attempting to create bucket %s...' % bucket_name)
+            s3.create_bucket(Bucket=bucket_name)
+        except ClientError as exc:
+            print('Error creating bucket %s: %s' % (bucket_name, exc))
+        s3res = session.resource('s3')
+        bucket = s3res.Bucket(bucket_name)
+        if audio_data is not None:
+            print('Uploading audio data...')
+            wav_data = audio_data.get_wav_data()
+            s3.put_object(Bucket=bucket_name, Key=filename, Body=wav_data)
+            object_acl = s3res.ObjectAcl(bucket_name, filename)
+            object_acl.put(ACL='public-read')
+        else:
+            print('Skipping audio upload.')
+        job_uri = 'https://%s.s3.amazonaws.com/%s' % (bucket_name, filename)
+
+        if check_existing:
+
+            # Wait for job to complete.
+            try:
+                status = transcribe.get_transcription_job(TranscriptionJobName=job_name)
+            except ClientError as exc:
+                print('!'*80)
+                print('Error getting job:', exc.response)
+                if exc.response['Error']['Code'] == 'BadRequestException' and "The requested job couldn't be found" in str(exc):
+                    # Some error caused the job we recorded to not exist on AWS.
+                    # Likely we were interrupted right after retrieving and deleting the job but before recording the transcript.
+                    # Reset and try again later.
+                    exc = TranscriptionNotReady()
+                    exc.job_name = None
+                    exc.file_key = None
+                    raise exc
+                else:
+                    # Some other error happened, so re-raise.
+                    raise
+            
+            job = status['TranscriptionJob']
+            print('status0:')
+            pprint(status, indent=4)
+            if job['TranscriptionJobStatus'] in ['COMPLETED'] and 'TranscriptFileUri' in job['Transcript']:
+
+                # Retrieve transcription JSON containing transcript.
+                transcript_uri = job['Transcript']['TranscriptFileUri']
+                import urllib.request, json
+                with urllib.request.urlopen(transcript_uri) as json_data:
+                    d = json.load(json_data)
+                    print('result:')
+                    pprint(d, indent=4)
+                    confidences = []
+                    for item in d['results']['items']:
+                        confidences.append(float(item['alternatives'][0]['confidence']))
+                    confidence = 0.5
+                    if confidences:
+                        confidence = sum(confidences)/float(len(confidences))
+                    transcript = d['results']['transcripts'][0]['transcript']
+
+                    # Delete job.
+                    try:
+                        transcribe.delete_transcription_job(TranscriptionJobName=job_name) # cleanup
+                    except Exception as exc:
+                        print('Warning, could not clean up transcription: %s' % exc)
+                        traceback.print_exc()
+
+                    # Delete S3 file.
+                    s3.delete_object(Bucket=bucket_name, Key=filename)
+
+                    return transcript, confidence
+            elif job['TranscriptionJobStatus'] in ['FAILED']:
+            
+                # Delete job.
+                try:
+                    transcribe.delete_transcription_job(TranscriptionJobName=job_name) # cleanup
+                except Exception as exc:
+                    print('Warning, could not clean up transcription: %s' % exc)
+                    traceback.print_exc()
+
+                # Delete S3 file.
+                s3.delete_object(Bucket=bucket_name, Key=filename)
+                
+                exc = TranscriptionFailed()
+                exc.job_name = None
+                exc.file_key = None
+                raise exc
+            else:
+                # Keep waiting.
+                print('Keep waiting.')
+                exc = TranscriptionNotReady()
+                exc.job_name = job_name
+                exc.file_key = None
+                raise exc
+
+        else:
+
+            # Launch the transcription job.
+            # try:
+                # transcribe.delete_transcription_job(TranscriptionJobName=job_name) # pre-cleanup
+            # except:
+                # # It's ok if this fails because the job hopefully doesn't exist yet.
+                # pass
+            try:
+                transcribe.start_transcription_job(
+                    TranscriptionJobName=job_name,
+                    Media={'MediaFileUri': job_uri},
+                    MediaFormat='wav',
+                    LanguageCode='en-US'
+                )
+                exc = TranscriptionNotReady()
+                exc.job_name = job_name
+                exc.file_key = None
+                raise exc
+            except ClientError as exc:
+                print('!'*80)
+                print('Error starting job:', exc.response)
+                if exc.response['Error']['Code'] == 'LimitExceededException':
+                    # Could not start job. Cancel everything.
+                    s3.delete_object(Bucket=bucket_name, Key=filename)
+                    exc = TranscriptionNotReady()
+                    exc.job_name = None
+                    exc.file_key = None
+                    raise exc
+                else:
+                    # Some other error happened, so re-raise.
+                    raise
+
+    def recognize_assemblyai(self, audio_data, api_token, job_name=None, **kwargs):
+        """
+        Wraps the AssemblyAI STT service.
+        https://www.assemblyai.com/
+        """
+
+        def read_file(filename, chunk_size=5242880):
+            with open(filename, 'rb') as _file:
+                while True:
+                    data = _file.read(chunk_size)
+                    if not data:
+                        break
+                    yield data
+
+        check_existing = audio_data is None and job_name
+        if check_existing:
+            # Query status.
+            transciption_id = job_name
+            endpoint = f"https://api.assemblyai.com/v2/transcript/{transciption_id}"
+            headers = {
+                "authorization": api_token,
+            }
+            response = requests.get(endpoint, headers=headers)
+            data = response.json()
+            print('Raw response: %s' % data)
+            status = data['status']
+
+            if status == 'error':
+                # Handle error.
+                exc = TranscriptionFailed()
+                exc.job_name = None
+                exc.file_key = None
+                raise exc
+                # Handle success.
+            elif status == 'completed':
+                confidence = data['confidence']
+                text = data['text']
+                return text, confidence
+
+            # Otherwise keep waiting.
+            print('Keep waiting.')
+            exc = TranscriptionNotReady()
+            exc.job_name = job_name
+            exc.file_key = None
+            raise exc
+        else:
+            # Upload file.
+            headers = {'authorization': api_token}
+            response = requests.post('https://api.assemblyai.com/v2/upload',
+                                     headers=headers,
+                                     data=read_file(audio_data))
+            print(response.json())
+            upload_url = response.json()['upload_url']
+            print('upload_url:', upload_url)
+
+            # Queue file for transcription.
+            endpoint = "https://api.assemblyai.com/v2/transcript"
+            json = {
+              "audio_url": upload_url
+            }
+            headers = {
+                "authorization": api_token,
+                "content-type": "application/json"
+            }
+            response = requests.post(endpoint, json=json, headers=headers)
+            data = response.json()
+            print(data)
+            transciption_id = data['id']
+            exc = TranscriptionNotReady()
+            exc.job_name = transciption_id
+            exc.file_key = None
+            raise exc
+
+    def recognize_ibm(self, audio_data, key, language="en-US", show_all=False):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the IBM Speech to Text API.
 
@@ -1302,22 +1575,19 @@ class Recognizer(AudioSource):
         Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
         """
         assert isinstance(audio_data, AudioData), "Data must be audio data"
-        assert isinstance(username, str), "``username`` must be a string"
-        assert isinstance(password, str), "``password`` must be a string"
+        assert isinstance(key, str), "``key`` must be a string"
 
         flac_data = audio_data.get_flac_data(
             convert_rate=None if audio_data.sample_rate >= 16000 else 16000,  # audio samples should be at least 16 kHz
             convert_width=None if audio_data.sample_width >= 2 else 2  # audio samples should be at least 16-bit
         )
-        url = "https://stream.watsonplatform.net/speech-to-text/api/v1/recognize?{}".format(urlencode({
-            "profanity_filter": "false",
-            "model": "{}_BroadbandModel".format(language),
-            "inactivity_timeout": -1,  # don't stop recognizing when the audio stream activity stops
-        }))
+        url = "https://gateway-wdc.watsonplatform.net/speech-to-text/api/v1/recognize"
         request = Request(url, data=flac_data, headers={
             "Content-Type": "audio/x-flac",
-            "X-Watson-Learning-Opt-Out": "true",  # prevent requests from being logged, for improved privacy
         })
+        request.get_method = lambda: 'POST'
+        username = 'apikey'
+        password = key
         authorization_value = base64.standard_b64encode("{}:{}".format(username, password).encode("utf-8")).decode("utf-8")
         request.add_header("Authorization", "Basic {}".format(authorization_value))
         try:
@@ -1330,17 +1600,23 @@ class Recognizer(AudioSource):
         result = json.loads(response_text)
 
         # return results
-        if show_all: return result
+        if show_all:
+            return result
+        print('result:')
+        pprint(result, indent=4)
         if "results" not in result or len(result["results"]) < 1 or "alternatives" not in result["results"][0]:
             raise UnknownValueError()
 
         transcription = []
+        confidence = None
         for utterance in result["results"]:
             if "alternatives" not in utterance: raise UnknownValueError()
             for hypothesis in utterance["alternatives"]:
                 if "transcript" in hypothesis:
                     transcription.append(hypothesis["transcript"])
-        return "\n".join(transcription)
+                    confidence = hypothesis["confidence"]
+                    break
+        return "\n".join(transcription), confidence
 
     lasttfgraph = ''
     tflabels = None

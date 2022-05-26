@@ -37,7 +37,7 @@ class InstallWithExtraSteps(install):
 
 
 setup(
-    name="SpeechRecognition",
+    name="speech-recognition",
     version=speech_recognition.__version__,
     packages=["speech_recognition"],
     include_package_data=True,
@@ -71,4 +71,5 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Multimedia :: Sound/Audio :: Speech",
     ],
+    install_requires=['requests>=2.26.0'],
 )
