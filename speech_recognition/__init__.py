@@ -22,7 +22,7 @@ import time
 import uuid
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "3.9.1"
+__version__ = "3.9.2"
 __license__ = "BSD"
 
 try:  # attempt to use the Python 2 modules
@@ -1310,12 +1310,14 @@ class Speaker(AudioSource):
         return result
 
     def __enter__(self):
+        s = self.device_info["maxOutputChannels"]
+        channel = int(s)
         assert self.stream is None, "This audio source is already inside a context manager"
         self.audio = self.pyaudio_module.PyAudio()
         try:
             self.stream = Speaker.SpeakerStream(
                 self.audio.open(
-                    input_device_index=self.device_index, channels=1,
+                    input_device_index=self.device_index, channels=channel,
                     format=self.format, rate=self.SAMPLE_RATE, frames_per_buffer=self.CHUNK,
                     input=True,  # stream is an input stream
                 )
