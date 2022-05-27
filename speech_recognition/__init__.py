@@ -22,7 +22,7 @@ import time
 import uuid
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "3.8.3"
+__version__ = "3.9.1"
 __license__ = "BSD"
 
 try:  # attempt to use the Python 2 modules
@@ -1269,7 +1269,7 @@ class Speaker(AudioSource):
             audio.terminate()
             raise
 
-        self.device_index = device_index
+        self.device_index = int(device_info["index"])
         self.format = self.pyaudio_module.paInt16  # 16-bit int sampling
         self.SAMPLE_WIDTH = self.pyaudio_module.get_sample_size(self.format)  # size of each sample
         self.SAMPLE_RATE = sample_rate  # sampling rate in Hertz
@@ -1313,7 +1313,7 @@ class Speaker(AudioSource):
         assert self.stream is None, "This audio source is already inside a context manager"
         self.audio = self.pyaudio_module.PyAudio()
         try:
-            self.stream = Microphone.MicrophoneStream(
+            self.stream = Speaker.SpeakerStream(
                 self.audio.open(
                     input_device_index=self.device_index, channels=1,
                     format=self.format, rate=self.SAMPLE_RATE, frames_per_buffer=self.CHUNK,

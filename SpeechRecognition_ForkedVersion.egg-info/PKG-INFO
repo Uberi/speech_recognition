@@ -1,12 +1,12 @@
 Metadata-Version: 2.1
 Name: SpeechRecognition-ForkedVersion
-Version: 3.8.3
-Summary: Library for performing speech recognition, with support for several engines and APIs, online and offline.
+Version: 3.9.1
+Summary: Forked version of orignal project with now capability to use speaker as a source for listening
 Home-page: https://github.com/Hashah2311/speech_recognition_fork
 Author: Hashah2311
 Author-email: shahharshit063@gmail.com
 License: BSD
-Keywords: speech recognition voice sphinx google wit bing api houndify ibm snowboy
+Keywords: speech recognition voice sphinx google wit bing api houndify ibm snowboy speaker
 Classifier: Development Status :: 5 - Production/Stable
 Classifier: Intended Audience :: Developers
 Classifier: Natural Language :: English
@@ -51,7 +51,7 @@ SpeechRecognition
     :target: https://travis-ci.org/Uberi/speech_recognition
     :alt: Continuous Integration Test Results
 
-Library for performing speech recognition, with support for several engines and APIs, online and offline.
+Forked version of orignal project with now capability to use speaker as a source for listening.
 
 **Note**: Hi I am Hashah2311, I have forked the orignal project and added system audio source ie now this module can listen system audio as well, **this is not the orignal version**.
 

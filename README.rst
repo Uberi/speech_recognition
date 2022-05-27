@@ -21,7 +21,7 @@ SpeechRecognition
     :target: https://travis-ci.org/Uberi/speech_recognition
     :alt: Continuous Integration Test Results
 
-Library for performing speech recognition, with support for several engines and APIs, online and offline.
+Forked version of orignal project with now capability to use speaker as a source for listening.
 
 **Note**: Hi I am Hashah2311, I have forked the orignal project and added system audio source ie now this module can listen system audio as well, **this is not the orignal version**.
 

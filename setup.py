@@ -46,10 +46,10 @@ setup(
     # PyPI metadata
     author="Hashah2311",
     author_email="shahharshit063@gmail.com",
-    description=speech_recognition.__doc__,
+    description="Forked version of orignal project with now capability to use speaker as a source for listening",
     long_description=open("README.rst").read(),
     license=speech_recognition.__license__,
-    keywords="speech recognition voice sphinx google wit bing api houndify ibm snowboy",
+    keywords="speech recognition voice sphinx google wit bing api houndify ibm snowboy speaker",
     url="https://github.com/Hashah2311/speech_recognition_fork",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
