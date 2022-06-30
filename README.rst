@@ -21,6 +21,10 @@ SpeechRecognition
     :target: https://travis-ci.org/Uberi/speech_recognition
     :alt: Continuous Integration Test Results
 
+.. image:: https://s3.amazonaws.com/prod.app.slai.io/static/media/SlaiEmbedWidget100x20.svg
+    :target: https://www.slai.io/s/5jwjr
+    :alt: Deploy SpeechRecognition on Slai
+
 Library for performing speech recognition, with support for several engines and APIs, online and offline.
 
 **UPDATE 2022-02-09**: Hey everyone! This project started as a tech demo, but these days it needs more time than I have to keep up with all the PRs and issues. Therefore, I'd like to put out an **open invite for collaborators** - just reach out at me@anthonyz.ca if you're interested!
