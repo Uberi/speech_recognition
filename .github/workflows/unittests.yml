@@ -1,0 +1,36 @@
+name: Unit tests
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: true
+      matrix:
+        python-version: ["3.9"]
+    
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y libpulse-dev libasound2-dev
+      - name: Install Python dependencies
+        run: |
+          python -m pip install pocketsphinx
+          python -m pip install .
+      - name: Test with unittest
+        run: |
+          python -m unittest discover --verbose

@@ -855,7 +855,7 @@ class Recognizer(AudioSource):
         if hypothesis is not None: return hypothesis.hypstr
         raise UnknownValueError()  # no transcriptions available
 
-    def recognize_google(self, audio_data, key=None, language="en-US", pfilter=0, show_all=False):
+    def recognize_google(self, audio_data, key=None, language="en-US", pfilter=0, show_all=False, with_confidence=False):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Google Speech Recognition API.
 
@@ -927,7 +927,9 @@ class Recognizer(AudioSource):
         # https://cloud.google.com/speech-to-text/docs/basics#confidence-values
         # "Your code should not require the confidence field as it is not guaranteed to be accurate, or even set, in any of the results."
         confidence = best_hypothesis.get("confidence", 0.5)
-        return best_hypothesis["transcript"], confidence
+        if with_confidence:
+            return best_hypothesis["transcript"], confidence
+        return best_hypothesis["transcript"]
 
     def recognize_google_cloud(self, audio_data, credentials_json=None, language="en-US", preferred_phrases=None, show_all=False):
         """
