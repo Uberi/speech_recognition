@@ -772,7 +772,7 @@ class Recognizer(AudioSource):
 
         Sphinx can also handle FSG or JSGF grammars. The parameter ``grammar`` expects a path to the grammar file. Note that if a JSGF grammar is passed, an FSG grammar will be created at the same location to speed up execution in the next run. If ``keyword_entries`` are passed, content of ``grammar`` will be ignored.
 
-        Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the Sphinx ``pocketsphinx.pocketsphinx.Decoder`` object resulting from the recognition.
+        Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the Sphinx ``pocketsphinx.Decoder`` object resulting from the recognition.
 
         Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if there are any issues with the Sphinx installation.
         """
@@ -782,13 +782,16 @@ class Recognizer(AudioSource):
 
         # import the PocketSphinx speech recognition module
         try:
-            from pocketsphinx import pocketsphinx, Jsgf, FsgModel
-
+            from pocketsphinx import Jsgf, FsgModel
         except ImportError:
             raise RequestError("missing PocketSphinx module: ensure that PocketSphinx is set up correctly.")
         except ValueError:
             raise RequestError("bad PocketSphinx installation; try reinstalling PocketSphinx version 0.0.9 or better.")
-        if not hasattr(pocketsphinx, "Decoder") or not hasattr(pocketsphinx.Decoder, "default_config"):
+        try:
+            from pocketsphinx import Decoder
+        except ImportError:
+            raise RequestError("bad PocketSphinx installation; try reinstalling PocketSphinx version 0.0.9 or better.")
+        if not hasattr(Decoder, "default_config"):
             raise RequestError("outdated PocketSphinx installation; ensure you have PocketSphinx version 0.0.9 or better.")
 
         if isinstance(language, str):  # directory containing language data
@@ -808,12 +811,12 @@ class Recognizer(AudioSource):
             raise RequestError("missing PocketSphinx phoneme dictionary file: \"{}\"".format(phoneme_dictionary_file))
 
         # create decoder object
-        config = pocketsphinx.Decoder.default_config()
+        config = Decoder.default_config()
         config.set_string("-hmm", acoustic_parameters_directory)  # set the path of the hidden Markov model (HMM) parameter files
         config.set_string("-lm", language_model_file)
         config.set_string("-dict", phoneme_dictionary_file)
         config.set_string("-logfn", os.devnull)  # disable logging (logging causes unwanted output in terminal)
-        decoder = pocketsphinx.Decoder(config)
+        decoder = Decoder(config)
 
         # obtain audio data
         raw_data = audio_data.get_raw_data(convert_rate=16000, convert_width=2)  # the included language models require audio to be 16-bit mono 16 kHz in little-endian format
