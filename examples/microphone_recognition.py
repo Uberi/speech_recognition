@@ -84,3 +84,11 @@ except sr.UnknownValueError:
     print("IBM Speech to Text could not understand audio")
 except sr.RequestError as e:
     print("Could not request results from IBM Speech to Text service; {0}".format(e))
+
+# recognize speech using whisper
+try:
+    print("Whisper thinks you said " + r.recognize_whisper(audio, language="english"))
+except sr.UnknownValueError:
+    print("Whisper could not understand audio")
+except sr.RequestError as e:
+    print("Could not request results from Whisper")
