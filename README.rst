@@ -38,6 +38,7 @@ Speech recognition engine/API support:
 * `Snowboy Hotword Detection <https://snowboy.kitt.ai/>`__ (works offline)
 * `Tensorflow <https://www.tensorflow.org/>`__
 * `Vosk API <https://github.com/alphacep/vosk-api/>`__ (works offline)
+* `OpenAI whisper <https://github.com/openai/whisper>`__ (works offline)
 
 **Quickstart:** ``pip install SpeechRecognition``. See the "Installing" section for more details.
 
@@ -93,6 +94,7 @@ To use all of the functionality of the library, you should have:
 * **Google API Client Library for Python** (required only if you need to use the Google Cloud Speech API, ``recognizer_instance.recognize_google_cloud``)
 * **FLAC encoder** (required only if the system is not x86-based Windows/Linux/OS X)
 * **Vosk** (required only if you need to use Vosk API speech recognition ``recognizer_instance.recognize_vosk``)
+* **Whisper** (required only if you need to use Whisper ``recognizer_instance.recognize_whisper``)
 
 The following requirements are optional, but can improve or extend functionality in some situations:
 
@@ -172,6 +174,12 @@ On Python 3, that library's functionality is built into the Python standard libr
 This is because monotonic time is necessary to handle cache expiry properly in the face of system time changes and other time-related issues. If monotonic time functionality is not available, then things like access token requests will not be cached.
 
 To install, use `Pip <https://pip.readthedocs.org/>`__: execute ``pip install monotonic`` in a terminal.
+
+Whisper (for Whisper users)
+~~~~~~~~~~~~~~~~~~~~~
+Whisper is **required if and only if you want to use whisper** (``recognizer_instance.recognize_whisper``).
+
+You can install it with ``python3 -m pip install git+https://github.com/openai/whisper.git``.
 
 Troubleshooting
 ---------------

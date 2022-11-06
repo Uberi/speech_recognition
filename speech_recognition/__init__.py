@@ -4,6 +4,7 @@
 
 import io
 import os
+import tempfile
 import sys
 import subprocess
 import wave
@@ -1666,6 +1667,44 @@ class Recognizer(AudioSource):
             for node_id in top_k:
                 human_string = self.tflabels[node_id]
                 return human_string
+
+    def recognize_whisper(self, audio_data, model="base", show_dict=False, load_options=None, language=None, translate=False, **transcribe_options):
+        """
+        Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using Whisper.
+
+        The recognition language is determined by ``language``, an uncapitalized full language name like "english" or "chinese". See the full language list at https://github.com/openai/whisper/blob/main/whisper/tokenizer.py
+
+        model can be any of tiny, base, small, medium, large, tiny.en, base.en, small.en, medium.en. See https://github.com/openai/whisper for more details.
+
+        If show_dict is true, returns the full dict response from Whisper, including the detected language. Otherwise returns only the transcription.
+
+        You can translate the result to english with Whisper by passing translate=True
+
+        Other values are passed directly to whisper. See https://github.com/openai/whisper/blob/main/whisper/transcribe.py for all options
+        """
+
+        assert isinstance(audio_data, AudioData), "Data must be audio data"
+        import whisper
+
+        if load_options or not hasattr(self, "whisper_model") or self.whisper_model.get(model) is None:
+            self.whisper_model = getattr(self, "whisper_model", {})
+            self.whisper_model[model] = whisper.load_model(model, **load_options or {})
+
+        with tempfile.NamedTemporaryFile(suffix=".wav") as f:
+            f.write(audio_data.get_wav_data())
+            f.flush()
+            result = self.whisper_model[model].transcribe(
+                f.name,
+                language=language,
+                task="translate" if translate else None,
+                **transcribe_options
+            )
+
+        if show_dict:
+            return result
+        else:
+            return result["text"]
+
             
     def recognize_vosk(self, audio_data, language='en'):
         from vosk import Model, KaldiRecognizer

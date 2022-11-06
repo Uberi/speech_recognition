@@ -300,6 +300,20 @@ Returns the most likely transcription if ``show_all`` is false (the default). Ot
 
 Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
 
+``recognizer_instance.recognize_whisper(audio_data: AudioData, model: str="base", show_dict: bool=False, load_options: Dict[Any, Any]=None, language:Optional[str]=None, translate:bool=False, **transcribe_options):``
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using Whisper.
+
+The recognition language is determined by ``language``, an uncapitalized full language name like "english" or "chinese". See the full language list at https://github.com/openai/whisper/blob/main/whisper/tokenizer.py
+
+model can be any of tiny, base, small, medium, large, tiny.en, base.en, small.en, medium.en. See https://github.com/openai/whisper for more details.
+
+If show_dict is true, returns the full dict response from Whisper, including the detected language. Otherwise returns only the transcription.
+
+You can translate the result to english with Whisper by passing translate=True
+
+Other values are passed directly to whisper. See https://github.com/openai/whisper/blob/main/whisper/transcribe.py for all options
+
 ``AudioSource``
 ---------------
 
