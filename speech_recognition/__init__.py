@@ -1684,6 +1684,7 @@ class Recognizer(AudioSource):
         """
 
         assert isinstance(audio_data, AudioData), "Data must be audio data"
+        import torch
         import whisper
 
         if load_options or not hasattr(self, "whisper_model") or self.whisper_model.get(model) is None:
@@ -1697,6 +1698,7 @@ class Recognizer(AudioSource):
                 f.name,
                 language=language,
                 task="translate" if translate else None,
+                fp16=torch.cuda.is_available(),
                 **transcribe_options
             )
 
