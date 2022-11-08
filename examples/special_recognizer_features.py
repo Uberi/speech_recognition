@@ -44,3 +44,12 @@ except sr.UnknownValueError:
     print("Google Cloud Speech could not understand audio")
 except sr.RequestError as e:
     print("Could not request results from Google Cloud Speech service; {0}".format(e))
+
+# boost keyword detection in speech using Deepgram Speech to Text
+DEEPGRAM_API_SECRET = "INSERT DEEPGRAM API KEY SECRET HERE"  # Deepgram API key secrets are 40-character lowercase hexadecimal strings.
+try:
+    print("Deepgram thinks you said " + r.recognize_deepgram(audio_en, key=DEEPGRAM_API_SECRET, keywords=['elephant:10']))
+except sr.UnknownValueError:
+    print("Deepgram could not understand audio")
+except sr.RequestError as e:
+    print("Could not request results from Deepgram; {0}".format(e))

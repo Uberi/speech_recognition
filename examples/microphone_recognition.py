@@ -92,3 +92,12 @@ except sr.UnknownValueError:
     print("Whisper could not understand audio")
 except sr.RequestError as e:
     print("Could not request results from Whisper")
+
+# recognize speech using Deepgram Speech to Text
+DEEPGRAM_API_SECRET = "INSERT DEEPGRAM API KEY SECRET HERE"  # Deepgram API key secrets are 40-character lowercase hexadecimal strings.
+try:
+    print("Deepgram thinks you said " + r.recognize_deepgram(audio, key=DEEPGRAM_API_SECRET))
+except sr.UnknownValueError:
+    print("Deepgram could not understand audio")
+except sr.RequestError as e:
+    print("Could not request results from Deepgram; {0}".format(e))

@@ -314,6 +314,17 @@ You can translate the result to english with Whisper by passing translate=True
 
 Other values are passed directly to whisper. See https://github.com/openai/whisper/blob/main/whisper/transcribe.py for all options
 
+``recognizer_instance.recognize_deepgram(audio_data: AudioData, key: str, tier: Optional[str] = "enhanced", model: Optional[str] = "general", version: Optional[str] = "latest", language: Optional[str] = "en-US", detect_language: bool = False, punctuate: bool = True, profanity_filter: bool = False, redact: Optional[str] = None, diarize: bool = False, diarize_version: Optional[str] = None, ner: bool = True, multichannel: bool = False, alternatives: int = 1, numerals: bool = True, search: Optional[Iterable[str]] = None, replace: Optional[Dict[str, str]] = None, keywords: Optional[Iterable[str]] = None, paragraphs: bool = False, summarize: bool = False, detect_topics: bool = False, utterances: bool = False, utt_split: Optional[float] = None, show_all: bool = False) -> Union[str, Dict[str, Any]]``
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Performs speech recognition of ``audio_data`` (an ``AudioData`` instance) using the Deepgram speech recognition API.
+
+Deepgram uses an API secret to authenticate users and authorize requests. To obtain an API secret, create an account with `Deepgram <https://console.deepgram.com>`__. The API secret is a 40-character hexadecimal string that can only be retrieved at creation time. It is identified using a UUID, which is not the API secret and shouldn't be used here.
+
+If ``show_all`` is false (the default), returns the most likely transcript string; otherwise, returns the raw API JSON response.
+
+Details of the various features can be found in the `Deepgram Documentation <https://developers.deepgram.com/>`__.
+
 ``AudioSource``
 ---------------
 
