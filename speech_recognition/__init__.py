@@ -29,7 +29,7 @@ except (ModuleNotFoundError, ImportError):
     pass
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "3.8.1"
+__version__ = "3.9.0"
 __license__ = "BSD"
 
 try:  # attempt to use the Python 2 modules
