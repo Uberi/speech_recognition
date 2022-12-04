@@ -48,6 +48,7 @@ setup(
     author_email="azhang9@gmail.com",
     description=speech_recognition.__doc__,
     long_description=open("README.rst").read(),
+    long_description_content_type="text/x-rst",
     license=speech_recognition.__license__,
     keywords="speech recognition voice sphinx google wit bing api houndify ibm snowboy",
     url="https://github.com/Uberi/speech_recognition#readme",
