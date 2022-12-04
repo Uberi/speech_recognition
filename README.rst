@@ -176,7 +176,7 @@ This is because monotonic time is necessary to handle cache expiry properly in t
 To install, use `Pip <https://pip.readthedocs.org/>`__: execute ``pip install monotonic`` in a terminal.
 
 Whisper (for Whisper users)
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Whisper is **required if and only if you want to use whisper** (``recognizer_instance.recognize_whisper``).
 
 You can install it with ``python3 -m pip install git+https://github.com/openai/whisper.git``.
