@@ -1510,7 +1510,7 @@ class Recognizer(AudioSource):
         if check_existing:
             # Query status.
             transciption_id = job_name
-            endpoint = f"https://api.assemblyai.com/v2/transcript/{transciption_id}"
+            endpoint = "https://api.assemblyai.com/v2/transcript/{}".format(transcription_id)
             headers = {
                 "authorization": api_token,
             }
