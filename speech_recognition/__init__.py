@@ -1684,6 +1684,8 @@ class Recognizer(AudioSource):
         """
 
         assert isinstance(audio_data, AudioData), "Data must be audio data"
+        import numpy as np
+        import soundfile as sf
         import torch
         import whisper
 
@@ -1691,16 +1693,19 @@ class Recognizer(AudioSource):
             self.whisper_model = getattr(self, "whisper_model", {})
             self.whisper_model[model] = whisper.load_model(model, **load_options or {})
 
-        with tempfile.NamedTemporaryFile(suffix=".wav") as f:
-            f.write(audio_data.get_wav_data())
-            f.flush()
-            result = self.whisper_model[model].transcribe(
-                f.name,
-                language=language,
-                task="translate" if translate else None,
-                fp16=torch.cuda.is_available(),
-                **transcribe_options
-            )
+        # 16 kHz https://github.com/openai/whisper/blob/28769fcfe50755a817ab922a7bc83483159600a9/whisper/audio.py#L98-L99
+        wav_bytes = audio_data.get_wav_data(convert_rate=16000)
+        wav_stream = io.BytesIO(wav_bytes)
+        audio_array, sampling_rate = sf.read(wav_stream)
+        audio_array = audio_array.astype(np.float32)
+
+        result = self.whisper_model[model].transcribe(
+            audio_array,
+            language=language,
+            task="translate" if translate else None,
+            fp16=torch.cuda.is_available(),
+            **transcribe_options
+        )
 
         if show_dict:
             return result
