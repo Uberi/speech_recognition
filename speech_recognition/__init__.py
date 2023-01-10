@@ -1770,7 +1770,6 @@ class PortableNamedTemporaryFile(object):
 
     def __enter__(self):
         # create the temporary file and open it
-        import tempfile
         file_descriptor, file_path = tempfile.mkstemp()
         self._file = os.fdopen(file_descriptor, self.mode)
 
