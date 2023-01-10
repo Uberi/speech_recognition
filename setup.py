@@ -10,11 +10,6 @@ from distutils import log
 
 import speech_recognition
 
-if sys.version_info < (2, 6):
-    print("THIS MODULE REQUIRES PYTHON 2.6, 2.7, OR 3.3+. YOU ARE CURRENTLY USING PYTHON {0}".format(sys.version))
-    sys.exit(1)
-
-
 FILES_TO_MARK_EXECUTABLE = ["flac-linux-x86", "flac-linux-x86_64", "flac-mac", "flac-win32.exe"]
 
 
@@ -62,13 +57,7 @@ setup(
         "Operating System :: MacOS :: MacOS X",
         "Operating System :: Other OS",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.3",
-        "Programming Language :: Python :: 3.4",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
@@ -76,5 +65,6 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Multimedia :: Sound/Audio :: Speech",
     ],
+    python_requires=">=3.7",
     install_requires=['requests>=2.26.0'],
 )
