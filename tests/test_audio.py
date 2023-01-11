@@ -9,7 +9,6 @@ import speech_recognition as sr
 class TestAudioFile(unittest.TestCase):
     def assertSimilar(self, bytes_1, bytes_2):
         for i, (byte_1, byte_2) in enumerate(zip(bytes_1, bytes_2)):
-            if str is bytes: byte_1, byte_2 = ord(byte_1), ord(byte_2)  # Python 2 compatibility - get the bytes as integer values
             if abs(byte_1 - byte_2) > 2:
                 raise AssertionError("{} is really different from {} at index {}".format(bytes_1, bytes_2, i))
 

@@ -32,13 +32,9 @@ __author__ = "Anthony Zhang (Uberi)"
 __version__ = "3.9.0"
 __license__ = "BSD"
 
-try:  # attempt to use the Python 2 modules
-    from urllib import urlencode
-    from urllib2 import Request, urlopen, URLError, HTTPError
-except ImportError:  # use the Python 3 modules
-    from urllib.parse import urlencode
-    from urllib.request import Request, urlopen
-    from urllib.error import URLError, HTTPError
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
+from urllib.error import URLError, HTTPError
 
 
 class WaitTimeoutError(Exception): pass
@@ -173,7 +169,7 @@ class Microphone(AudioSource):
 
                 # compute RMS of debiased audio
                 energy = -audioop.rms(buffer, 2)
-                energy_bytes = chr(energy & 0xFF) + chr((energy >> 8) & 0xFF) if bytes is str else bytes([energy & 0xFF, (energy >> 8) & 0xFF])  # Python 2 compatibility
+                energy_bytes = bytes([energy & 0xFF, (energy >> 8) & 0xFF])
                 debiased_energy = audioop.rms(audioop.add(buffer, energy_bytes * (len(buffer) // 2), 2), 2)
 
                 if debiased_energy > 30:  # probably actually audio
@@ -1065,11 +1061,8 @@ class Recognizer(AudioSource):
         try:
             from time import monotonic  # we need monotonic time to avoid being affected by system clock changes, but this is only available in Python 3.3+
         except ImportError:
-            try:
-                from monotonic import monotonic  # use time.monotonic backport for Python 2 if available (from https://pypi.python.org/pypi/monotonic)
-            except (ImportError, RuntimeError):
-                expire_time = None  # monotonic time not available, don't cache access tokens
-                allow_caching = False  # don't allow caching, since monotonic time isn't available
+            expire_time = None  # monotonic time not available, don't cache access tokens
+            allow_caching = False  # don't allow caching, since monotonic time isn't available
         if expire_time is None or monotonic() > expire_time:  # caching not enabled, first credential request, or the access token from the previous one expired
             # get an access token using OAuth
             credential_url = "https://" + location + ".api.cognitive.microsoft.com/sts/v1.0/issueToken"
@@ -1162,11 +1155,8 @@ class Recognizer(AudioSource):
         try:
             from time import monotonic  # we need monotonic time to avoid being affected by system clock changes, but this is only available in Python 3.3+
         except ImportError:
-            try:
-                from monotonic import monotonic  # use time.monotonic backport for Python 2 if available (from https://pypi.python.org/pypi/monotonic)
-            except (ImportError, RuntimeError):
-                expire_time = None  # monotonic time not available, don't cache access tokens
-                allow_caching = False  # don't allow caching, since monotonic time isn't available
+            expire_time = None  # monotonic time not available, don't cache access tokens
+            allow_caching = False  # don't allow caching, since monotonic time isn't available
         if expire_time is None or monotonic() > expire_time:  # caching not enabled, first credential request, or the access token from the previous one expired
             # get an access token using OAuth
             credential_url = "https://api.cognitive.microsoft.com/sts/v1.0/issueToken"
@@ -1780,7 +1770,6 @@ class PortableNamedTemporaryFile(object):
 
     def __enter__(self):
         # create the temporary file and open it
-        import tempfile
         file_descriptor, file_path = tempfile.mkstemp()
         self._file = os.fdopen(file_descriptor, self.mode)
 
