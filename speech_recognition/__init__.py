@@ -893,16 +893,12 @@ class Recognizer(AudioSource):
         except URLError as e:
             raise RequestError("recognition connection failed: {}".format(e.reason))
         response_text = response.read().decode("utf-8")
-        # print('response_text:')
-        # pprint(response_text, indent=4)
 
         # ignore any blank blocks
         actual_result = []
         for line in response_text.split("\n"):
             if not line: continue
-            result = json.loads(line)["result"]            
-            # print('result1:')
-            # pprint(result, indent=4)
+            result = json.loads(line)["result"]
             if len(result) != 0:
                 actual_result = result[0]
                 break
@@ -910,8 +906,7 @@ class Recognizer(AudioSource):
         # return results
         if show_all:
             return actual_result
-        print('result2:')
-        pprint(actual_result, indent=4)
+
         if not isinstance(actual_result, dict) or len(actual_result.get("alternative", [])) == 0: raise UnknownValueError()
 
         if "confidence" in actual_result["alternative"]:
@@ -1124,8 +1119,6 @@ class Recognizer(AudioSource):
         result = json.loads(response_text)
 
         # return results
-        print('result:')
-        pprint(result, indent=4)
         if show_all:
             return result
         if "RecognitionStatus" not in result or result["RecognitionStatus"] != "Success" or "NBest" not in result:
@@ -1305,8 +1298,6 @@ class Recognizer(AudioSource):
 
         # return results
         if show_all: return result
-        print('result:')
-        pprint(result, indent=4)
         if "Disambiguation" not in result or result["Disambiguation"] is None:
             raise UnknownValueError()
         return result['Disambiguation']['ChoiceData'][0]['Transcription'], result['Disambiguation']['ChoiceData'][0]['ConfidenceScore']
@@ -1395,8 +1386,6 @@ class Recognizer(AudioSource):
                     raise
             
             job = status['TranscriptionJob']
-            print('status0:')
-            pprint(status, indent=4)
             if job['TranscriptionJobStatus'] in ['COMPLETED'] and 'TranscriptFileUri' in job['Transcript']:
 
                 # Retrieve transcription JSON containing transcript.
@@ -1404,8 +1393,6 @@ class Recognizer(AudioSource):
                 import urllib.request, json
                 with urllib.request.urlopen(transcript_uri) as json_data:
                     d = json.load(json_data)
-                    print('result:')
-                    pprint(d, indent=4)
                     confidences = []
                     for item in d['results']['items']:
                         confidences.append(float(item['alternatives'][0]['confidence']))
@@ -1506,7 +1493,6 @@ class Recognizer(AudioSource):
             }
             response = requests.get(endpoint, headers=headers)
             data = response.json()
-            print('Raw response: %s' % data)
             status = data['status']
 
             if status == 'error':
@@ -1533,9 +1519,7 @@ class Recognizer(AudioSource):
             response = requests.post('https://api.assemblyai.com/v2/upload',
                                      headers=headers,
                                      data=read_file(audio_data))
-            print(response.json())
             upload_url = response.json()['upload_url']
-            print('upload_url:', upload_url)
 
             # Queue file for transcription.
             endpoint = "https://api.assemblyai.com/v2/transcript"
@@ -1548,7 +1532,6 @@ class Recognizer(AudioSource):
             }
             response = requests.post(endpoint, json=json, headers=headers)
             data = response.json()
-            print(data)
             transciption_id = data['id']
             exc = TranscriptionNotReady()
             exc.job_name = transciption_id
@@ -1595,8 +1578,6 @@ class Recognizer(AudioSource):
         # return results
         if show_all:
             return result
-        print('result:')
-        pprint(result, indent=4)
         if "results" not in result or len(result["results"]) < 1 or "alternatives" not in result["results"][0]:
             raise UnknownValueError()
 
