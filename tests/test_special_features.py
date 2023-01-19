@@ -25,6 +25,12 @@ class TestSpecialFeatures(unittest.TestCase):
         if set_tested != set_reference:
             raise self.failureException(msg if msg is not None else "%r doesn't consist of the same words as %r" % (tested, reference))
 
+    @unittest.skipUnless("DEEPGRAM_API_SECRET" in os.environ, "requires Deepgram API secret to be specified in DEEPGRAM_API_SECRET environment variables")
+    def test_deepgram_keywords(self):
+        r = sr.Recognizer()
+        with sr.AudioFile(self.AUDIO_FILE_EN) as source: audio = r.record(source)
+        self.assertEqual(r.recognize_deepgram(audio, key=os.environ["DEEPGRAM_API_SECRET"], tier='base', keywords=['elephant:1000000']), "elephant elephant elephant")
+
 
 if __name__ == "__main__":
     unittest.main()

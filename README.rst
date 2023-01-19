@@ -39,6 +39,7 @@ Speech recognition engine/API support:
 * `Tensorflow <https://www.tensorflow.org/>`__
 * `Vosk API <https://github.com/alphacep/vosk-api/>`__ (works offline)
 * `OpenAI whisper <https://github.com/openai/whisper>`__ (works offline)
+* `Deepgram <https://www.deepgram.com>`__
 
 **Quickstart:** ``pip install SpeechRecognition``. See the "Installing" section for more details.
 
@@ -344,6 +345,7 @@ Authors
     tb0hdan (Bohdan Turkynewych)
     Thynix <steve@asksteved.com> (Steve Dougherty)
     beeedy <broderick.carlin@gmail.com> (Broderick Carlin)
+    ajsyp <adam@deepgram.com> (Adam Sypniewski)
 
 Please report bugs and suggestions at the `issue tracker <https://github.com/Uberi/speech_recognition/issues>`__!
 

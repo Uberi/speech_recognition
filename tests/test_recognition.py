@@ -97,5 +97,12 @@ class TestRecognition(unittest.TestCase):
         with sr.AudioFile(self.AUDIO_FILE_ZH) as source: audio = r.record(source)
         self.assertEqual(r.recognize_whisper(audio, model="small", language="chinese", **self.WHISPER_CONFIG), u"砸自己的腳")
 
+    @unittest.skipUnless("DEEPGRAM_API_SECRET" in os.environ, "requires Deepgram API secret to be specified in DEEPGRAM_API_SECRET environment variables")
+    def test_deepgram(self):
+        r = sr.Recognizer()
+        with sr.AudioFile(self.AUDIO_FILE_EN) as source: audio = r.record(source)
+        self.assertEqual(r.recognize_deepgram(audio, key=os.environ["DEEPGRAM_API_SECRET"]), "123")
+
+
 if __name__ == "__main__":
     unittest.main()
