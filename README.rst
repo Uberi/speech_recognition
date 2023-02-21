@@ -39,6 +39,7 @@ Speech recognition engine/API support:
 * `Tensorflow <https://www.tensorflow.org/>`__
 * `Vosk API <https://github.com/alphacep/vosk-api/>`__ (works offline)
 * `OpenAI whisper <https://github.com/openai/whisper>`__ (works offline)
+* `Speechmatics ASR API <https://portal.speechmatics.com/>`__
 
 **Quickstart:** ``pip install SpeechRecognition``. See the "Installing" section for more details.
 
@@ -95,6 +96,7 @@ To use all of the functionality of the library, you should have:
 * **FLAC encoder** (required only if the system is not x86-based Windows/Linux/OS X)
 * **Vosk** (required only if you need to use Vosk API speech recognition ``recognizer_instance.recognize_vosk``)
 * **Whisper** (required only if you need to use Whisper ``recognizer_instance.recognize_whisper``)
+* **Speechmatics** (required only if you need to use Speechmatics ``recognizer_instance.recognize_speechmatics``)
 
 The following requirements are optional, but can improve or extend functionality in some situations:
 
@@ -168,6 +170,12 @@ Whisper (for Whisper users)
 Whisper is **required if and only if you want to use whisper** (``recognizer_instance.recognize_whisper``).
 
 You can install it with ``python3 -m pip install git+https://github.com/openai/whisper.git soundfile``.
+
+Speechmatics (for Speechmatics users)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Speechmatics is **required if and only if you want to use speechmatics** (``recognizer_instance.recognize_speechmatics``).
+
+You can install it with ``python3 -m pip install speechmatics-python``.
 
 Troubleshooting
 ---------------
