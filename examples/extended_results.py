@@ -16,6 +16,16 @@ r = sr.Recognizer()
 with sr.AudioFile(AUDIO_FILE) as source:
     audio = r.record(source)  # read the entire audio file
 
+# recognize speech using Speechmatics
+SPEECHMATICS_KEY = "INSERT SPEECHMATICS API KEY HERE"
+try:
+    print("Speechmatics results:")
+    pprint(r.recognize_speechmatics(audio, key=SPEECHMATICS_KEY, transcript_format="json-v2"))
+except sr.UnknownValueError:
+    print("Speechmatics could not understand audio")
+except sr.RequestError as e:
+    print("Speechmatics error; {0}".format(e))
+
 # recognize speech using Sphinx
 try:
     print("Sphinx thinks you said " + r.recognize_sphinx(audio))

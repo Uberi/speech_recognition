@@ -1702,6 +1702,45 @@ class Recognizer(AudioSource):
         
         return finalRecognition
 
+    def recognize_speechmatics(self, audio_data, key=None, language="en", transcript_format="txt"):
+        """
+        Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Speechmatics ASR
+
+        The key value is your speechmatics API key. You can get an API key by creating an account and signing into the portal at https://portal.speechmatics.com/manage-access/.
+
+        The recognition language is determined by ``language``, an RFC5646 language tag like "en" or "es". The full list of supported languages can be found at https://docs.speechmatics.com/introduction/supported-languages.
+
+        Returns a text representation of the transcript by default. You can alson get a json representation of the transcript by setting transcript_format='json-v2', which comes with a range of meta-data about each word in the transcript. The full transcript schema is documented here: https://docs.speechmatics.com/features. You can also request an SRT format by setting `format='srt'`
+
+        Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
+        """
+        assert isinstance(audio_data, AudioData), "Data must be audio data"
+        assert isinstance(key, str), "``key`` must be a string"
+
+        try:
+            from speechmatics.models import ConnectionSettings, BatchTranscriptionConfig
+            from speechmatics.batch_client import BatchClient
+            from speechmatics.constants import BATCH_SELF_SERVICE_URL
+        except:
+            raise RequestError("missing speechmatics python module: install using `pip install speechmatics-python`")
+
+        wav_data = audio_data.get_wav_data()
+        audio_input = ("audio_file.wav", wav_data)
+        settings = ConnectionSettings(
+            url=BATCH_SELF_SERVICE_URL,
+            auth_token=key,
+        )
+        conf = BatchTranscriptionConfig(
+            language=language,
+        )
+        with BatchClient(settings) as client:
+            job_id = client.submit_job(
+                audio=audio_input,
+                transcription_config=conf,
+            )
+            transcript = client.wait_for_completion(job_id, transcription_format=transcript_format)
+            return transcript
+
 def get_flac_converter():
     """Returns the absolute path of a FLAC converter executable, or raises an OSError if none can be found."""
     flac_converter = shutil_which("flac")  # check for installed version first
