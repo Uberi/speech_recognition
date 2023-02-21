@@ -44,7 +44,7 @@ class TestRecognition(unittest.TestCase):
     def test_speechmatics_french(self):
         r = sr.Recognizer()
         with sr.AudioFile(self.AUDIO_FILE_FR) as source: audio = r.record(source)
-        self.assertEqual(r.recognize_speechmatics(audio, key=os.environ["SPEECHMATICS_KEY"], language="fr"), u"Essaye la dictée numéro un.")
+        self.assertEqual(r.recognize_speechmatics(audio, key=os.environ["SPEECHMATICS_KEY"], language="fr"), u"C'est la dictée numéro un.")
 
     @unittest.skipUnless("SPEECHMATICS_KEY" in os.environ, "requires Speechmatics key to be specified in SPEECHMATICS_KEY environment variable")
     def test_speechmatics_mandarin(self):

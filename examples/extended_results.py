@@ -20,7 +20,7 @@ with sr.AudioFile(AUDIO_FILE) as source:
 SPEECHMATICS_KEY = "INSERT SPEECHMATICS API KEY HERE"
 try:
     print("Speechmatics results:")
-    pprint(r.recognize_sphinx(audio, key=SPEECHMATICS_KEY, transcript_format="json-v2"))
+    pprint(r.recognize_speechmatics(audio, key=SPEECHMATICS_KEY, transcript_format="json-v2"))
 except sr.UnknownValueError:
     print("Speechmatics could not understand audio")
 except sr.RequestError as e:

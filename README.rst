@@ -175,7 +175,7 @@ Speechmatics (for Speechmatics users)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Speechmatics is **required if and only if you want to use speechmatics** (``recognizer_instance.recognize_speechmatics``).
 
-You can install it with ``python3 -m pip install speechmatics-python``.
+You can install it with ``python3 -m pip install speechmatics-python``. You will also need an API key from `<https://portal.speechmatics.com/manage-access/>__`.
 
 Troubleshooting
 ---------------
