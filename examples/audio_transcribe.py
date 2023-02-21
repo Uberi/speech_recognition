@@ -13,10 +13,10 @@ r = sr.Recognizer()
 with sr.AudioFile(AUDIO_FILE) as source:
     audio = r.record(source)  # read the entire audio file
 
-# recognize speech using Speechmatics Speech to Text
-API_KEY = "INSERT API KEY HERE"
+# recognize speech using Speechmatics
+SPEECHMATICS_KEY = "INSERT SPEECHMATICS API KEY HERE"
 try:
-    print("Speechmatics thinks you said " + r.recognize_ibm(audio, key=API_KEY))
+    print("Speechmatics thinks you said " + r.recognize_ibm(audio, key=SPEECHMATICS_KEY))
 except sr.UnknownValueError:
     print("Speechmatics could not understand audio")
 except sr.RequestError as e:
