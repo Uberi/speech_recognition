@@ -1724,9 +1724,7 @@ class Recognizer(AudioSource):
         except:
             raise RequestError("missing speechmatics python module: install using `pip install speechmatics-python`")
 
-        wav_data = audio_data.get_wav_data(
-            convert_rate=None if audio_data.sample_rate >= 16000 else 16000  # audio samples must be at least 16 kHz
-        )
+        wav_data = audio_data.get_wav_data()
         audio_input = ("audio_file.wav", wav_data)
         settings = ConnectionSettings(
             url=BATCH_SELF_SERVICE_URL,
