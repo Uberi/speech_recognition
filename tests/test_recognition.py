@@ -34,6 +34,24 @@ class TestRecognition(unittest.TestCase):
         with sr.AudioFile(self.AUDIO_FILE_ZH) as source: audio = r.record(source)
         self.assertEqual(r.recognize_google(audio, language="zh-CN"), u"砸自己的脚")
 
+    @unittest.skipUnless("SPEECHMATICS_KEY" in os.environ, "requires Speechmatics key to be specified in SPEECHMATICS_KEY environment variable")
+    def test_speechmatics_english(self):
+        r = sr.Recognizer()
+        with sr.AudioFile(self.AUDIO_FILE_EN) as source: audio = r.record(source)
+        self.assertEqual(r.recognize_speechmatics(audio, key=os.environ["SPEECHMATICS_KEY"]), "One, two, three.")
+
+    @unittest.skipUnless("SPEECHMATICS_KEY" in os.environ, "requires Speechmatics key to be specified in SPEECHMATICS_KEY environment variable")
+    def test_speechmatics_french(self):
+        r = sr.Recognizer()
+        with sr.AudioFile(self.AUDIO_FILE_FR) as source: audio = r.record(source)
+        self.assertEqual(r.recognize_speechmatics(audio, key=os.environ["SPEECHMATICS_KEY"], language="fr"), u"C'est la dictée numéro un.")
+
+    @unittest.skipUnless("SPEECHMATICS_KEY" in os.environ, "requires Speechmatics key to be specified in SPEECHMATICS_KEY environment variable")
+    def test_speechmatics_mandarin(self):
+        r = sr.Recognizer()
+        with sr.AudioFile(self.AUDIO_FILE_ZH) as source: audio = r.record(source)
+        self.assertEqual(r.recognize_speechmatics(audio, key=os.environ["SPEECHMATICS_KEY"], language="cmn"), u"砸自己的脚。")
+
     @unittest.skipUnless("WIT_AI_KEY" in os.environ, "requires Wit.ai key to be specified in WIT_AI_KEY environment variable")
     def test_wit_english(self):
         r = sr.Recognizer()

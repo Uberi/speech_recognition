@@ -314,6 +314,19 @@ You can translate the result to english with Whisper by passing translate=True
 
 Other values are passed directly to whisper. See https://github.com/openai/whisper/blob/main/whisper/transcribe.py for all options
 
+``recognize_speechmatics(self, audio_data, key=None, language="en", transcript_format="txt")``
+----------------------------------------------------------------------------------------------
+
+Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Speechmatics ASR
+
+The key value is your speechmatics API key. You can get an API key by creating an account and signing into the portal at https://portal.speechmatics.com/manage-access/.
+
+The recognition language is determined by ``language``, an RFC5646 language tag like "en" or "es". The full list of supported languages can be found at https://docs.speechmatics.com/introduction/supported-languages.
+
+Returns a text representation of the transcript by default. You can alson get a json representation of the transcript by setting transcript_format='json-v2', which comes with a range of meta-data about each word in the transcript. The full transcript schema is documented here: https://docs.speechmatics.com/features. You can also request an SRT format by setting `format='srt'`
+
+Raises errors directly from the speechmatics-python package. Read more at https://speechmatics.github.io/speechmatics-python/exceptions.html.
+
 ``AudioSource``
 ---------------
 
