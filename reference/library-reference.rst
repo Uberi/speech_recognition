@@ -325,7 +325,7 @@ The recognition language is determined by ``language``, an RFC5646 language tag 
 
 Returns a text representation of the transcript by default. You can alson get a json representation of the transcript by setting transcript_format='json-v2', which comes with a range of meta-data about each word in the transcript. The full transcript schema is documented here: https://docs.speechmatics.com/features. You can also request an SRT format by setting `format='srt'`
 
-Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
+Raises errors directly from the speechmatics-python package. Read more at https://speechmatics.github.io/speechmatics-python/exceptions.html.
 
 ``AudioSource``
 ---------------
