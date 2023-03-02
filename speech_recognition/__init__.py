@@ -36,6 +36,8 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
 
+from .recognizers import whisper
+
 
 class WaitTimeoutError(Exception): pass
 
@@ -1683,6 +1685,7 @@ class Recognizer(AudioSource):
         else:
             return result["text"]
 
+    recognize_whisper_api = whisper.recognize_whisper_api
             
     def recognize_vosk(self, audio_data, language='en'):
         from vosk import Model, KaldiRecognizer
