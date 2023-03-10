@@ -34,20 +34,14 @@ from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
 
 from .audio import AudioData, get_flac_converter
-from .exceptions import RequestError
+from .exceptions import (
+    RequestError,
+    TranscriptionFailed, 
+    TranscriptionNotReady,
+    UnknownValueError,
+    WaitTimeoutError,
+)
 from .recognizers import whisper
-
-
-class WaitTimeoutError(Exception): pass
-
-
-class UnknownValueError(Exception): pass
-
-
-class TranscriptionNotReady(Exception): pass
-
-
-class TranscriptionFailed(Exception): pass
 
 
 class AudioSource(object):
