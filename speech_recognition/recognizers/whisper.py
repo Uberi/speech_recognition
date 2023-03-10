@@ -4,7 +4,7 @@ import os
 from io import BytesIO
 
 from speech_recognition.audio import AudioData
-from speech_recognition.exceptions import RequestError
+from speech_recognition.exceptions import SetupError
 
 
 def recognize_whisper_api(
@@ -24,12 +24,12 @@ def recognize_whisper_api(
     if not isinstance(audio_data, AudioData):
         raise ValueError("``audio_data`` must be an ``AudioData`` instance")
     if api_key is None and os.environ.get("OPENAI_API_KEY") is None:
-        raise ValueError("Set environment variable ``OPENAI_API_KEY``")
+        raise SetupError("Set environment variable ``OPENAI_API_KEY``")
 
     try:
         import openai
     except ImportError:
-        raise RequestError(
+        raise SetupError(
             "missing openai module: ensure that openai is set up correctly."
         )
 
