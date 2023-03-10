@@ -176,7 +176,7 @@ Whisper API (for Whisper API users)
 
 The library `openai <https://pypi.org/project/openai/>`__ is **required if and only if you want to use Whisper API** (``recognizer_instance.recognize_whisper_api``).
 
-If not installed, everything in the library will still work, except calling ``recognizer_instance.recognize_whisper_api`` will raise an ``ModuleNotFoundError``.
+If not installed, everything in the library will still work, except calling ``recognizer_instance.recognize_whisper_api`` will raise an ``RequestError``.
 
 You can install it with ``python3 -m pip install openai``.
 
