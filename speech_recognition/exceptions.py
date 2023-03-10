@@ -1,3 +1,7 @@
+class SetupError(Exception):
+    pass
+
+
 class WaitTimeoutError(Exception):
     pass
 
