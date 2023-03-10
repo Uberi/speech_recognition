@@ -92,3 +92,10 @@ except sr.UnknownValueError:
     print("Whisper could not understand audio")
 except sr.RequestError as e:
     print("Could not request results from Whisper")
+
+# recognize speech using Whisper API
+OPENAI_API_KEY = "INSERT OPENAI API KEY HERE"
+try:
+    print(f"Whisper API thinks you said {r.recognize_whisper_api(audio, api_key=OPENAI_API_KEY)}")
+except sr.RequestError as e:
+    print("Could not request results from Whisper API")

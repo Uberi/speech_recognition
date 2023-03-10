@@ -39,6 +39,7 @@ Speech recognition engine/API support:
 * `Tensorflow <https://www.tensorflow.org/>`__
 * `Vosk API <https://github.com/alphacep/vosk-api/>`__ (works offline)
 * `OpenAI whisper <https://github.com/openai/whisper>`__ (works offline)
+* `Whisper API <https://platform.openai.com/docs/guides/speech-to-text>`__
 
 **Quickstart:** ``pip install SpeechRecognition``. See the "Installing" section for more details.
 
@@ -88,13 +89,14 @@ Requirements
 
 To use all of the functionality of the library, you should have:
 
-* **Python** 3.7+ (required)
+* **Python** 3.8+ (required)
 * **PyAudio** 0.2.11+ (required only if you need to use microphone input, ``Microphone``)
 * **PocketSphinx** (required only if you need to use the Sphinx recognizer, ``recognizer_instance.recognize_sphinx``)
 * **Google API Client Library for Python** (required only if you need to use the Google Cloud Speech API, ``recognizer_instance.recognize_google_cloud``)
 * **FLAC encoder** (required only if the system is not x86-based Windows/Linux/OS X)
 * **Vosk** (required only if you need to use Vosk API speech recognition ``recognizer_instance.recognize_vosk``)
 * **Whisper** (required only if you need to use Whisper ``recognizer_instance.recognize_whisper``)
+* **openai** (required only if you need to use Whisper API speech recognition ``recognizer_instance.recognize_whisper_api``)
 
 The following requirements are optional, but can improve or extend functionality in some situations:
 
@@ -105,7 +107,7 @@ The following sections go over the details of each requirement.
 Python
 ~~~~~~
 
-The first software requirement is `Python 3.7+ <https://www.python.org/downloads/>`__. This is required to use the library.
+The first software requirement is `Python 3.8+ <https://www.python.org/downloads/>`__. This is required to use the library.
 
 PyAudio (for microphone users)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -168,6 +170,15 @@ Whisper (for Whisper users)
 Whisper is **required if and only if you want to use whisper** (``recognizer_instance.recognize_whisper``).
 
 You can install it with ``python3 -m pip install git+https://github.com/openai/whisper.git soundfile``.
+
+Whisper API (for Whisper API users) 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The library `openai <https://pypi.org/project/openai/>`__ is **required if and only if you want to use Whisper API** (``recognizer_instance.recognize_whisper_api``).
+
+If not installed, everything in the library will still work, except calling ``recognizer_instance.recognize_whisper_api`` will raise an ``RequestError``.
+
+You can install it with ``python3 -m pip install openai``.
 
 Troubleshooting
 ---------------
