@@ -4,6 +4,7 @@ import os
 from io import BytesIO
 
 from speech_recognition.audio import AudioData
+from speech_recognition.exceptions import RequestError
 
 
 def recognize_whisper_api(
@@ -25,7 +26,12 @@ def recognize_whisper_api(
     if api_key is None and os.environ.get("OPENAI_API_KEY") is None:
         raise ValueError("Set environment variable ``OPENAI_API_KEY``")
 
-    import openai
+    try:
+        import openai
+    except ImportError:
+        raise RequestError(
+            "missing openai module: ensure that openai is set up correctly."
+        )
 
     wav_data = BytesIO(audio_data.get_wav_data())
     wav_data.name = "SpeechRecognition_audio.wav"
