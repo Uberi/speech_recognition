@@ -323,6 +323,8 @@ This function requires an OpenAI account; visit https://platform.openai.com/sign
 
 Detail: https://platform.openai.com/docs/guides/speech-to-text
 
+Raises a ``speech_recognition.exceptions.SetupError`` exception if there are any issues with the openai installation, or the environment variable is missing.
+
 ``AudioSource``
 ---------------
 
