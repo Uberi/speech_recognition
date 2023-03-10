@@ -85,7 +85,7 @@ class TestRecognition(unittest.TestCase):
     def test_whisper_english(self):
         r = sr.Recognizer()
         with sr.AudioFile(self.AUDIO_FILE_EN) as source: audio = r.record(source)
-        self.assertEqual(r.recognize_whisper(audio, language="english", **self.WHISPER_CONFIG), " 1, 2, 3")
+        self.assertEqual(r.recognize_whisper(audio, language="english", **self.WHISPER_CONFIG), " 1, 2, 3.")
 
     def test_whisper_french(self):
         r = sr.Recognizer()
