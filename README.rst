@@ -39,6 +39,7 @@ Speech recognition engine/API support:
 * `Tensorflow <https://www.tensorflow.org/>`__
 * `Vosk API <https://github.com/alphacep/vosk-api/>`__ (works offline)
 * `OpenAI whisper <https://github.com/openai/whisper>`__ (works offline)
+* `Whisper API <https://platform.openai.com/docs/guides/speech-to-text>`__
 
 **Quickstart:** ``pip install SpeechRecognition``. See the "Installing" section for more details.
 
@@ -95,6 +96,7 @@ To use all of the functionality of the library, you should have:
 * **FLAC encoder** (required only if the system is not x86-based Windows/Linux/OS X)
 * **Vosk** (required only if you need to use Vosk API speech recognition ``recognizer_instance.recognize_vosk``)
 * **Whisper** (required only if you need to use Whisper ``recognizer_instance.recognize_whisper``)
+* **openai** (required only if you need to use Whisper API speech recognition ``recognizer_instance.recognize_whisper_api``)
 
 The following requirements are optional, but can improve or extend functionality in some situations:
 
@@ -168,6 +170,15 @@ Whisper (for Whisper users)
 Whisper is **required if and only if you want to use whisper** (``recognizer_instance.recognize_whisper``).
 
 You can install it with ``python3 -m pip install git+https://github.com/openai/whisper.git soundfile``.
+
+Whisper API (for Whisper API users) 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The library `openai <https://pypi.org/project/openai/>`__ is **required if and only if you want to use Whisper API** (``recognizer_instance.recognize_whisper_api``).
+
+If not installed, everything in the library will still work, except calling ``recognizer_instance.recognize_whisper_api`` will raise an ``ModuleNotFoundError``.
+
+You can install it with ``python3 -m pip install openai``.
 
 Troubleshooting
 ---------------
