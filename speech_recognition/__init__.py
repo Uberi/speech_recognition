@@ -1503,16 +1503,31 @@ class Recognizer(AudioSource):
 
     recognize_whisper_api = whisper.recognize_whisper_api
             
-    def recognize_vosk(self, audio_data, language='en'):
+    def recognize_vosk(self, audio_data, model='', language='en-us'):
         from vosk import Model, KaldiRecognizer
-        
+
         assert isinstance(audio_data, AudioData), "Data must be audio data"
-        
+
         if not hasattr(self, 'vosk_model'):
-            if not os.path.exists("model"):
-                return "Please download the model from https://github.com/alphacep/vosk-api/blob/master/doc/models.md and unpack as 'model' in the current folder."
-                exit (1)
-            self.vosk_model = Model("model")
+            if model:
+                if not os.path.exists(model):
+                    raise RequestError(f"Please download the model from https://github.com/alphacep/vosk-api/blob/master/doc/models.md and unpack as '{model}' in the current folder.")
+                self.vosk_model = Model(model)
+            else:
+                try:
+                    import requests
+                except ImportError:
+                    raise RequestError("requests module is required to download model data")
+                # verify this language is available via api
+                response = requests.get('https://alphacephei.com/vosk/models/model-list.json', timeout=10)
+                # raise error if bad response
+                response.raise_for_status()
+
+                models = response.json()
+                languages = { m["lang"] for m in models }
+                if language not in languages:
+                    raise RequestError(f"Language '{language}' not available. Available language codes are: {languages}")
+                self.vosk_model = Model(lang=language)
 
         rec = KaldiRecognizer(self.vosk_model, 16000);
         
