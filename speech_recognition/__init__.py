@@ -19,6 +19,7 @@ import hashlib
 import hmac
 import time
 import uuid
+from multiprocessing.dummy import Pool
 
 try:
     import requests
@@ -338,6 +339,8 @@ class Recognizer(AudioSource):
         self.phrase_threshold = 0.3  # minimum seconds of speaking audio before we consider the speaking audio a phrase - values below this are ignored (for filtering out clicks and pops)
         self.non_speaking_duration = 0.5  # seconds of non-speaking audio to keep on both sides of the recording
 
+        self.pool = Pool(processes=1) 
+
     def record(self, source, duration=None, offset=None):
         """
         Records up to ``duration`` seconds of audio from ``source`` (an ``AudioSource`` instance) starting at ``offset`` (or at the beginning if not specified) into an ``AudioData`` instance, which it returns.
@@ -447,7 +450,7 @@ class Recognizer(AudioSource):
 
         return b"".join(frames), elapsed_time
 
-    def listen(self, source, timeout=None, phrase_time_limit=None, snowboy_configuration=None):
+    def listen(self, source, timeout=None, phrase_time_limit=None, snowboy_configuration=None, hot_word_callback=None):
         """
         Records a single phrase from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance, which it returns.
 
@@ -508,6 +511,8 @@ class Recognizer(AudioSource):
                 snowboy_location, snowboy_hot_word_files = snowboy_configuration
                 buffer, delta_time = self.snowboy_wait_for_hot_word(snowboy_location, snowboy_hot_word_files, source, timeout)
                 elapsed_time += delta_time
+                if hot_word_callback is not None:
+                    self.pool.apply_async(hot_word_callback, [])
                 if len(buffer) == 0: break  # reached end of the stream
                 frames.append(buffer)
 
