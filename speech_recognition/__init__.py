@@ -1120,7 +1120,7 @@ class Recognizer(AudioSource):
             raise UnknownValueError()
         return result['Disambiguation']['ChoiceData'][0]['Transcription'], result['Disambiguation']['ChoiceData'][0]['ConfidenceScore']
 
-    def recognize_amazon(self, audio_data, bucket_name=None, access_key_id=None, secret_access_key=None, region=None, job_name=None, file_key=None):
+    def recognize_amazon(self, audio_data, bucket_name=None, access_key_id=None, secret_access_key=None, region=None, job_name=None, language='en-US'):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance) using Amazon Transcribe.
         https://aws.amazon.com/transcribe/
@@ -1168,11 +1168,11 @@ class Recognizer(AudioSource):
         try:
             # Bucket creation fails surprisingly often, even if the bucket exists.
             # print('Attempting to create bucket %s...' % bucket_name)
-            s3.create_bucket(Bucket=bucket_name)
+            s3.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={'LocationConstraint': region})
         except ClientError as exc:
             print('Error creating bucket %s: %s' % (bucket_name, exc))
         s3res = session.resource('s3')
-        bucket = s3res.Bucket(bucket_name)
+        _ = s3res.Bucket(bucket_name)
         if audio_data is not None:
             print('Uploading audio data...')
             wav_data = audio_data.get_wav_data()
@@ -1267,7 +1267,7 @@ class Recognizer(AudioSource):
                     TranscriptionJobName=job_name,
                     Media={'MediaFileUri': job_uri},
                     MediaFormat='wav',
-                    LanguageCode='en-US'
+                    LanguageCode=language
                 )
                 exc = TranscriptionNotReady()
                 exc.job_name = job_name
@@ -1279,8 +1279,8 @@ class Recognizer(AudioSource):
                 if exc.response['Error']['Code'] == 'LimitExceededException':
                     # Could not start job. Cancel everything.
                     s3.delete_object(Bucket=bucket_name, Key=filename)
-                    exc = TranscriptionNotReady()
-                    exc.job_name = None
+                    exc = TranscriptionFailed()
+                    exc.job_name = job_name
                     exc.file_key = None
                     raise exc
                 else:
