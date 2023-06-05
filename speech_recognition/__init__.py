@@ -41,7 +41,7 @@ from .exceptions import (
     UnknownValueError,
     WaitTimeoutError,
 )
-from .recognizers import whisper
+from .recognizers import whisper, fasterwhisper
 
 
 class AudioSource(object):
@@ -1502,6 +1502,7 @@ class Recognizer(AudioSource):
             return result["text"]
 
     recognize_whisper_api = whisper.recognize_whisper_api
+    recognize_faster_whisper = fasterwhisper.recognize_faster_whisper
             
     def recognize_vosk(self, audio_data, language='en'):
         from vosk import Model, KaldiRecognizer
