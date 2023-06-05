@@ -100,17 +100,17 @@ class TestRecognition(unittest.TestCase):
     def test_faster_whisper_english(self):
         r = sr.Recognizer()
         with sr.AudioFile(self.AUDIO_FILE_EN) as source: audio = r.record(source)
-        self.assertEqual(r.recognize_faster_whisper(audio, language="english", **self.WHISPER_CONFIG), " 1, 2, 3.")
+        self.assertEqual(r.recognize_faster_whisper(audio, device="cpu", language="en"), "1, 2, 3.")
 
     def test_faster_whisper_french(self):
         r = sr.Recognizer()
         with sr.AudioFile(self.AUDIO_FILE_FR) as source: audio = r.record(source)
-        self.assertEqual(r.recognize_faster_whisper(audio, language="french", **self.WHISPER_CONFIG), " et c'est la dictée numéro 1.")
+        self.assertEqual(r.recognize_faster_whisper(audio, device="cpu", language="fr"), "et c'est la dictée numéro 1.")
 
     def test_faster_whisper_chinese(self):
         r = sr.Recognizer()
         with sr.AudioFile(self.AUDIO_FILE_ZH) as source: audio = r.record(source)
-        self.assertEqual(r.recognize_faster_whisper(audio, model="small", language="chinese", **self.WHISPER_CONFIG), u"砸自己的腳")
+        self.assertEqual(r.recognize_faster_whisper(audio, device="cpu", model="small", language="zh"), u"砸自己的脚")
 
 if __name__ == "__main__":
     unittest.main()
