@@ -11,6 +11,7 @@ def recognize_faster_whisper(
     recognizer,
     audio_data: "AudioData",
     model="base",
+    download_root=None,
     beam_size=5,
     device="auto",
     compute_type="int8",
@@ -29,6 +30,7 @@ def recognize_faster_whisper(
     {beam_size}: Allows overriding the default beam size if desired.
     {device}: Allows setting the device, e.g. "auto", "cpu", "cuda", etc.
     {compute_type}: Allows setting the compute type, e.g. "int8", "float16", etc.
+    {download_root}: Allows setting the model cache root path
 
     The return dict is also customized to avoid returning a mess of FasterWhisper objects.
     """
@@ -39,9 +41,9 @@ def recognize_faster_whisper(
     import soundfile as sf
     import faster_whisper
 
-    print(f"model: {model}, beam_size: {beam_size}, device: {device}, compute_type: {compute_type}, language: {language}, translate: {translate}")
+    print(f"model: {model}, download_root: {download_root}, beam_size: {beam_size}, device: {device}, compute_type: {compute_type}, language: {language}, translate: {translate}")
 
-    whisper_model = faster_whisper.WhisperModel(model, device=device, compute_type=compute_type)
+    whisper_model = faster_whisper.WhisperModel(model, device=device, compute_type=compute_type, download_root=download_root)
 
     # 16 kHz https://github.com/openai/whisper/blob/28769fcfe50755a817ab922a7bc83483159600a9/whisper/audio.py#L98-L99
     wav_bytes = audio_data.get_wav_data(convert_rate=16000)
