@@ -10,18 +10,13 @@ from speech_recognition.exceptions import SetupError
 def recognize_faster_whisper(
     recognizer,
     audio_data: "AudioData",
-    model="base",
-    download_root=None,
-    beam_size=5,
-    device="auto",
-    compute_type="int8",
-    show_dict=False,
-    language=None,
-    translate=False,
-    **transcribe_options
+    **kwargs,
 ):
     """
     Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Faster Whisper implementation of OpenAI Whisper.
+
+    This is a stub function which calls perform_recognize_faster_whisper in a separate process using multiprocessing. Otherwise, there is
+    a significant memory leak in the calling program. All kwargs are passed directly through using **kwargs.
 
     Detail: https://github.com/guillaumekln/faster-whisper
 
@@ -36,6 +31,33 @@ def recognize_faster_whisper(
     """
 
     assert isinstance(audio_data, AudioData), "Data must be audio data"
+
+    import multiprocessing as mp
+    queue = mp.Queue(maxsize=1)
+    proc = mp.Process(target=perform_recognize_faster_whisper, args=(queue, recognizer, audio_data), kwargs=kwargs)
+    proc.start()
+    result = queue.get()
+    proc.join()
+    return result
+
+def perform_recognize_faster_whisper(
+    queue,
+    recognizer,
+    audio_data: "AudioData",
+    model="base",
+    download_root=None,
+    beam_size=5,
+    device="auto",
+    compute_type="int8",
+    show_dict=False,
+    language=None,
+    translate=False,
+    **transcribe_options
+):
+    """
+    This function performs the actual faster_whisper transcribing in a spearate process to avoid a memory leak. It returns the results
+    back to the calling stub function with a Queue.
+    """
 
     import numpy as np
     import soundfile as sf
@@ -73,4 +95,4 @@ def recognize_faster_whisper(
     else:
         result = text
 
-    return result
+    queue.put(result)
