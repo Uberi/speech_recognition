@@ -785,11 +785,11 @@ class Recognizer(AudioSource):
             'language_code': language
         }
         if preferred_phrases is not None:
-            config['speechContexts'] = [speech.SpeechContext(
+            config['speech_contexts'] = [speech.SpeechContext(
                 phrases=preferred_phrases
             )]
         if show_all:
-            config['enableWordTimeOffsets'] = True  # some useful extra options for when we want all the output
+            config['enable_word_time_offsets'] = True  # some useful extra options for when we want all the output
 
         opts = {}
         if self.operation_timeout and socket.getdefaulttimeout() is None:
