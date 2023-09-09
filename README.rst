@@ -35,7 +35,7 @@ Speech recognition engine/API support:
 * `Microsoft Bing Voice Recognition (Deprecated) <https://www.microsoft.com/cognitive-services/en-us/speech-api>`__
 * `Houndify API <https://houndify.com/>`__
 * `IBM Speech to Text <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text.html>`__
-* `Snowboy Hotword Detection <https://snowboy.kitt.ai/>`__ (works offline)
+* `Snowboy Hotword Detection <https://github.com/Kitt-AI/snowboy/>`__ (works offline)
 * `Tensorflow <https://www.tensorflow.org/>`__
 * `Vosk API <https://github.com/alphacep/vosk-api/>`__ (works offline)
 * `OpenAI whisper <https://github.com/openai/whisper>`__ (works offline)
