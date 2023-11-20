@@ -29,7 +29,7 @@ def recognize_whisper_api(
         raise SetupError("Set environment variable ``OPENAI_API_KEY``")
 
     try:
-        import openai
+        from openai import OpenAI
     except ImportError:
         raise SetupError(
             "missing openai module: ensure that openai is set up correctly."
@@ -38,5 +38,7 @@ def recognize_whisper_api(
     wav_data = BytesIO(audio_data.get_wav_data())
     wav_data.name = "SpeechRecognition_audio.wav"
 
-    transcript = openai.Audio.transcribe(model, wav_data, api_key=api_key)
-    return transcript["text"]
+    client = OpenAI()
+
+    transcript = client.audio.transcriptions.create(model=model, file=wav_data, api_key=api_key)
+    return transcript
