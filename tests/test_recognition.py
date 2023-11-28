@@ -14,6 +14,17 @@ class TestRecognition(unittest.TestCase):
         self.AUDIO_FILE_ZH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "chinese.flac")
         self.WHISPER_CONFIG = {"temperature": 0}
 
+    def test_recognizer_attributes(self):
+        r = sr.Recognizer()
+
+        self.assertEqual(r.energy_threshold, 300)
+        self.assertTrue(r.dynamic_energy_threshold)
+        self.assertEqual(r.dynamic_energy_adjustment_damping, 0.15)
+        self.assertEqual(r.dynamic_energy_ratio, 1.5)
+        self.assertEqual(r.pause_threshold, 0.8)
+        self.assertEqual(r.phrase_threshold, 0.3)
+        self.assertEqual(r.non_speaking_duration, 0.5)
+
     def test_sphinx_english(self):
         r = sr.Recognizer()
         with sr.AudioFile(self.AUDIO_FILE_EN) as source: audio = r.record(source)
