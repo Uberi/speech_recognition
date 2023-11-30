@@ -65,5 +65,5 @@ setup(
         "Topic :: Multimedia :: Sound/Audio :: Speech",
     ],
     python_requires=">=3.8",
-    install_requires=['requests>=2.26.0'],
+    install_requires=['requests>=2.26.0', "typing-extensions"],
 )
