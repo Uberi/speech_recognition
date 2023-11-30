@@ -2,6 +2,8 @@
 
 """Library for performing speech recognition, with support for several engines and APIs, online and offline."""
 
+from __future__ import annotations
+
 import io
 import os
 import tempfile
@@ -42,6 +44,7 @@ from .exceptions import (
     WaitTimeoutError,
 )
 from .recognizers import whisper
+from .recognizers.google import Alternative, Result
 
 
 class AudioSource(object):
@@ -716,9 +719,9 @@ class Recognizer(AudioSource):
         actual_result = []
         for line in response_text.split("\n"):
             if not line: continue
-            result = json.loads(line)["result"]
+            result: list[Result] = json.loads(line)["result"]
             if len(result) != 0:
-                actual_result = result[0]
+                actual_result: Result = result[0]
                 break
 
         # return results
@@ -729,10 +732,10 @@ class Recognizer(AudioSource):
 
         if "confidence" in actual_result["alternative"]:
             # return alternative with highest confidence score
-            best_hypothesis = max(actual_result["alternative"], key=lambda alternative: alternative["confidence"])
+            best_hypothesis: Alternative = max(actual_result["alternative"], key=lambda alternative: alternative["confidence"])
         else:
             # when there is no confidence available, we arbitrarily choose the first hypothesis.
-            best_hypothesis = actual_result["alternative"][0]
+            best_hypothesis: Alternative = actual_result["alternative"][0]
         if "transcript" not in best_hypothesis: raise UnknownValueError()
         # https://cloud.google.com/speech-to-text/docs/basics#confidence-values
         # "Your code should not require the confidence field as it is not guaranteed to be accurate, or even set, in any of the results."
