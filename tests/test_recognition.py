@@ -32,16 +32,6 @@ class TestRecognition(unittest.TestCase):
         with sr.AudioFile(self.AUDIO_FILE_EN) as source: audio = r.record(source)
         self.assertEqual(r.recognize_sphinx(audio), "one two three")
 
-    def test_google_french(self):
-        r = sr.Recognizer()
-        with sr.AudioFile(self.AUDIO_FILE_FR) as source: audio = r.record(source)
-        self.assertEqual(r.recognize_google(audio, language="fr-FR"), u"et c'est la dictée numéro 1")
-
-    def test_google_chinese(self):
-        r = sr.Recognizer()
-        with sr.AudioFile(self.AUDIO_FILE_ZH) as source: audio = r.record(source)
-        self.assertEqual(r.recognize_google(audio, language="zh-CN"), u"砸自己的脚")
-
     @unittest.skipUnless("WIT_AI_KEY" in os.environ, "requires Wit.ai key to be specified in WIT_AI_KEY environment variable")
     def test_wit_english(self):
         r = sr.Recognizer()
@@ -106,32 +96,47 @@ class TestRecognition(unittest.TestCase):
         self.assertEqual(r.recognize_whisper(audio, model="small", language="chinese", **self.WHISPER_CONFIG), u"砸自己的腳")
 
 
+@patch("speech_recognition.urlopen")
+@patch("speech_recognition.Request")
 class RecognizeGoogleTestCase(unittest.TestCase):
-    @patch("speech_recognition.urlopen")
-    @patch("speech_recognition.Request")
-    def test_return_best_hypothesis_transcript_with_default_parameters(self, Request, urlopen):
-        response = MagicMock(spec=http.client.HTTPResponse)
-        urlopen.return_value = response
-        response.read.return_value = b"""\
+    def setUp(self) -> None:
+        self.response = MagicMock(spec=http.client.HTTPResponse)
+        self.response.read.return_value = b"""\
 {"result":[]}
 {"result":[{"alternative":[{"transcript":"one two three","confidence":0.49585345},{"transcript":"1 2","confidence":0.42899391}],"final":true}],"result_index":0}
 """
         # mock has AudioData's attributes (e.g. sample_rate)
-        audio = MagicMock(spec=sr.audio.AudioData(None, 1, 1))
-        audio.sample_rate = 16_000
-        r = sr.Recognizer()
+        self.audio = MagicMock(spec=sr.audio.AudioData(None, 1, 1))
 
-        actual = r.recognize_google(audio)
+        self.r = sr.Recognizer()
+
+    def test_return_best_hypothesis_transcript_with_default_parameters(self, Request, urlopen):
+        urlopen.return_value = self.response
+        self.audio.sample_rate = 16_000
+
+        actual = self.r.recognize_google(self.audio)
 
         self.assertEqual(actual, "one two three")
-        audio.get_flac_data.assert_called_once_with(convert_rate=None, convert_width=2)
+        self.audio.get_flac_data.assert_called_once_with(convert_rate=None, convert_width=2)
         Request.assert_called_once_with(
             "http://www.google.com/speech-api/v2/recognize?client=chromium&lang=en-US&key=AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw&pFilter=0",
-            data=audio.get_flac_data.return_value,
+            data=self.audio.get_flac_data.return_value,
             headers={"Content-Type": "audio/x-flac; rate=16000"},
         )
         urlopen.assert_called_once_with(Request.return_value, timeout=None)
-        response.read.assert_called_once_with()
+        self.response.read.assert_called_once_with()
+
+    def test_specified_language_request(self, Request, urlopen):
+        urlopen.return_value = self.response
+        self.audio.sample_rate = 16_000
+
+        _ = self.r.recognize_google(self.audio, language="zh-CN")
+
+        Request.assert_called_once_with(
+            "http://www.google.com/speech-api/v2/recognize?client=chromium&lang=zh-CN&key=AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw&pFilter=0",
+            data=self.audio.get_flac_data.return_value,
+            headers={"Content-Type": "audio/x-flac; rate=16000"},
+        )
 
 
 if __name__ == "__main__":
