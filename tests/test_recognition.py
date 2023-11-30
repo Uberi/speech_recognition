@@ -127,6 +127,14 @@ class RecognizeGoogleTestCase(unittest.TestCase):
         urlopen.assert_called_once_with(Request.return_value, timeout=None)
         self.response.read.assert_called_once_with()
 
+    def test_minimum_sample_rate(self, Request, urlopen):
+        urlopen.return_value = self.response
+        self.audio.sample_rate = 7_999
+
+        _ = self.r.recognize_google(self.audio)
+
+        self.audio.get_flac_data.assert_called_once_with(convert_rate=8000, convert_width=2)
+
     def test_specified_language_request(self, Request, urlopen):
         urlopen.return_value = self.response
         self.audio.sample_rate = 16_000
@@ -138,6 +146,41 @@ class RecognizeGoogleTestCase(unittest.TestCase):
             data=self.audio.get_flac_data.return_value,
             headers={"Content-Type": "audio/x-flac; rate=16000"},
         )
+
+    def test_specified_key_request(self, Request, urlopen):
+        urlopen.return_value = self.response
+        self.audio.sample_rate = 16_000
+
+        _ = self.r.recognize_google(self.audio, key="awesome-key")
+
+        Request.assert_called_once_with(
+            "http://www.google.com/speech-api/v2/recognize?client=chromium&lang=en-US&key=awesome-key&pFilter=0",
+            data=self.audio.get_flac_data.return_value,
+            headers={"Content-Type": "audio/x-flac; rate=16000"},
+        )
+
+    def test_show_all(self, Request, urlopen):
+        urlopen.return_value = self.response
+        self.audio.sample_rate = 16_000
+
+        actual = self.r.recognize_google(self.audio, show_all=True)
+
+        expected = {
+            "alternative": [
+                {"transcript": "one two three", "confidence": 0.49585345},
+                {"transcript": "1 2", "confidence": 0.42899391}
+            ],
+            "final": True
+        }
+        self.assertEqual(actual, expected)
+
+    def test_with_confidence(self, Request, urlopen):
+        urlopen.return_value = self.response
+        self.audio.sample_rate = 16_000
+
+        actual = self.r.recognize_google(self.audio, with_confidence=True)
+
+        self.assertEqual(actual, ("one two three", 0.49585345))
 
 
 if __name__ == "__main__":
