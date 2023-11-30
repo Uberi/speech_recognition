@@ -4,49 +4,49 @@
 
 from __future__ import annotations
 
-import io
-import os
-import tempfile
-import sys
-import subprocess
-import wave
 import aifc
-import math
 import audioop
-import collections
-import json
 import base64
-import threading
+import collections
 import hashlib
 import hmac
+import io
+import json
+import math
+import os
+import subprocess
+import sys
+import tempfile
+import threading
 import time
 import uuid
+import wave
 from typing import TYPE_CHECKING
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
 
 try:
     import requests
 except (ModuleNotFoundError, ImportError):
     pass
 
-__author__ = "Anthony Zhang (Uberi)"
-__version__ = "3.10.0"
-__license__ = "BSD"
-
-from urllib.parse import urlencode
-from urllib.request import Request, urlopen
-from urllib.error import URLError, HTTPError
-
 from .audio import AudioData, get_flac_converter
 from .exceptions import (
     RequestError,
-    TranscriptionFailed, 
+    TranscriptionFailed,
     TranscriptionNotReady,
     UnknownValueError,
     WaitTimeoutError,
 )
 from .recognizers import whisper
+
 if TYPE_CHECKING:
     from .recognizers.google import Alternative, Result
+
+__author__ = "Anthony Zhang (Uberi)"
+__version__ = "3.10.0"
+__license__ = "BSD"
 
 
 class AudioSource(object):
@@ -602,7 +602,7 @@ class Recognizer(AudioSource):
 
         # import the PocketSphinx speech recognition module
         try:
-            from pocketsphinx import pocketsphinx, Jsgf, FsgModel
+            from pocketsphinx import FsgModel, Jsgf, pocketsphinx
 
         except ImportError:
             raise RequestError("missing PocketSphinx module: ensure that PocketSphinx is set up correctly.")
@@ -768,8 +768,9 @@ class Recognizer(AudioSource):
 
         try:
             import socket
-            from google.cloud import speech
+
             from google.api_core.exceptions import GoogleAPICallError
+            from google.cloud import speech
         except ImportError:
             raise RequestError('missing google-cloud-speech module: ensure that google-cloud-speech is set up correctly.')
 
@@ -877,7 +878,9 @@ class Recognizer(AudioSource):
         access_token, expire_time = getattr(self, "azure_cached_access_token", None), getattr(self, "azure_cached_access_token_expiry", None)
         allow_caching = True
         try:
-            from time import monotonic  # we need monotonic time to avoid being affected by system clock changes, but this is only available in Python 3.3+
+            from time import (
+                monotonic,  # we need monotonic time to avoid being affected by system clock changes, but this is only available in Python 3.3+
+            )
         except ImportError:
             expire_time = None  # monotonic time not available, don't cache access tokens
             allow_caching = False  # don't allow caching, since monotonic time isn't available
@@ -969,7 +972,9 @@ class Recognizer(AudioSource):
         access_token, expire_time = getattr(self, "bing_cached_access_token", None), getattr(self, "bing_cached_access_token_expiry", None)
         allow_caching = True
         try:
-            from time import monotonic  # we need monotonic time to avoid being affected by system clock changes, but this is only available in Python 3.3+
+            from time import (
+                monotonic,  # we need monotonic time to avoid being affected by system clock changes, but this is only available in Python 3.3+
+            )
         except ImportError:
             expire_time = None  # monotonic time not available, don't cache access tokens
             allow_caching = False  # don't allow caching, since monotonic time isn't available
@@ -1135,9 +1140,10 @@ class Recognizer(AudioSource):
         assert access_key_id is None or isinstance(access_key_id, str), "``access_key_id`` must be a string"
         assert secret_access_key is None or isinstance(secret_access_key, str), "``secret_access_key`` must be a string"
         assert region is None or isinstance(region, str), "``region`` must be a string"
+        import multiprocessing
         import traceback
         import uuid
-        import multiprocessing
+
         from botocore.exceptions import ClientError
         proc = multiprocessing.current_process()
 
@@ -1213,7 +1219,8 @@ class Recognizer(AudioSource):
 
                 # Retrieve transcription JSON containing transcript.
                 transcript_uri = job['Transcript']['TranscriptFileUri']
-                import urllib.request, json
+                import json
+                import urllib.request
                 with urllib.request.urlopen(transcript_uri) as json_data:
                     d = json.load(json_data)
                     confidences = []
@@ -1509,7 +1516,7 @@ class Recognizer(AudioSource):
     recognize_whisper_api = whisper.recognize_whisper_api
             
     def recognize_vosk(self, audio_data, language='en'):
-        from vosk import Model, KaldiRecognizer
+        from vosk import KaldiRecognizer, Model
         
         assert isinstance(audio_data, AudioData), "Data must be audio data"
         
