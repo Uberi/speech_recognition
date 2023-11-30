@@ -21,6 +21,7 @@ import hashlib
 import hmac
 import time
 import uuid
+from typing import TYPE_CHECKING
 
 try:
     import requests
@@ -44,7 +45,8 @@ from .exceptions import (
     WaitTimeoutError,
 )
 from .recognizers import whisper
-from .recognizers.google import Alternative, Result
+if TYPE_CHECKING:
+    from .recognizers.google import Alternative, Result
 
 
 class AudioSource(object):
