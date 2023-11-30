@@ -24,6 +24,7 @@ class TestRecognition(unittest.TestCase):
         self.assertEqual(r.dynamic_energy_adjustment_damping, 0.15)
         self.assertEqual(r.dynamic_energy_ratio, 1.5)
         self.assertEqual(r.pause_threshold, 0.8)
+        self.assertIsNone(r.operation_timeout)
         self.assertEqual(r.phrase_threshold, 0.3)
         self.assertEqual(r.non_speaking_duration, 0.5)
 
