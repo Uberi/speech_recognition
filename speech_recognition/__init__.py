@@ -2,46 +2,51 @@
 
 """Library for performing speech recognition, with support for several engines and APIs, online and offline."""
 
-import io
-import os
-import tempfile
-import sys
-import subprocess
-import wave
+from __future__ import annotations
+
 import aifc
-import math
 import audioop
-import collections
-import json
 import base64
-import threading
+import collections
 import hashlib
 import hmac
+import io
+import json
+import math
+import os
+import subprocess
+import sys
+import tempfile
+import threading
 import time
 import uuid
+import wave
+from typing import TYPE_CHECKING
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
 
 try:
     import requests
 except (ModuleNotFoundError, ImportError):
     pass
 
-__author__ = "Anthony Zhang (Uberi)"
-__version__ = "3.10.0"
-__license__ = "BSD"
-
-from urllib.parse import urlencode
-from urllib.request import Request, urlopen
-from urllib.error import URLError, HTTPError
-
 from .audio import AudioData, get_flac_converter
 from .exceptions import (
     RequestError,
-    TranscriptionFailed, 
+    TranscriptionFailed,
     TranscriptionNotReady,
     UnknownValueError,
     WaitTimeoutError,
 )
 from .recognizers import whisper
+
+if TYPE_CHECKING:
+    from .recognizers.google import Alternative, Result
+
+__author__ = "Anthony Zhang (Uberi)"
+__version__ = "3.10.0"
+__license__ = "BSD"
 
 
 class AudioSource(object):
@@ -597,7 +602,7 @@ class Recognizer(AudioSource):
 
         # import the PocketSphinx speech recognition module
         try:
-            from pocketsphinx import pocketsphinx, Jsgf, FsgModel
+            from pocketsphinx import FsgModel, Jsgf, pocketsphinx
 
         except ImportError:
             raise RequestError("missing PocketSphinx module: ensure that PocketSphinx is set up correctly.")
@@ -716,9 +721,9 @@ class Recognizer(AudioSource):
         actual_result = []
         for line in response_text.split("\n"):
             if not line: continue
-            result = json.loads(line)["result"]
+            result: list[Result] = json.loads(line)["result"]
             if len(result) != 0:
-                actual_result = result[0]
+                actual_result: Result = result[0]
                 break
 
         # return results
@@ -729,10 +734,10 @@ class Recognizer(AudioSource):
 
         if "confidence" in actual_result["alternative"]:
             # return alternative with highest confidence score
-            best_hypothesis = max(actual_result["alternative"], key=lambda alternative: alternative["confidence"])
+            best_hypothesis: Alternative = max(actual_result["alternative"], key=lambda alternative: alternative["confidence"])
         else:
             # when there is no confidence available, we arbitrarily choose the first hypothesis.
-            best_hypothesis = actual_result["alternative"][0]
+            best_hypothesis: Alternative = actual_result["alternative"][0]
         if "transcript" not in best_hypothesis: raise UnknownValueError()
         # https://cloud.google.com/speech-to-text/docs/basics#confidence-values
         # "Your code should not require the confidence field as it is not guaranteed to be accurate, or even set, in any of the results."
@@ -763,8 +768,9 @@ class Recognizer(AudioSource):
 
         try:
             import socket
-            from google.cloud import speech
+
             from google.api_core.exceptions import GoogleAPICallError
+            from google.cloud import speech
         except ImportError:
             raise RequestError('missing google-cloud-speech module: ensure that google-cloud-speech is set up correctly.')
 
@@ -872,7 +878,9 @@ class Recognizer(AudioSource):
         access_token, expire_time = getattr(self, "azure_cached_access_token", None), getattr(self, "azure_cached_access_token_expiry", None)
         allow_caching = True
         try:
-            from time import monotonic  # we need monotonic time to avoid being affected by system clock changes, but this is only available in Python 3.3+
+            from time import (
+                monotonic,  # we need monotonic time to avoid being affected by system clock changes, but this is only available in Python 3.3+
+            )
         except ImportError:
             expire_time = None  # monotonic time not available, don't cache access tokens
             allow_caching = False  # don't allow caching, since monotonic time isn't available
@@ -964,7 +972,9 @@ class Recognizer(AudioSource):
         access_token, expire_time = getattr(self, "bing_cached_access_token", None), getattr(self, "bing_cached_access_token_expiry", None)
         allow_caching = True
         try:
-            from time import monotonic  # we need monotonic time to avoid being affected by system clock changes, but this is only available in Python 3.3+
+            from time import (
+                monotonic,  # we need monotonic time to avoid being affected by system clock changes, but this is only available in Python 3.3+
+            )
         except ImportError:
             expire_time = None  # monotonic time not available, don't cache access tokens
             allow_caching = False  # don't allow caching, since monotonic time isn't available
@@ -1130,9 +1140,10 @@ class Recognizer(AudioSource):
         assert access_key_id is None or isinstance(access_key_id, str), "``access_key_id`` must be a string"
         assert secret_access_key is None or isinstance(secret_access_key, str), "``secret_access_key`` must be a string"
         assert region is None or isinstance(region, str), "``region`` must be a string"
+        import multiprocessing
         import traceback
         import uuid
-        import multiprocessing
+
         from botocore.exceptions import ClientError
         proc = multiprocessing.current_process()
 
@@ -1208,7 +1219,8 @@ class Recognizer(AudioSource):
 
                 # Retrieve transcription JSON containing transcript.
                 transcript_uri = job['Transcript']['TranscriptFileUri']
-                import urllib.request, json
+                import json
+                import urllib.request
                 with urllib.request.urlopen(transcript_uri) as json_data:
                     d = json.load(json_data)
                     confidences = []
@@ -1504,7 +1516,7 @@ class Recognizer(AudioSource):
     recognize_whisper_api = whisper.recognize_whisper_api
             
     def recognize_vosk(self, audio_data, language='en'):
-        from vosk import Model, KaldiRecognizer
+        from vosk import KaldiRecognizer, Model
         
         assert isinstance(audio_data, AudioData), "Data must be audio data"
         
