@@ -97,8 +97,8 @@ class TestRecognition(unittest.TestCase):
         self.assertEqual(r.recognize_whisper(audio, model="small", language="chinese", **self.WHISPER_CONFIG), u"砸自己的腳")
 
 
-@patch("speech_recognition.urlopen")
-@patch("speech_recognition.Request")
+@patch("speech_recognition.recognizers.google.urlopen")
+@patch("speech_recognition.recognizers.google.Request")
 class RecognizeGoogleTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.response = MagicMock(spec=http.client.HTTPResponse)
