@@ -38,7 +38,6 @@ from .exceptions import (
     UnknownValueError,
     WaitTimeoutError,
 )
-from .recognizers import google, whisper
 
 __author__ = "Anthony Zhang (Uberi)"
 __version__ = "3.10.0"
@@ -670,8 +669,6 @@ class Recognizer(AudioSource):
         hypothesis = decoder.hyp()
         if hypothesis is not None: return hypothesis.hypstr
         raise UnknownValueError()  # no transcriptions available
-
-    recognize_google = google.recognize_legacy
 
     def recognize_google_cloud(self, audio_data, credentials_json=None, language="en-US", preferred_phrases=None, show_all=False):
         """
@@ -1439,8 +1436,6 @@ class Recognizer(AudioSource):
             return result
         else:
             return result["text"]
-
-    recognize_whisper_api = whisper.recognize_whisper_api
             
     def recognize_vosk(self, audio_data, language='en'):
         from vosk import KaldiRecognizer, Model
@@ -1487,6 +1482,18 @@ class PortableNamedTemporaryFile(object):
 
     def flush(self, *args, **kwargs):
         return self._file.flush(*args, **kwargs)
+
+
+# During the pip install process, the 'import speech_recognition' command in setup.py is executed.
+# At this time, the dependencies are not yet installed, resulting in a ModuleNotFoundError.
+# This is a workaround to resolve this issue
+try:
+    from .recognizers import google, whisper
+except (ModuleNotFoundError, ImportError):
+    pass
+else:
+    Recognizer.recognize_google = google.recognize_legacy
+    Recognizer.recognize_whisper_api = whisper.recognize_whisper_api
 
 
 # ===============================
