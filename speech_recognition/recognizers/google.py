@@ -42,6 +42,9 @@ class RequestBuilder:
         self.filter_level = filter_level
 
     def build(self, audio_data: AudioData) -> Request:
+        if not isinstance(audio_data, AudioData):
+            raise ValueError("``audio_data`` must be audio data")
+
         url = self.build_url()
         headers = self.build_headers(audio_data)
         flac_data = self.build_data(audio_data)
@@ -80,6 +83,11 @@ def create_request_builder(
     language: str = "en-US",
     filter_level: ProfanityFilterLevel = 0,
 ) -> RequestBuilder:
+    if not isinstance(language, str):
+        raise ValueError("``language`` must be a string")
+    if key is not None and not isinstance(key, str):
+        raise "``key`` must be ``None`` or a string"
+
     if key is None:
         key = "AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw"
     return RequestBuilder(
@@ -111,14 +119,6 @@ def recognize_legacy(
 
     Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
     """
-    assert isinstance(
-        audio_data, AudioData
-    ), "``audio_data`` must be audio data"
-    assert key is None or isinstance(
-        key, str
-    ), "``key`` must be ``None`` or a string"
-    assert isinstance(language, str), "``language`` must be a string"
-
     request_builder = create_request_builder(
         key=key, language=language, filter_level=pfilter
     )
