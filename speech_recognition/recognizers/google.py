@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import TypedDict
+from typing import Dict, Literal, TypedDict
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -27,12 +27,72 @@ class GoogleResponse(TypedDict):
     result_index: NotRequired[int]
 
 
+ProfanityFilterLevel = Literal[0, 1]
+RequestHeaders = Dict[str, str]
+
+
+class RequestBuilder:
+    endpoint = "http://www.google.com/speech-api/v2/recognize"
+
+    def __init__(
+        self, *, key: str, language: str, filter_level: ProfanityFilterLevel
+    ) -> None:
+        self.key = key
+        self.language = language
+        self.filter_level = filter_level
+
+    def build(self, audio_data: AudioData) -> Request:
+        url = self.build_url()
+        headers = self.build_headers(audio_data)
+        flac_data = self.build_data(audio_data)
+        request = Request(url, data=flac_data, headers=headers)
+        return request
+
+    def build_url(self) -> str:
+        params = urlencode(
+            {
+                "client": "chromium",
+                "lang": self.language,
+                "key": self.key,
+                "pFilter": self.filter_level,
+            }
+        )
+        return f"{self.endpoint}?{params}"
+
+    def build_headers(self, audio_data: AudioData) -> RequestHeaders:
+        rate = audio_data.sample_rate
+        headers = {"Content-Type": f"audio/x-flac; rate={rate}"}
+        return headers
+
+    def build_data(self, audio_data: AudioData) -> bytes:
+        flac_data = audio_data.get_flac_data(
+            convert_rate=None
+            if audio_data.sample_rate >= 8000
+            else 8000,  # audio samples must be at least 8 kHz
+            convert_width=2,  # audio samples must be 16-bit
+        )
+        return flac_data
+
+
+def create_request_builder(
+    *,
+    key: str | None = None,
+    language: str = "en-US",
+    filter_level: ProfanityFilterLevel = 0,
+) -> RequestBuilder:
+    if key is None:
+        key = "AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw"
+    return RequestBuilder(
+        key=key, language=language, filter_level=filter_level
+    )
+
+
 def recognize_legacy(
     recognizer,
     audio_data: AudioData,
     key: str | None = None,
     language: str = "en-US",
-    pfilter: int = 0,
+    pfilter: ProfanityFilterLevel = 0,
     show_all: bool = False,
     with_confidence: bool = False,
 ):
@@ -59,33 +119,10 @@ def recognize_legacy(
     ), "``key`` must be ``None`` or a string"
     assert isinstance(language, str), "``language`` must be a string"
 
-    flac_data = audio_data.get_flac_data(
-        convert_rate=None
-        if audio_data.sample_rate >= 8000
-        else 8000,  # audio samples must be at least 8 kHz
-        convert_width=2,  # audio samples must be 16-bit
+    request_builder = create_request_builder(
+        key=key, language=language, filter_level=pfilter
     )
-    if key is None:
-        key = "AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw"
-    url = "http://www.google.com/speech-api/v2/recognize?{}".format(
-        urlencode(
-            {
-                "client": "chromium",
-                "lang": language,
-                "key": key,
-                "pFilter": pfilter,
-            }
-        )
-    )
-    request = Request(
-        url,
-        data=flac_data,
-        headers={
-            "Content-Type": "audio/x-flac; rate={}".format(
-                audio_data.sample_rate
-            )
-        },
-    )
+    request = request_builder.build(audio_data)
 
     # obtain audio transcription results
     try:
