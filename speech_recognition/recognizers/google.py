@@ -52,6 +52,11 @@ class RequestBuilder:
         return request
 
     def build_url(self) -> str:
+        """
+        >>> builder = RequestBuilder(key="awesome-key", language="en-US", filter_level=0)
+        >>> builder.build_url()
+        'http://www.google.com/speech-api/v2/recognize?client=chromium&lang=en-US&key=awesome-key&pFilter=0'
+        """
         params = urlencode(
             {
                 "client": "chromium",
@@ -63,6 +68,12 @@ class RequestBuilder:
         return f"{self.endpoint}?{params}"
 
     def build_headers(self, audio_data: AudioData) -> RequestHeaders:
+        """
+        >>> builder = RequestBuilder(key="", language="", filter_level=1)
+        >>> audio_data = AudioData(b"", 16_000, 1)
+        >>> builder.build_headers(audio_data)
+        {'Content-Type': 'audio/x-flac; rate=16000'}
+        """
         rate = audio_data.sample_rate
         headers = {"Content-Type": f"audio/x-flac; rate={rate}"}
         return headers
