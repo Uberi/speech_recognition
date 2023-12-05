@@ -80,12 +80,21 @@ class RequestBuilder:
 
     def build_data(self, audio_data: AudioData) -> bytes:
         flac_data = audio_data.get_flac_data(
-            convert_rate=None
-            if audio_data.sample_rate >= 8000
-            else 8000,  # audio samples must be at least 8 kHz
+            convert_rate=self.to_convert_rate(audio_data.sample_rate),
             convert_width=2,  # audio samples must be 16-bit
         )
         return flac_data
+
+    @staticmethod
+    def to_convert_rate(sample_rate: int) -> int:
+        """Audio samples must be at least 8 kHz
+
+        >>> RequestBuilder.to_convert_rate(16_000)
+        >>> RequestBuilder.to_convert_rate(8_000)
+        >>> RequestBuilder.to_convert_rate(7_999)
+        8000
+        """
+        return None if sample_rate >= 8000 else 8000
 
 
 def create_request_builder(

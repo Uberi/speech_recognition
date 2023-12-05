@@ -28,3 +28,17 @@ class RequestBuilderTestCase(TestCase):
             data=build_data.return_value,
             headers=build_headers.return_value,
         )
+
+    @patch(f"{CLASS_UNDER_TEST}.to_convert_rate")
+    def test_build_data(self, to_convert_rate):
+        # mock has AudioData's attributes (e.g. sample_rate)
+        audio_data = MagicMock(spec=AudioData(None, 1, 1))
+        sut = google.RequestBuilder(key="", language="", filter_level=0)
+
+        actual = sut.build_data(audio_data)
+
+        self.assertEqual(actual, audio_data.get_flac_data.return_value)
+        audio_data.get_flac_data.assert_called_once_with(
+            convert_rate=to_convert_rate.return_value, convert_width=2
+        )
+        to_convert_rate.assert_called_once_with(audio_data.sample_rate)
