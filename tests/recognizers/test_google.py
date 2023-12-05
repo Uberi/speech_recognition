@@ -5,10 +5,11 @@ from speech_recognition.audio import AudioData
 from speech_recognition.recognizers import google
 
 MODULE_UNDER_TEST = "speech_recognition.recognizers.google"
-CLASS_UNDER_TEST = f"{MODULE_UNDER_TEST}.RequestBuilder"
 
 
 class RequestBuilderTestCase(TestCase):
+    CLASS_UNDER_TEST = f"{MODULE_UNDER_TEST}.RequestBuilder"
+
     @patch(f"{MODULE_UNDER_TEST}.Request")
     @patch(f"{CLASS_UNDER_TEST}.build_data")
     @patch(f"{CLASS_UNDER_TEST}.build_headers")
@@ -42,3 +43,51 @@ class RequestBuilderTestCase(TestCase):
             convert_rate=to_convert_rate.return_value, convert_width=2
         )
         to_convert_rate.assert_called_once_with(audio_data.sample_rate)
+
+
+class OutputParserTestCase(TestCase):
+    CLASS_UNDER_TEST = f"{MODULE_UNDER_TEST}.OutputParser"
+
+    @patch(f"{CLASS_UNDER_TEST}.convert_to_result")
+    def test_parse_show_all(self, convert_to_result):
+        parser = google.OutputParser(show_all=True, with_confidence=False)
+
+        actual = parser.parse("dummy response text")
+
+        self.assertEqual(actual, convert_to_result.return_value)
+        convert_to_result.assert_called_once_with("dummy response text")
+
+    @patch(f"{CLASS_UNDER_TEST}.find_best_hypothesis")
+    @patch(f"{CLASS_UNDER_TEST}.convert_to_result")
+    def test_parse_without_confidence(
+        self, convert_to_result, find_best_hypothesis
+    ):
+        convert_to_result.return_value = {"alternative": "dummy"}
+        find_best_hypothesis.return_value = {
+            "transcript": "1 2",
+            "confidence": 0.49585345,
+        }
+
+        parser = google.OutputParser(show_all=False, with_confidence=False)
+        actual = parser.parse("dummy response text2")
+
+        self.assertEqual(actual, "1 2")
+        convert_to_result.assert_called_once_with("dummy response text2")
+        find_best_hypothesis.assert_called_once_with("dummy")
+
+    @patch(f"{CLASS_UNDER_TEST}.find_best_hypothesis")
+    @patch(f"{CLASS_UNDER_TEST}.convert_to_result")
+    def test_parse_without_confidence(
+        self, convert_to_result, find_best_hypothesis
+    ):
+        convert_to_result.return_value = {"alternative": "dummy3"}
+        find_best_hypothesis.return_value = {
+            "transcript": "1 2",
+            "confidence": 0.49585345,
+        }
+
+        parser = google.OutputParser(show_all=False, with_confidence=True)
+        actual = parser.parse("dummy response text3")
+
+        self.assertEqual(actual, ("1 2", 0.49585345))
+        find_best_hypothesis.assert_called_once_with("dummy3")

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import Dict, Literal, TypedDict
+from typing import Dict, List, Literal, TypedDict
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -27,6 +27,7 @@ class GoogleResponse(TypedDict):
     result_index: NotRequired[int]
 
 
+EmptyList = List[Result]
 ProfanityFilterLevel = Literal[0, 1]
 RequestHeaders = Dict[str, str]
 
@@ -115,6 +116,78 @@ def create_request_builder(
     )
 
 
+class OutputParser:
+    def __init__(self, *, show_all: bool, with_confidence: bool) -> None:
+        self.show_all = show_all
+        self.with_confidence = with_confidence
+
+    def parse(self, response_text: str):
+        actual_result = self.convert_to_result(response_text)
+        if self.show_all:
+            return actual_result
+
+        if (
+            not isinstance(actual_result, dict)
+            or len(actual_result.get("alternative", [])) == 0
+        ):
+            raise UnknownValueError()
+
+        best_hypothesis = self.find_best_hypothesis(
+            actual_result["alternative"]
+        )
+        if "transcript" not in best_hypothesis:
+            raise UnknownValueError()
+        # https://cloud.google.com/speech-to-text/docs/basics#confidence-values
+        # "Your code should not require the confidence field as it is not guaranteed to be accurate, or even set, in any of the results."
+        confidence = best_hypothesis.get("confidence", 0.5)
+        if self.with_confidence:
+            return best_hypothesis["transcript"], confidence
+        return best_hypothesis["transcript"]
+
+    @staticmethod
+    def convert_to_result(response_text: str) -> Result | EmptyList:
+        r"""
+        >>> OutputParser.convert_to_result("\n")
+        []
+        >>> OutputParser.convert_to_result('{"result":[]}')
+        []
+        >>> response_text = '''{"result":[]}
+        ... {"result":[{"alternative":[{"transcript":"one two three","confidence":0.49585345},{"transcript":"1 2","confidence":0.42899391}],"final":true}],"result_index":0}
+        ... '''
+        >>> OutputParser.convert_to_result(response_text)
+        {'alternative': [{'transcript': 'one two three', 'confidence': 0.49585345}, {'transcript': '1 2', 'confidence': 0.42899391}], 'final': True}
+        """
+        # ignore any blank blocks
+        actual_result = []
+        for line in response_text.split("\n"):
+            if not line:
+                continue
+            result: list[Result] = json.loads(line)["result"]
+            if len(result) != 0:
+                actual_result: Result = result[0]
+                break
+        return actual_result
+
+    @staticmethod
+    def find_best_hypothesis(alternatives: list[Alternative]) -> Alternative:
+        """
+        >>> alternatives = [{"transcript": "one two three", "confidence": 0.42899391}, {"transcript": "1 2", "confidence": 0.49585345}]
+        >>> OutputParser.find_best_hypothesis(alternatives)
+        {'transcript': 'one two three', 'confidence': 0.42899391}
+        """
+        if "confidence" in alternatives:
+            # BUG: actual_result["alternative"] (=alternatives) is list, not dict
+            # return alternative with highest confidence score
+            best_hypothesis: Alternative = max(
+                alternatives,
+                key=lambda alternative: alternative["confidence"],
+            )
+        else:
+            # when there is no confidence available, we arbitrarily choose the first hypothesis.
+            best_hypothesis: Alternative = alternatives[0]
+        return best_hypothesis
+
+
 def recognize_legacy(
     recognizer,
     audio_data: AudioData,
@@ -155,40 +228,7 @@ def recognize_legacy(
         )
     response_text = response.read().decode("utf-8")
 
-    # ignore any blank blocks
-    actual_result = []
-    for line in response_text.split("\n"):
-        if not line:
-            continue
-        result: list[Result] = json.loads(line)["result"]
-        if len(result) != 0:
-            actual_result: Result = result[0]
-            break
-
-    # return results
-    if show_all:
-        return actual_result
-
-    if (
-        not isinstance(actual_result, dict)
-        or len(actual_result.get("alternative", [])) == 0
-    ):
-        raise UnknownValueError()
-
-    if "confidence" in actual_result["alternative"]:
-        # return alternative with highest confidence score
-        best_hypothesis: Alternative = max(
-            actual_result["alternative"],
-            key=lambda alternative: alternative["confidence"],
-        )
-    else:
-        # when there is no confidence available, we arbitrarily choose the first hypothesis.
-        best_hypothesis: Alternative = actual_result["alternative"][0]
-    if "transcript" not in best_hypothesis:
-        raise UnknownValueError()
-    # https://cloud.google.com/speech-to-text/docs/basics#confidence-values
-    # "Your code should not require the confidence field as it is not guaranteed to be accurate, or even set, in any of the results."
-    confidence = best_hypothesis.get("confidence", 0.5)
-    if with_confidence:
-        return best_hypothesis["transcript"], confidence
-    return best_hypothesis["transcript"]
+    output_parser = OutputParser(
+        show_all=show_all, with_confidence=with_confidence
+    )
+    return output_parser.parse(response_text)
