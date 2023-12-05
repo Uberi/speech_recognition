@@ -2,6 +2,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock, patch
 from urllib.request import Request
 
+from speech_recognition import Recognizer
 from speech_recognition.audio import AudioData
 from speech_recognition.recognizers import google
 
@@ -108,3 +109,35 @@ class ObtainTranscriptionTestCase(TestCase):
         urlopen.assert_called_once_with(request, timeout=0)
         response.read.assert_called_once_with()
         response.read.return_value.decode.assert_called_once_with("utf-8")
+
+
+class RecognizeLegacyTestCase(TestCase):
+    @patch(f"{MODULE_UNDER_TEST}.OutputParser")
+    @patch(f"{MODULE_UNDER_TEST}.obtain_transcription")
+    @patch(f"{MODULE_UNDER_TEST}.create_request_builder")
+    def test_default_values(
+        self, create_request_builder, obtain_transcription, OutputParser
+    ):
+        request_builder = create_request_builder.return_value
+        request = request_builder.build.return_value
+        response_text = obtain_transcription.return_value
+        output_parser = OutputParser.return_value
+
+        # Add operation_timeout attribute by spec=<instance>
+        recognizer = MagicMock(spec=Recognizer())
+        audio_data = MagicMock(spec=AudioData)
+
+        actual = google.recognize_legacy(recognizer, audio_data)
+
+        self.assertEqual(actual, output_parser.parse.return_value)
+        create_request_builder.assert_called_once_with(
+            key=None, language="en-US", filter_level=0
+        )
+        request_builder.build.assert_called_once_with(audio_data)
+        obtain_transcription.assert_called_once_with(
+            request, timeout=recognizer.operation_timeout
+        )
+        OutputParser.assert_called_once_with(
+            show_all=False, with_confidence=False
+        )
+        output_parser.parse.assert_called_once_with(response_text)
