@@ -1,5 +1,6 @@
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
+from urllib.request import Request
 
 from speech_recognition.audio import AudioData
 from speech_recognition.recognizers import google
@@ -91,3 +92,19 @@ class OutputParserTestCase(TestCase):
 
         self.assertEqual(actual, ("1 2", 0.49585345))
         find_best_hypothesis.assert_called_once_with("dummy3")
+
+
+class ObtainTranscriptionTestCase(TestCase):
+    @patch(f"{MODULE_UNDER_TEST}.urlopen")
+    def test_obtain(self, urlopen):
+        request = MagicMock(spec=Request)
+        response = urlopen.return_value
+
+        actual = google.obtain_transcription(request, 0)
+
+        self.assertEqual(
+            actual, response.read.return_value.decode.return_value
+        )
+        urlopen.assert_called_once_with(request, timeout=0)
+        response.read.assert_called_once_with()
+        response.read.return_value.decode.assert_called_once_with("utf-8")

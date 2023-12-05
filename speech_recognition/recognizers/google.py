@@ -188,6 +188,18 @@ class OutputParser:
         return best_hypothesis
 
 
+def obtain_transcription(request: Request, timeout: int) -> str:
+    try:
+        response = urlopen(request, timeout=timeout)
+    except HTTPError as e:
+        raise RequestError("recognition request failed: {}".format(e.reason))
+    except URLError as e:
+        raise RequestError(
+            "recognition connection failed: {}".format(e.reason)
+        )
+    return response.read().decode("utf-8")
+
+
 def recognize_legacy(
     recognizer,
     audio_data: AudioData,
@@ -217,16 +229,9 @@ def recognize_legacy(
     )
     request = request_builder.build(audio_data)
 
-    # obtain audio transcription results
-    try:
-        response = urlopen(request, timeout=recognizer.operation_timeout)
-    except HTTPError as e:
-        raise RequestError("recognition request failed: {}".format(e.reason))
-    except URLError as e:
-        raise RequestError(
-            "recognition connection failed: {}".format(e.reason)
-        )
-    response_text = response.read().decode("utf-8")
+    response_text = obtain_transcription(
+        request, timeout=recognizer.operation_timeout
+    )
 
     output_parser = OutputParser(
         show_all=show_all, with_confidence=with_confidence
