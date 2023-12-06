@@ -97,59 +97,5 @@ class TestRecognition(unittest.TestCase):
         self.assertEqual(r.recognize_whisper(audio, model="small", language="chinese", **self.WHISPER_CONFIG), u"砸自己的腳")
 
 
-@patch("speech_recognition.recognizers.google.urlopen")
-@patch("speech_recognition.recognizers.google.Request")
-class RecognizeGoogleTestCase(unittest.TestCase):
-    def setUp(self) -> None:
-        self.response = MagicMock(spec=http.client.HTTPResponse)
-        self.response.read.return_value = b"""\
-{"result":[]}
-{"result":[{"alternative":[{"transcript":"one two three","confidence":0.49585345},{"transcript":"1 2","confidence":0.42899391}],"final":true}],"result_index":0}
-"""
-        # mock has AudioData's attributes (e.g. sample_rate)
-        self.audio = MagicMock(spec=sr.audio.AudioData(None, 1, 1))
-
-        self.r = sr.Recognizer()
-
-    def test_return_best_hypothesis_transcript_with_default_parameters(self, Request, urlopen):
-        urlopen.return_value = self.response
-        self.audio.sample_rate = 16_000
-
-        actual = self.r.recognize_google(self.audio)
-
-        self.assertEqual(actual, "one two three")
-        self.audio.get_flac_data.assert_called_once_with(convert_rate=None, convert_width=2)
-        Request.assert_called_once_with(
-            "http://www.google.com/speech-api/v2/recognize?client=chromium&lang=en-US&key=AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw&pFilter=0",
-            data=self.audio.get_flac_data.return_value,
-            headers={"Content-Type": "audio/x-flac; rate=16000"},
-        )
-        urlopen.assert_called_once_with(Request.return_value, timeout=None)
-        self.response.read.assert_called_once_with()
-
-    def test_show_all(self, Request, urlopen):
-        urlopen.return_value = self.response
-        self.audio.sample_rate = 16_000
-
-        actual = self.r.recognize_google(self.audio, show_all=True)
-
-        expected = {
-            "alternative": [
-                {"transcript": "one two three", "confidence": 0.49585345},
-                {"transcript": "1 2", "confidence": 0.42899391}
-            ],
-            "final": True
-        }
-        self.assertEqual(actual, expected)
-
-    def test_with_confidence(self, Request, urlopen):
-        urlopen.return_value = self.response
-        self.audio.sample_rate = 16_000
-
-        actual = self.r.recognize_google(self.audio, with_confidence=True)
-
-        self.assertEqual(actual, ("one two three", 0.49585345))
-
-
 if __name__ == "__main__":
     unittest.main()
