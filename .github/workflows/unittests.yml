@@ -35,4 +35,5 @@ jobs:
           python -m pip install .
       - name: Test with unittest
         run: |
+          python -m doctest speech_recognition/recognizers/google.py -v
           python -m unittest discover --verbose
