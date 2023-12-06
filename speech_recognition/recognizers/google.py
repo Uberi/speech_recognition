@@ -131,8 +131,6 @@ class OutputParser:
         best_hypothesis = self.find_best_hypothesis(
             actual_result["alternative"]
         )
-        if "transcript" not in best_hypothesis:
-            raise UnknownValueError()
         # https://cloud.google.com/speech-to-text/docs/basics#confidence-values
         # "Your code should not require the confidence field as it is not guaranteed to be accurate, or even set, in any of the results."
         confidence = best_hypothesis.get("confidence", 0.5)
@@ -173,6 +171,12 @@ class OutputParser:
         >>> alternatives = [{"transcript": "one two three", "confidence": 0.42899391}, {"transcript": "1 2", "confidence": 0.49585345}]
         >>> OutputParser.find_best_hypothesis(alternatives)
         {'transcript': 'one two three', 'confidence': 0.42899391}
+
+        >>> alternatives = [{"confidence": 0.49585345}]
+        >>> OutputParser.find_best_hypothesis(alternatives)
+        Traceback (most recent call last):
+          ...
+        speech_recognition.exceptions.UnknownValueError
         """
         if "confidence" in alternatives:
             # BUG: actual_result["alternative"] (=alternatives) is list, not dict
@@ -184,6 +188,8 @@ class OutputParser:
         else:
             # when there is no confidence available, we arbitrarily choose the first hypothesis.
             best_hypothesis: Alternative = alternatives[0]
+        if "transcript" not in best_hypothesis:
+            raise UnknownValueError()
         return best_hypothesis
 
 
