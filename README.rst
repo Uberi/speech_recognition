@@ -30,6 +30,7 @@ Speech recognition engine/API support:
 * `CMU Sphinx <http://cmusphinx.sourceforge.net/wiki/>`__ (works offline)
 * Google Speech Recognition
 * `Google Cloud Speech API <https://cloud.google.com/speech/>`__
+* `AssemblyAI API <https://www.assemblyai.com/>`__
 * `Wit.ai <https://wit.ai/>`__
 * `Microsoft Azure Speech <https://azure.microsoft.com/en-us/services/cognitive-services/speech/>`__
 * `Microsoft Bing Voice Recognition (Deprecated) <https://www.microsoft.com/cognitive-services/en-us/speech-api>`__
@@ -202,7 +203,7 @@ The solution is to decrease this threshold, or call ``recognizer_instance.adjust
 The recognizer doesn't understand my particular language/dialect.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Try setting the recognition language to your language/dialect. To do this, see the documentation for ``recognizer_instance.recognize_sphinx``, ``recognizer_instance.recognize_google``, ``recognizer_instance.recognize_wit``, ``recognizer_instance.recognize_bing``, ``recognizer_instance.recognize_api``, ``recognizer_instance.recognize_houndify``, and ``recognizer_instance.recognize_ibm``.
+Try setting the recognition language to your language/dialect. To do this, see the documentation for ``recognizer_instance.recognize_sphinx``, ``recognizer_instance.recognize_google``, ``recognizer_instance.recognize_wit``, ``recognizer_instance.recognize_bing``, ``recognizer_instance.recognize_api``, ``recognizer_instance.recognize_houndify``, and ``recognizer_instance.recognize_ibm``, and ``recognizer_instance.recognize_assemblyai``.
 
 For example, if your language/dialect is British English, it is better to use ``"en-GB"`` as the language rather than ``"en-US"``.
 

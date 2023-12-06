@@ -87,3 +87,24 @@ except sr.UnknownValueError:
     print("IBM Speech to Text could not understand audio")
 except sr.RequestError as e:
     print("Could not request results from IBM Speech to Text service; {0}".format(e))
+
+# recognize speech using the AssemblyAI API
+ASSEMBLYAI_API_TOKEN = "INSERT ASSEMBLYAI API TOKEN HERE"  # Get a Free token at https://www.assemblyai.com/
+
+# First submit the file for transcription and obtain the job_name that corresponds to the transcription_id
+try:
+    r.recognize_assemblyai(audio, api_token=ASSEMBLYAI_API_TOKEN)
+except sr.TranscriptionNotReady as e:
+    job_name = e.job_name
+except sr.TranscriptionFailed as e:
+    print(e)
+except sr.RequestError as e:
+    print("Could not request results from AssemblyAI service; {0}".format(e))
+
+# Wait a little bit, then query the transcript with the job_name
+try:
+    print("AssemblyAI thinks you said " + r.recognize_assemblyai(audio_data=None, api_token=ASSEMBLYAI_API_TOKEN, job_name=job_name)[0])
+except sr.TranscriptionFailed as e:
+    print(e)
+except sr.RequestError as e:
+    print("Could not request results from AssemblyAI service; {0}".format(e))

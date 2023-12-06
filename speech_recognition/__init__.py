@@ -1225,33 +1225,51 @@ class Recognizer(AudioSource):
 
     def recognize_assemblyai(self, audio_data, api_token, job_name=None, **kwargs):
         """
-        Wraps the AssemblyAI STT service.
+        Performs speech recognition using the AssemblyAI API.
+
         https://www.assemblyai.com/
+
+        Args:
+            audio_data: Can be an ``AudioData`` instance or a str with a path to a file.
+            api_token: An AssemblyAI API token.
+            job_name: The name of the job which corresponds to the transcription id. If no job_name is given, it submits the file for transcription
+                      and raises a ``speech_recognition.TranscriptionNotReady`` exception. The final transcript can then be queried at a later time
+                      by passing the job_name.
+
+        Raises a ``speech_recognition.TranscriptionFailed`` exception if the speech recognition operation failed or if the key isn't valid.
+        Raises a ``speech_recognition.RequestError`` exception if API requests failed, e.g. if there is no internet connection.
+
+        Example:
+        ```
+        try:
+            r.recognize_assemblyai(audio_data=audio, api_token=your_token)
+        except sr.TranscriptionNotReady as e:
+            job_name = e.job_name
+
+        # wait a little bit...
+        result = r.recognize_assemblyai(audio_data=None, api_token=your_token, job_name=job_name)
+        ```
         """
 
-        def read_file(filename, chunk_size=5242880):
-            with open(filename, 'rb') as _file:
-                while True:
-                    data = _file.read(chunk_size)
-                    if not data:
-                        break
-                    yield data
+        headers = {"authorization": api_token}
 
         check_existing = audio_data is None and job_name
         if check_existing:
             # Query status.
             transciption_id = job_name
             endpoint = f"https://api.assemblyai.com/v2/transcript/{transciption_id}"
-            headers = {
-                "authorization": api_token,
-            }
-            response = requests.get(endpoint, headers=headers)
+
+            try:
+                response = requests.get(endpoint, headers=headers)
+            except requests.exceptions.RequestException as e:
+                raise RequestError("recognition request failed: {}".format(e.reason))
+
             data = response.json()
             status = data['status']
 
             if status == 'error':
                 # Handle error.
-                exc = TranscriptionFailed()
+                exc = TranscriptionFailed("Transcription failed: {}".format(data["error"]))
                 exc.job_name = None
                 exc.file_key = None
                 raise exc
@@ -1268,24 +1286,52 @@ class Recognizer(AudioSource):
             exc.file_key = None
             raise exc
         else:
-            # Upload file.
-            headers = {'authorization': api_token}
-            response = requests.post('https://api.assemblyai.com/v2/upload',
-                                     headers=headers,
-                                     data=read_file(audio_data))
-            upload_url = response.json()['upload_url']
+            # Upload file and queue for transcription.
+            # This path raises a TranscriptionNotReady error that contains the job_id.
+            # The job_id can then be used at a later point to query the transcript
+            if isinstance(audio_data, AudioData):
+                # convert to flac first
+                upload_data = audio_data.get_flac_data(
+                    convert_rate=None if audio_data.sample_rate >= 8000 else 8000,  # audio samples should be at least 8 kHz
+                    convert_width=None if audio_data.sample_width >= 2 else 2  # audio samples should be at least 16-bit
+                )
+            else:
+                # assume audio_data is a path to a file that can be uploaded directly
+                upload_data = audio_data
+
+            try:
+                response = requests.post('https://api.assemblyai.com/v2/upload',
+                                         headers=headers,
+                                         data=upload_data)
+            except requests.exceptions.RequestException as e:
+                raise RequestError("recognition request failed: {}".format(e.reason))
+
+            data = response.json()
+            if "error" in data:
+                exc = TranscriptionFailed("Transcription failed: {}".format(data["error"]))
+                exc.job_name = None
+                exc.file_key = None
+                raise exc
+
+            upload_url = data['upload_url']
 
             # Queue file for transcription.
             endpoint = "https://api.assemblyai.com/v2/transcript"
-            json = {
-              "audio_url": upload_url
-            }
-            headers = {
-                "authorization": api_token,
-                "content-type": "application/json"
-            }
-            response = requests.post(endpoint, json=json, headers=headers)
+            json = { "audio_url": upload_url }
+
+            try:
+                response = requests.post(endpoint, json=json, headers=headers)
+            except requests.exceptions.RequestException as e:
+                raise RequestError("recognition request failed: {}".format(e.reason))
+
             data = response.json()
+
+            if "error" in data:
+                exc = TranscriptionFailed("Transcription failed: {}".format(data["error"]))
+                exc.job_name = None
+                exc.file_key = None
+                raise exc
+
             transciption_id = data['id']
             exc = TranscriptionNotReady()
             exc.job_name = transciption_id
