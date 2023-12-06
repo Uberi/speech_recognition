@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import Dict, List, Literal, TypedDict
+from typing import Dict, Literal, TypedDict
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -27,7 +27,6 @@ class GoogleResponse(TypedDict):
     result_index: NotRequired[int]
 
 
-EmptyList = List[Result]
 ProfanityFilterLevel = Literal[0, 1]
 RequestHeaders = Dict[str, str]
 
@@ -126,10 +125,7 @@ class OutputParser:
         if self.show_all:
             return actual_result
 
-        if (
-            not isinstance(actual_result, dict)
-            or len(actual_result.get("alternative", [])) == 0
-        ):
+        if len(actual_result.get("alternative", [])) == 0:
             raise UnknownValueError()
 
         best_hypothesis = self.find_best_hypothesis(
@@ -145,28 +141,31 @@ class OutputParser:
         return best_hypothesis["transcript"]
 
     @staticmethod
-    def convert_to_result(response_text: str) -> Result | EmptyList:
+    def convert_to_result(response_text: str) -> Result:
         r"""
-        >>> OutputParser.convert_to_result("\n")
-        []
-        >>> OutputParser.convert_to_result('{"result":[]}')
-        []
         >>> response_text = '''{"result":[]}
         ... {"result":[{"alternative":[{"transcript":"one two three","confidence":0.49585345},{"transcript":"1 2","confidence":0.42899391}],"final":true}],"result_index":0}
         ... '''
         >>> OutputParser.convert_to_result(response_text)
         {'alternative': [{'transcript': 'one two three', 'confidence': 0.49585345}, {'transcript': '1 2', 'confidence': 0.42899391}], 'final': True}
+
+        >>> OutputParser.convert_to_result("")
+        Traceback (most recent call last):
+          ...
+        speech_recognition.exceptions.UnknownValueError
+        >>> OutputParser.convert_to_result('\n{"result":[]}')
+        Traceback (most recent call last):
+          ...
+        speech_recognition.exceptions.UnknownValueError
         """
         # ignore any blank blocks
-        actual_result = []
         for line in response_text.split("\n"):
             if not line:
                 continue
             result: list[Result] = json.loads(line)["result"]
             if len(result) != 0:
-                actual_result: Result = result[0]
-                break
-        return actual_result
+                return result[0]
+        raise UnknownValueError()
 
     @staticmethod
     def find_best_hypothesis(alternatives: list[Alternative]) -> Alternative:
