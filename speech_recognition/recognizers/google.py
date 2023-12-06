@@ -125,9 +125,6 @@ class OutputParser:
         if self.show_all:
             return actual_result
 
-        if len(actual_result.get("alternative", [])) == 0:
-            raise UnknownValueError()
-
         best_hypothesis = self.find_best_hypothesis(
             actual_result["alternative"]
         )
@@ -155,6 +152,14 @@ class OutputParser:
         Traceback (most recent call last):
           ...
         speech_recognition.exceptions.UnknownValueError
+        >>> OutputParser.convert_to_result('{"result":[{"foo": "bar"}]}')
+        Traceback (most recent call last):
+          ...
+        speech_recognition.exceptions.UnknownValueError
+        >>> OutputParser.convert_to_result('{"result":[{"alternative": []}]}')
+        Traceback (most recent call last):
+          ...
+        speech_recognition.exceptions.UnknownValueError
         """
         # ignore any blank blocks
         for line in response_text.split("\n"):
@@ -162,6 +167,8 @@ class OutputParser:
                 continue
             result: list[Result] = json.loads(line)["result"]
             if len(result) != 0:
+                if len(result[0].get("alternative", [])) == 0:
+                    raise UnknownValueError()
                 return result[0]
         raise UnknownValueError()
 
