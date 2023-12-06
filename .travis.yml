@@ -1,0 +1,35 @@
+language: python
+python:
+  - "2.7"
+  - "3.3"
+  - "3.4"
+  - "3.5"
+  - "3.6"
+  - "3.6-dev"
+  - "3.7-dev"
+  - "nightly"
+
+addons:
+  apt:
+    packages:
+    - swig
+    - libpulse-dev
+    - libasound2-dev
+install:
+  - trap 'sleep 3' ERR
+  - pip install pocketsphinx monotonic
+  - pip install flake8 rstcheck
+  - pip install -e .
+script:
+  - flake8 --ignore=E501,E701,W504 speech_recognition tests examples setup.py # ignore errors for long lines and multi-statement lines
+  - rstcheck README.rst reference/*.rst # ensure RST is well-formed
+  - python -m unittest discover --verbose # run unit tests
+sudo: false # this allows TravisCI to use the fast Docker build environment rather than the slower VMs
+env:
+  global:
+    - secure: "jFHi/NK+hkf8Jw/bA06utypMRAzOcpeKPEZz/P2U79c70aIcmeAOGNUG6t5x2hmaeNpaP1STDtOLVdDawLY904rv/2sAhdMExlLUYubVQrJumvfgwyHRep0NLxrWV/Sf7y6FBPsvS0We29sn5HeEUlSzFwLrANyagpZYGeeWI3SGfdseDK/n4SlD436i7n5jM0Vlbmo07JDtdTN5Ov17APtuqy0ZViNhhTG+wvU8RCd/0/1IvstaaOhSa/82jABXNzH12hY4ynSuK75EVdVLj/WstSmH90r+8TS+YHH1D68yFeoub8kjTzZirqDuwb1s0nGOzx3VAC03+Fb48jHNfz2X0LJEj6gOpaaxgXOr4qkb1+Bx4L1bUkMk3ywjKoXFF0BU/haZfPbzG0fFUDubEXYjhC88gM1CR0LrFf4qtIqFcdM4sjasfv7TD2peiuWqVRZeHzjcvQVC8aDxVFFbTF+Cx1xZ1qLxAY5iJ/dUPWpOVcSs0GIJaJw7LQJU5uQbiU0vg17k9QcVYbASJu0cFAt/OsWGDZp/uArSWrMcSoexe8wI8/k5u9XFnOmlEu5kUJXOrZANjniUk5ilFUe+lag2Zl/ZasNtW16qke+vaWfBnpKl7NOoQemWNdYOxgyc/4x9B3x8gryf5XAmfBeqneh7k10O18u6GYpt33r0zuQ=" # encrypted version of "WIT_AI_KEY=(my key)"
+    - secure: "ZKs+ywhJett8CpA24wR8js3C5B0uzaXMFIaiWBgkQfVhwbwkecCjG2HbLaJ1ncXP5VZnrXF6Ym4pZm87q0mIp/S0dMS7ZC5Jikowc3Bdyph9L49MDubZL0SO98+YR9j0QeKw8wxiVP6kv9cw12uVWn4VNgGcuW6AYZ0AqzdvUfW4+zby+Ua9U8LC0RcDKY3GR4Svq6dUjNFtJmI5uJ129UFO4oujCzuHNZL3KSSUJVt1KelVX+1eUNJ67sN3AvoMfx86jXNtN0kS12lZ+dP4YDo+lCtViG/W1dHCCdBmnUZsPE4Bc+Uyvg/BeKZaL1hgrNb6QHCNWmZC7jGxzkP2akwX5PxmKW7ClXn/79c7e84YUiRHlYQgL0qP+kZ7WDG6nJyKqLNFAtTHAw5F++5cpomNThYoCJeQOmkhi+KLEs9KMmn4d/bOLzW1RCeuf0bhjOOCI89+761aqJ1ky8UHJUZCKjYegHLM/bZ9LkKnUi+d+KYNQB8qpluZSLqObknCczh6ekKt/1FdrC+FBbFmpkTCuru1K9APdz01+ipVV8Av6NB+ax0+KPlKp49TA9uzANKWyLRkW9j6LD67MGF6SH/h8t5OeNZXdmf4DGjqv1erbKZeW+y25Hw7lVbqEo1m4T9wn1lmA1nse0kBrqGF+kQ4mNdfNSmWGWKxj+gFuxA=" # encrypted version of "BING_KEY=(my key)"
+    - secure: "JEtMaAhDglqRrHdKZapxIaY0zlCohsepgxfRckhuCB3RZljeIKjt15Q/8LzFcx0ZdQV2thOQ/2oA0WpnfTckEnh42X+Ki0AUlezjXXYII2DenCs9q7jXxuOYK5AjxcNzyfeh7NnI2R3jdAyf49FdnoOa/OdEZq7aYRouP0yZtVKK/eMueURfr7JMsTrmuYoy1LXkF/yEyxns9HiaSebn7YqeQ7cb9Q5LcSigM6kCXZrtG1K4MqWGrvnqGeabE6xoZVxkf+az6fMv91oZ4spZRfjjlFpGx050gP4SCpk8XQqVS2HAtzVSFBdnLld4ydRoGVHVMAOmvQY5xbk5y9REVj4EVdfeErOhaEz6CfFqZi9UpAS0Zza/7khGDDWkHmfg4O4CzrVLkfdcPIgIKcz9TT9zP+wPVCYmfN2Qq0XB+PJkewjmgPuWZnUyBb402iPs1hWEze8oK6Yk5K3OnBuSqeE4EtvpT/SUrLtroSNcWJJ7i585cqgNB5KwzDDKNnyn0zteQQTj+fUzrumQ+/FTYjaafOVZ6ZAiZ+xvgge0+foB94GCoV/8LUm5rVTtk8vV3c3oJu9jdzsyiOSargYPSYg7iy1kzkC/eQ12rX89EWLGjoP+mveLGBpUebQNbB8vxaVRd8uaozW/G3Vwgelqg7gzrvmwkaYK3g6a1TAVpcs=" # encrypted version of "HOUNDIFY_CLIENT_ID=(my client ID)"
+    - secure: "izFPobia0Luga6mL0pXDBmp/V1/kzZdFc09PbYUBNoyx63DPmDwP8dtSFy9ynEERJg4HQ6KeQzsPED3ZhnYO3C3lD3y078+k6Ryl15aONLrou6jzDiYMw6KV1CQ6V1OIz3tLwZoS7wwWdr0ZYdMEklYVVVu8wJOzl6aZ8gtp8Y3woev6qrxFeXhkkNZOybtQ8ugV6a5EypVEVQ2IGTEVvA6A8oSGDd8BDOSYyKPQ3LXPx7imA6freqio/b5HaACkBIidFRykly3xkBib2phhww2D18Zdu5imJtCmHxFQ3V+N5ZzlUkgmR9gyvdblQgJ7sCwpQAC/Mb0KWqUDar59nRA1WmY+onVN/t7sjBBCPjS0Ddu5Ls3X9Qdh3rflQ2Fc7nSi8iVITAHFreUKEW/jgJyBnFuau0Cu5DNcZYy24W+GBzwks1g/uoy4vWVbijaIzSEXu352CqClSJpBTltp3z0KZ/9D9VRB1tFoFmlVWkW39bBBqpJy/49mGVlbrG2J+hyCW+J+BQFpTcjXSd+JS57XXYKcm3QXnNxxnIQ5lw/6t92SbWWP+IeJB9fJENFLteE5XjtQWQ7gHbb7hP0iH9u92mJbehzvdo9KwePlIeWFC1Wyw3ZHrLa56DykfPNg9kYcuJdTwLMRxI4X5aG/e1QBVAwM8tii6Zrjag684iM=" # encrypted version of "HOUNDIFY_CLIENT_KEY=(my client key)"
+    - secure: "uj5LUKDtf214EZPqsjpy6tk8iXEfydC3z/px98xbXa/H6PVN6wMPTHsF1DuuTWCbLrqNyi9/rMbpJFiNuqMm+q0LarrvvuTKHA9JFe/ZA11R1w3WI2ZMTvub6vzCbmcznIkjq981BjFWz5aCazPXhLt18e0iMit2FR+D6jwZ4al8TIo9i6RjkJ3MimH2/Sgm2BnXZ7qHsmDlG+4VsABiPiH0SPzrxqJJ4WSOb8EnNkNcOujiHuYvDNR+6R566bXjV1x+z2ewKb2nae5LOEl8L+6B/CsNT2cyeds2imYWAw9vTZoTajXf2u21M3pqRINQ67CuWhGFOdUXiEd6E/jTQFcsE4GuB7eMIYcHCmPzhhHn1b6XzNJtf923+YlSnayf63Y5jHjeSWSWs6pjJOUjJquuXS8vQYuJYX4n8sXDeEsZg0yD2jdxFMqMmjZoKKJzWPTPUkDTLawZdZs2q6bOF+xBQysUPozgSnxe3koCMFLeA1cU6fUkXWWIFDuAehR0JqYQHaUovoO0ZYx8Env0Ojhl6IZclONxaLVA41CbzkSUC1pg0k/VeMiv6YB2SQsFxV1riKM/OPDxq7AAuUuNVDCj/SGya4BJEYrxtagtmq0em8Q8SJzLq7IFNBNq5pO8IaqA0JO/tieSIsutrhdRzVMI35apuwbE+5jxoDmiGW0=" # encrypted version of "IBM_USERNAME=(my username)"
+    - secure: "fqWkYnsx5xrYjDosEkHramkzuuRjAu6NUkSx/yJf78WTDgJ0XAvu7BP9vdfO9g+KvwVZ9uBSClBXiNM7c1i/CpZCJcZJQtQS9PqL3YB9+76J3hPwOsQx0t3oRiYKPDmHX3WFUFuGhI2k90iw4n6nWHUUiU2WxWk/8sibXxyCf99CRMGwpfycd+w8mhsi/MkzbyxWBjzgRKIFu6tg28bs6GcjrMyoq6avD3jpwghGAu1CA3UnuxdOqY9WI2+d9MwmtK6cUQ88o/5MX7GjPZzfkiohru03yn1sBBBivf1V7Vwvd7xsnUZ+6/WiJnzRkaqoGaYSOnI5bhJ/qR21zNMwNEaYrbdyCWau+YLuOheTJzihyeTN9f5zQg/PiBQMLDyKWBw7+v2rQMzTmKoif7fz+SAN5GMXvqgcoMlZ7se9sk0QH6z+GLYbnZNtu0Qpf01gNaJaveQRuurdLtihF8EBTET+hBouiRTUWHvJMgd6PI2pp9BRdnvwwHlhCQLwUjqprLUHX6OdbhFc2ixHwao+Qbg+oCEv+IhCrW1HoTCFIBy/SllRx0l7MfroEiRDRkaZeKA6bOr+3yirVmUOQVLH5rmVUuoNCmI0BZG5GPt5+AhZ36Wlw3/CXkcJAf7VNcya+u4ls+Hdxb9SyFNsZ5IF0ZWNRPfZlG8uEGDy/o05fbY=" # encrypted version of "IBM_PASSWORD=(my password)"
