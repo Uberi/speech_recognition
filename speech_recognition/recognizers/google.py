@@ -106,7 +106,7 @@ def create_request_builder(
     if not isinstance(language, str):
         raise ValueError("``language`` must be a string")
     if key is not None and not isinstance(key, str):
-        raise "``key`` must be ``None`` or a string"
+        raise ValueError("``key`` must be ``None`` or a string")
 
     if key is None:
         key = "AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw"
