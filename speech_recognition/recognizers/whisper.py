@@ -13,6 +13,7 @@ def recognize_whisper_api(
     *,
     model: str = "whisper-1",
     api_key: str | None = None,
+    **params,
 ):
     """
     Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the OpenAI Whisper API.
@@ -38,5 +39,5 @@ def recognize_whisper_api(
     wav_data = BytesIO(audio_data.get_wav_data())
     wav_data.name = "SpeechRecognition_audio.wav"
 
-    transcript = openai.Audio.transcribe(model, wav_data, api_key=api_key)
+    transcript = openai.Audio.transcribe(model, wav_data, api_key=api_key, **params)
     return transcript["text"]
