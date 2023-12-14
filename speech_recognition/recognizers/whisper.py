@@ -25,7 +25,7 @@ def recognize_whisper_api(
     """
     if not isinstance(audio_data, AudioData):
         raise ValueError("``audio_data`` must be an ``AudioData`` instance")
-    if api_key is None and os.environ.get("OPENAI_API_KEY") is None:
+    if os.environ.get("OPENAI_API_KEY") is None:
         raise SetupError("Set environment variable ``OPENAI_API_KEY``")
 
     try:
