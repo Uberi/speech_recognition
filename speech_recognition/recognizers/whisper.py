@@ -39,7 +39,5 @@ def recognize_whisper_api(
     wav_data.name = "SpeechRecognition_audio.wav"
 
     openai = OpenAI(api_key=api_key)
-    transcript = openai.audio.transcriptions.create(
-        model="whisper-1",
-        file=wav_data)
+    transcript = openai.audio.transcriptions.create(model, wav_data)
     return transcript.text
