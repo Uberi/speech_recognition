@@ -40,6 +40,7 @@ Speech recognition engine/API support:
 * `Vosk API <https://github.com/alphacep/vosk-api/>`__ (works offline)
 * `OpenAI whisper <https://github.com/openai/whisper>`__ (works offline)
 * `Whisper API <https://platform.openai.com/docs/guides/speech-to-text>`__
+* `Yandex Cloud SpeechKit STT API <https://cloud.yandex.com/en-ru/docs/speechkit/stt/request>`__
 
 **Quickstart:** ``pip install SpeechRecognition``. See the "Installing" section for more details.
 

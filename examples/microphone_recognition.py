@@ -47,6 +47,15 @@ except sr.UnknownValueError:
 except sr.RequestError as e:
     print("Could not request results from Wit.ai service; {0}".format(e))
 
+# recognize speech using Yandex SpeechKit STT
+YANDEX_API_KEY = "INSERT YANDEX CLOUD SERVICE ACCOUNT API KEY HERE" # Yandex Cloud Service Account API keys 40-character mixed-case alphanumeric strings
+try:
+    print("Yandex thinks you said " + r.recognize_yandex(audio, api_key=YANDEX_API_KEY))
+except sr.UnknownValueError:
+    print("Yandex could not understand audio")
+except sr.RequestError as e:
+    print("Could not request results from Yandex SpeechKit STT service; {0}".format(e))
+
 # recognize speech using Microsoft Bing Voice Recognition
 BING_KEY = "INSERT BING API KEY HERE"  # Microsoft Bing Voice Recognition API keys 32-character lowercase hexadecimal strings
 try:
