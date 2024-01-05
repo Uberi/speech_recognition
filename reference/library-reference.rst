@@ -257,6 +257,31 @@ Returns the most likely transcription if ``show_all`` is false (the default). Ot
 
 Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
 
+``recognizer_instance.recognize_yandex(audio_data: AudioData, api_key: Optional[str] = None, iam_token: Optional[str] = None, folder_id: Optional[str] = None, sample_rate: int = 48000, topic: str = "general", lang: str = "en-US", profanity_filter: bool = False, raw_results: bool = False, show_all: bool = False) -> Union[str, Dict[str, Any]]``
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Yandex SpeechKit Cloud API.
+
+This function requires a Yandex Cloud account; refer to the `Yandex SpeechKit documentation <https://cloud.yandex.com/en-ru/services/speechkit>`__ for detailed instructions and setup. Start by creating a Yandex Cloud project, enable the SpeechKit service for the project, and generate either an Service Account API key or IAM token for authentication.
+
+The Service Account API key or IAM token should be used for the `api_key` or `iam_token` parameters, respectively. If an IAM token is used, you must also provide the `folder_id` corresponding to the Yandex Cloud directory where the SpeechKit service is enabled. If the API key or IAM token is not specified, the method will not function as these credentials are essential for accessing the SpeechKit API.
+
+The language for recognition is determined by ``lang``, which should be a valid language code as per the Yandex SpeechKit documentation. The default value is "en-US" (English). A list of available languages can be found in the `model description <https://cloud.yandex.com/en-ru/docs/speechkit/stt/models>`__.
+
+The ``sample_rate`` parameter specifies the sampling frequency to which the input audio_data will be converted. Acceptable values include: 48000: Converts the audio to a sampling rate of 48 kHz (default). 16000: Converts the audio to a sampling rate of 16 kHz. 8000: Converts the audio to a sampling rate of 8 kHz.
+
+The ``topic`` parameter specifies the language model used for recognition. The available values depend on the selected language, and choosing the closest model to your context improves recognition accuracy. The default value is "general". Refer to the `acceptable values <https://cloud.yandex.com/en-ru/docs/speechkit/stt/models>`__ for more details.
+
+The ``profanityFilter`` parameter manages the exclusion of profanity from recognition results. It accepts boolean values: `True` for filtering out profanity, and `False` (the default) for including it in the recognition results.
+
+The ``rawResults`` parameter controls the representation of numbers in the recognition results. Set it to `True` for spelling out numbers and `False` (the default) for representing them as digits.
+
+The ``folderId`` parameter is the ID of the folder you have access to, required for authorization with a user account. This should be provided when using an IAM token for authentication.
+
+Returns the transcription if ``show_all`` is False (the default). Otherwise, returns the raw API response as a JSON dictionary.
+
+Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the credentials aren't valid, or if there is no Internet connection.
+
 ``recognizer_instance.recognize_bing(audio_data: AudioData, key: str, language: str = "en-US", show_all: bool = False) -> Union[str, Dict[str, Any]]``
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 

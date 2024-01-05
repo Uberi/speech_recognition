@@ -39,6 +39,18 @@ class TestRecognition(unittest.TestCase):
         with sr.AudioFile(self.AUDIO_FILE_EN) as source: audio = r.record(source)
         self.assertEqual(r.recognize_wit(audio, key=os.environ["WIT_AI_KEY"]), "one two three")
 
+    @unittest.skipUnless("YANDEX_API_KEY" in os.environ, "requires Yandex Cloud Service Account key to be specified in YANDEX_API_KEY environment variable")
+    def test_yandex_english(self):
+        r = sr.Recognizer()
+        with sr.AudioFile(self.AUDIO_FILE_EN) as source: audio = r.record(source)
+        self.assertEqual(r.recognize_yandex(audio, api_key=os.environ["YANDEX_API_KEY"], raw_results=True), "one two three")
+
+    @unittest.skipUnless("YANDEX_API_KEY" in os.environ, "requires Yandex Cloud Service Account key to be specified in YANDEX_API_KEY environment variable")
+    def test_yandex_french(self):
+        r = sr.Recognizer()
+        with sr.AudioFile(self.AUDIO_FILE_FR) as source: audio = r.record(source)
+        self.assertEqual(r.recognize_yandex(audio, api_key=os.environ["YANDEX_API_KEY"], lang="fr-FR", raw_results=True), "et cela dicté numéro un")
+
     @unittest.skipUnless("BING_KEY" in os.environ, "requires Microsoft Bing Voice Recognition key to be specified in BING_KEY environment variable")
     def test_bing_english(self):
         r = sr.Recognizer()
