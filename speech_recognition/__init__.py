@@ -670,7 +670,7 @@ class Recognizer(AudioSource):
         if hypothesis is not None: return hypothesis.hypstr
         raise UnknownValueError()  # no transcriptions available
 
-    def recognize_google_cloud(self, audio_data, credentials_json=None, language="en-US", preferred_phrases=None, show_all=False):
+    def recognize_google_cloud(self, audio_data, credentials_json=None, language="en-US", preferred_phrases=None, use_enhanced=False, model=None, show_all=False):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Google Cloud Speech API.
 
@@ -689,6 +689,8 @@ class Recognizer(AudioSource):
             assert os.environ.get('GOOGLE_APPLICATION_CREDENTIALS') is not None
         assert isinstance(language, str), "``language`` must be a string"
         assert preferred_phrases is None or all(isinstance(preferred_phrases, (type(""), type(u""))) for preferred_phrases in preferred_phrases), "``preferred_phrases`` must be a list of strings"
+        assert isinstance(use_enhanced, bool), "``use_enhanced`` must be a boolean"
+        assert model is None or model in (None, "latest_long", "latest_short", "command_and_search", "phone_call", "video", "default", "medical_conversation", "medical_dictation"), "``model`` must be None or 'command_and_search', 'phone_call', 'video', or 'default'"
 
         try:
             import socket
@@ -712,7 +714,9 @@ class Recognizer(AudioSource):
         config = {
             'encoding': speech.RecognitionConfig.AudioEncoding.FLAC,
             'sample_rate_hertz': audio_data.sample_rate,
-            'language_code': language
+            'language_code': language,
+            'use_enhanced': use_enhanced,
+            'model': model,
         }
         if preferred_phrases is not None:
             config['speechContexts'] = [speech.SpeechContext(
