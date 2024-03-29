@@ -25,3 +25,18 @@ class RecognizeWhisperApiTestCase(TestCase):
         client.audio.transcriptions.create.assert_called_once_with(
             file=BytesIO.return_value, model="whisper-1"
         )
+
+    def test_recognize_pass_arguments(self, OpenAI, BytesIO, environ):
+        client = OpenAI.return_value
+
+        recognizer = MagicMock(spec=Recognizer)
+        audio_data = MagicMock(spec=AudioData)
+
+        actual = whisper.recognize_whisper_api(
+            recognizer, audio_data, model="x-whisper", api_key="OPENAI_API_KEY"
+        )
+
+        OpenAI.assert_called_once_with(api_key="OPENAI_API_KEY")
+        client.audio.transcriptions.create.assert_called_once_with(
+            file=BytesIO.return_value, model="x-whisper"
+        )
