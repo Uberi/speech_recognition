@@ -31,9 +31,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install 'pocketsphinx<5'
-          python -m pip install openai-whisper soundfile
-          python -m pip install openai
-          python -m pip install .
+          python -m pip install .[whisper-local,whisper-api]
       - name: Test with unittest
         run: |
           python -m doctest speech_recognition/recognizers/google.py -v
