@@ -6,11 +6,11 @@ import numpy as np
 from speech_recognition import AudioData, Recognizer
 
 
+@patch("speech_recognition.io.BytesIO")
+@patch("soundfile.read")
+@patch("torch.cuda.is_available")
+@patch("whisper.load_model")
 class RecognizeWhisperTestCase(TestCase):
-    @patch("speech_recognition.io.BytesIO")
-    @patch("soundfile.read")
-    @patch("torch.cuda.is_available")
-    @patch("whisper.load_model")
     def test_default_parameters(
         self, load_model, is_available, sf_read, BytesIO
     ):
@@ -37,3 +37,15 @@ class RecognizeWhisperTestCase(TestCase):
             fp16=is_available.return_value,
         )
         transcript.__getitem__.assert_called_once_with("text")
+
+    def test_return_as_dict(self, load_model, is_available, sf_read, BytesIO):
+        whisper_model = load_model.return_value
+        audio_array = MagicMock()
+        dummy_sampling_rate = 99_999
+        sf_read.return_value = (audio_array, dummy_sampling_rate)
+
+        recognizer = Recognizer()
+        audio_data = MagicMock(spec=AudioData)
+        actual = recognizer.recognize_whisper(audio_data, show_dict=True)
+
+        self.assertEqual(actual, whisper_model.transcribe.return_value)
