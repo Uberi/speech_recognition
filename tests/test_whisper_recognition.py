@@ -49,3 +49,30 @@ class RecognizeWhisperTestCase(TestCase):
         actual = recognizer.recognize_whisper(audio_data, show_dict=True)
 
         self.assertEqual(actual, whisper_model.transcribe.return_value)
+
+    def test_pass_parameters(self, load_model, is_available, sf_read, BytesIO):
+        whisper_model = load_model.return_value
+        transcript = whisper_model.transcribe.return_value
+        audio_array = MagicMock()
+        dummy_sampling_rate = 99_999
+        sf_read.return_value = (audio_array, dummy_sampling_rate)
+
+        recognizer = Recognizer()
+        audio_data = MagicMock(spec=AudioData)
+        actual = recognizer.recognize_whisper(
+            audio_data,
+            model="small",
+            language="english",
+            translate=True,
+            temperature=0,
+        )
+
+        self.assertEqual(actual, transcript.__getitem__.return_value)
+        load_model.assert_called_once_with("small")
+        whisper_model.transcribe.assert_called_once_with(
+            audio_array.astype.return_value,
+            language="english",
+            task="translate",
+            fp16=is_available.return_value,
+            temperature=0,
+        )
