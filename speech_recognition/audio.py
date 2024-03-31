@@ -113,7 +113,7 @@ class AudioData(object):
                     audioop.error
                 ):  # this version of audioop doesn't support 24-bit audio (probably Python 3.3 or less)
                     raw_data = b"".join(
-                        raw_data[i + 1 : i + 4]
+                        raw_data[i + 1: i + 4]
                         for i in range(0, len(raw_data), 4)
                     )  # since we're in little endian, we discard the first byte from each 32-bit sample to get a 24-bit sample
                 else:  # 24-bit audio fully supported, we don't need to shim anything
@@ -188,8 +188,8 @@ class AudioData(object):
         ):  # ``audioop.byteswap`` was only added in Python 3.4
             raw_data = audioop.byteswap(raw_data, sample_width)
         else:  # manually reverse the bytes of each sample, which is slower but works well enough as a fallback
-            raw_data = raw_data[sample_width - 1 :: -1] + b"".join(
-                raw_data[i + sample_width : i : -1]
+            raw_data = raw_data[sample_width - 1:: -1] + b"".join(
+                raw_data[i + sample_width: i: -1]
                 for i in range(sample_width - 1, len(raw_data), sample_width)
             )
 
