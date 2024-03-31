@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import http
 import os
 import unittest
-from unittest.mock import patch, MagicMock
 
 import speech_recognition as sr
 
