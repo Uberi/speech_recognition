@@ -1124,7 +1124,7 @@ class Recognizer(AudioSource):
             try:
                 status = transcribe.get_transcription_job(TranscriptionJobName=job_name)
             except ClientError as exc:
-                print('!'*80)
+                print('!' * 80)
                 print('Error getting job:', exc.response)
                 if exc.response['Error']['Code'] == 'BadRequestException' and "The requested job couldn't be found" in str(exc):
                     # Some error caused the job we recorded to not exist on AWS.
@@ -1152,7 +1152,7 @@ class Recognizer(AudioSource):
                         confidences.append(float(item['alternatives'][0]['confidence']))
                     confidence = 0.5
                     if confidences:
-                        confidence = sum(confidences)/float(len(confidences))
+                        confidence = sum(confidences) / float(len(confidences))
                     transcript = d['results']['transcripts'][0]['transcript']
 
                     # Delete job.
@@ -1210,7 +1210,7 @@ class Recognizer(AudioSource):
                 exc.file_key = None
                 raise exc
             except ClientError as exc:
-                print('!'*80)
+                print('!' * 80)
                 print('Error starting job:', exc.response)
                 if exc.response['Error']['Code'] == 'LimitExceededException':
                     # Could not start job. Cancel everything.
