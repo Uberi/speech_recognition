@@ -1087,7 +1087,7 @@ class Recognizer(AudioSource):
             aws_secret_access_key=secret_access_key,
             region_name=region)
 
-        s3 = boto3.client('s3', 
+        s3 = boto3.client('s3',
             aws_access_key_id=access_key_id,
             aws_secret_access_key=secret_access_key,
             region_name=region)
@@ -1137,7 +1137,7 @@ class Recognizer(AudioSource):
                 else:
                     # Some other error happened, so re-raise.
                     raise
-            
+
             job = status['TranscriptionJob']
             if job['TranscriptionJobStatus'] in ['COMPLETED'] and 'TranscriptFileUri' in job['Transcript']:
 
@@ -1167,7 +1167,7 @@ class Recognizer(AudioSource):
 
                     return transcript, confidence
             elif job['TranscriptionJobStatus'] in ['FAILED']:
-            
+
                 # Delete job.
                 try:
                     transcribe.delete_transcription_job(TranscriptionJobName=job_name) # cleanup
@@ -1177,7 +1177,7 @@ class Recognizer(AudioSource):
 
                 # Delete S3 file.
                 s3.delete_object(Bucket=bucket_name, Key=filename)
-                
+
                 exc = TranscriptionFailed()
                 exc.job_name = None
                 exc.file_key = None
@@ -1436,12 +1436,12 @@ class Recognizer(AudioSource):
             return result
         else:
             return result["text"]
-            
+
     def recognize_vosk(self, audio_data, language='en'):
         from vosk import KaldiRecognizer, Model
-        
+
         assert isinstance(audio_data, AudioData), "Data must be audio data"
-        
+
         if not hasattr(self, 'vosk_model'):
             if not os.path.exists("model"):
                 return "Please download the model from https://github.com/alphacep/vosk-api/blob/master/doc/models.md and unpack as 'model' in the current folder."
@@ -1449,10 +1449,10 @@ class Recognizer(AudioSource):
             self.vosk_model = Model("model")
 
         rec = KaldiRecognizer(self.vosk_model, 16000);
-        
+
         rec.AcceptWaveform(audio_data.get_raw_data(convert_rate=16000, convert_width=2));
         finalRecognition = rec.FinalResult()
-        
+
         return finalRecognition
 
 
