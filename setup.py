@@ -21,12 +21,15 @@ class InstallWithExtraSteps(install):
             if os.path.basename(output_path) in FILES_TO_MARK_EXECUTABLE:
                 log.info("setting executable permissions on {}".format(output_path))
                 stat_info = os.stat(output_path)
+                OWNER_CAN_READ_EXECUTE = stat.S_IRUSR | stat.S_IXUSR
+                GROUP_CAN_READ_EXECUTE = stat.S_IRGRP | stat.S_IXGRP
+                OTHERS_CAN_READ_EXECUTE = stat.S_IROTH | stat.S_IXOTH
                 os.chmod(
                     output_path,
-                    stat_info.st_mode |
-                    stat.S_IRUSR | stat.S_IXUSR |  # owner can read/execute
-                    stat.S_IRGRP | stat.S_IXGRP |  # group can read/execute
-                    stat.S_IROTH | stat.S_IXOTH  # everyone else can read/execute
+                    stat_info.st_mode
+                    | OWNER_CAN_READ_EXECUTE
+                    | GROUP_CAN_READ_EXECUTE
+                    | OTHERS_CAN_READ_EXECUTE,
                 )
 
 

@@ -1087,7 +1087,8 @@ class Recognizer(AudioSource):
             aws_secret_access_key=secret_access_key,
             region_name=region)
 
-        s3 = boto3.client('s3', 
+        s3 = boto3.client(
+            's3',
             aws_access_key_id=access_key_id,
             aws_secret_access_key=secret_access_key,
             region_name=region)
@@ -1107,7 +1108,6 @@ class Recognizer(AudioSource):
         except ClientError as exc:
             print('Error creating bucket %s: %s' % (bucket_name, exc))
         s3res = session.resource('s3')
-        bucket = s3res.Bucket(bucket_name)
         if audio_data is not None:
             print('Uploading audio data...')
             wav_data = audio_data.get_wav_data()
@@ -1124,7 +1124,7 @@ class Recognizer(AudioSource):
             try:
                 status = transcribe.get_transcription_job(TranscriptionJobName=job_name)
             except ClientError as exc:
-                print('!'*80)
+                print('!' * 80)
                 print('Error getting job:', exc.response)
                 if exc.response['Error']['Code'] == 'BadRequestException' and "The requested job couldn't be found" in str(exc):
                     # Some error caused the job we recorded to not exist on AWS.
@@ -1137,7 +1137,7 @@ class Recognizer(AudioSource):
                 else:
                     # Some other error happened, so re-raise.
                     raise
-            
+
             job = status['TranscriptionJob']
             if job['TranscriptionJobStatus'] in ['COMPLETED'] and 'TranscriptFileUri' in job['Transcript']:
 
@@ -1152,12 +1152,12 @@ class Recognizer(AudioSource):
                         confidences.append(float(item['alternatives'][0]['confidence']))
                     confidence = 0.5
                     if confidences:
-                        confidence = sum(confidences)/float(len(confidences))
+                        confidence = sum(confidences) / float(len(confidences))
                     transcript = d['results']['transcripts'][0]['transcript']
 
                     # Delete job.
                     try:
-                        transcribe.delete_transcription_job(TranscriptionJobName=job_name) # cleanup
+                        transcribe.delete_transcription_job(TranscriptionJobName=job_name)  # cleanup
                     except Exception as exc:
                         print('Warning, could not clean up transcription: %s' % exc)
                         traceback.print_exc()
@@ -1167,17 +1167,17 @@ class Recognizer(AudioSource):
 
                     return transcript, confidence
             elif job['TranscriptionJobStatus'] in ['FAILED']:
-            
+
                 # Delete job.
                 try:
-                    transcribe.delete_transcription_job(TranscriptionJobName=job_name) # cleanup
+                    transcribe.delete_transcription_job(TranscriptionJobName=job_name)  # cleanup
                 except Exception as exc:
                     print('Warning, could not clean up transcription: %s' % exc)
                     traceback.print_exc()
 
                 # Delete S3 file.
                 s3.delete_object(Bucket=bucket_name, Key=filename)
-                
+
                 exc = TranscriptionFailed()
                 exc.job_name = None
                 exc.file_key = None
@@ -1193,11 +1193,6 @@ class Recognizer(AudioSource):
         else:
 
             # Launch the transcription job.
-            # try:
-                # transcribe.delete_transcription_job(TranscriptionJobName=job_name) # pre-cleanup
-            # except:
-                # # It's ok if this fails because the job hopefully doesn't exist yet.
-                # pass
             try:
                 transcribe.start_transcription_job(
                     TranscriptionJobName=job_name,
@@ -1210,7 +1205,7 @@ class Recognizer(AudioSource):
                 exc.file_key = None
                 raise exc
             except ClientError as exc:
-                print('!'*80)
+                print('!' * 80)
                 print('Error starting job:', exc.response)
                 if exc.response['Error']['Code'] == 'LimitExceededException':
                     # Could not start job. Cancel everything.
@@ -1277,9 +1272,7 @@ class Recognizer(AudioSource):
 
             # Queue file for transcription.
             endpoint = "https://api.assemblyai.com/v2/transcript"
-            json = {
-              "audio_url": upload_url
-            }
+            json = {"audio_url": upload_url}
             headers = {
                 "authorization": api_token,
                 "content-type": "application/json"
@@ -1436,23 +1429,23 @@ class Recognizer(AudioSource):
             return result
         else:
             return result["text"]
-            
+
     def recognize_vosk(self, audio_data, language='en'):
         from vosk import KaldiRecognizer, Model
-        
+
         assert isinstance(audio_data, AudioData), "Data must be audio data"
-        
+
         if not hasattr(self, 'vosk_model'):
             if not os.path.exists("model"):
                 return "Please download the model from https://github.com/alphacep/vosk-api/blob/master/doc/models.md and unpack as 'model' in the current folder."
-                exit (1)
+                exit(1)
             self.vosk_model = Model("model")
 
-        rec = KaldiRecognizer(self.vosk_model, 16000);
-        
-        rec.AcceptWaveform(audio_data.get_raw_data(convert_rate=16000, convert_width=2));
+        rec = KaldiRecognizer(self.vosk_model, 16000)
+
+        rec.AcceptWaveform(audio_data.get_raw_data(convert_rate=16000, convert_width=2))
         finalRecognition = rec.FinalResult()
-        
+
         return finalRecognition
 
 

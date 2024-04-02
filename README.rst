@@ -276,7 +276,7 @@ To hack on this library, first make sure you have all the requirements listed in
 -  Documentation can be found in the ``reference/`` `directory <https://github.com/Uberi/speech_recognition/tree/master/reference>`__.
 -  Third-party libraries, utilities, and reference material are in the ``third-party/`` `directory <https://github.com/Uberi/speech_recognition/tree/master/third-party>`__.
 
-To install/reinstall the library locally, run ``python setup.py install`` in the project `root directory <https://github.com/Uberi/speech_recognition>`__.
+To install/reinstall the library locally, run ``python -m pip install -e .[dev]`` in the project `root directory <https://github.com/Uberi/speech_recognition>`__.
 
 Before a release, the version number is bumped in ``README.rst`` and ``speech_recognition/__init__.py``. Version tags are then created using ``git config gpg.program gpg2 && git config user.signingkey DB45F6C431DE7C2DCD99FF7904882258A4063489 && git tag -s VERSION_GOES_HERE -m "Version VERSION_GOES_HERE"``.
 
@@ -291,17 +291,19 @@ To run all the tests:
 
     python -m unittest discover --verbose
 
-Testing is also done automatically by TravisCI, upon every push. To set up the environment for offline/local Travis-like testing on a Debian-like system:
+To run static analysis:
 
 .. code:: bash
 
-    sudo docker run --volume "$(pwd):/speech_recognition" --interactive --tty quay.io/travisci/travis-python:latest /bin/bash
-    su - travis && cd /speech_recognition
-    sudo apt-get update && sudo apt-get install swig libpulse-dev
-    pip install --user pocketsphinx && pip install --user flake8 rstcheck && pip install --user -e .
-    python -m unittest discover --verbose # run unit tests
-    python -m flake8 --ignore=E501,E701 speech_recognition tests examples setup.py # ignore errors for long lines and multi-statement lines
-    python -m rstcheck README.rst reference/*.rst # ensure RST is well-formed
+    python -m flake8 --ignore=E501,E701,W503 speech_recognition tests examples setup.py
+
+To ensure RST is well-formed:
+
+.. code:: bash
+
+    python -m rstcheck README.rst reference/*.rst
+
+Testing is also done automatically by GitHub Actions, upon every push.
 
 FLAC Executables
 ~~~~~~~~~~~~~~~~

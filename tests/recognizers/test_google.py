@@ -79,7 +79,7 @@ class OutputParserTestCase(TestCase):
 
     @patch(f"{CLASS_UNDER_TEST}.find_best_hypothesis")
     @patch(f"{CLASS_UNDER_TEST}.convert_to_result")
-    def test_parse_without_confidence(
+    def test_parse_with_confidence(
         self, convert_to_result, find_best_hypothesis
     ):
         convert_to_result.return_value = {"alternative": "dummy3"}

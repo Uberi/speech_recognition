@@ -32,7 +32,7 @@ class RecognizeWhisperApiTestCase(TestCase):
         recognizer = MagicMock(spec=Recognizer)
         audio_data = MagicMock(spec=AudioData)
 
-        actual = whisper.recognize_whisper_api(
+        _ = whisper.recognize_whisper_api(
             recognizer, audio_data, model="x-whisper", api_key="OPENAI_API_KEY"
         )
 
