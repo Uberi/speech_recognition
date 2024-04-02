@@ -1193,11 +1193,6 @@ class Recognizer(AudioSource):
         else:
 
             # Launch the transcription job.
-            # try:
-                # transcribe.delete_transcription_job(TranscriptionJobName=job_name) # pre-cleanup
-            # except:
-                # # It's ok if this fails because the job hopefully doesn't exist yet.
-                # pass
             try:
                 transcribe.start_transcription_job(
                     TranscriptionJobName=job_name,
