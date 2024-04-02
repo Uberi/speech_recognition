@@ -1273,9 +1273,7 @@ class Recognizer(AudioSource):
 
             # Queue file for transcription.
             endpoint = "https://api.assemblyai.com/v2/transcript"
-            json = {
-              "audio_url": upload_url
-            }
+            json = {"audio_url": upload_url}
             headers = {
                 "authorization": api_token,
                 "content-type": "application/json"
