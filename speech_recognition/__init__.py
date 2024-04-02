@@ -1157,7 +1157,7 @@ class Recognizer(AudioSource):
 
                     # Delete job.
                     try:
-                        transcribe.delete_transcription_job(TranscriptionJobName=job_name) # cleanup
+                        transcribe.delete_transcription_job(TranscriptionJobName=job_name)  # cleanup
                     except Exception as exc:
                         print('Warning, could not clean up transcription: %s' % exc)
                         traceback.print_exc()
@@ -1170,7 +1170,7 @@ class Recognizer(AudioSource):
 
                 # Delete job.
                 try:
-                    transcribe.delete_transcription_job(TranscriptionJobName=job_name) # cleanup
+                    transcribe.delete_transcription_job(TranscriptionJobName=job_name)  # cleanup
                 except Exception as exc:
                     print('Warning, could not clean up transcription: %s' % exc)
                     traceback.print_exc()
