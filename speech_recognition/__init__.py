@@ -1108,7 +1108,6 @@ class Recognizer(AudioSource):
         except ClientError as exc:
             print('Error creating bucket %s: %s' % (bucket_name, exc))
         s3res = session.resource('s3')
-        bucket = s3res.Bucket(bucket_name)
         if audio_data is not None:
             print('Uploading audio data...')
             wav_data = audio_data.get_wav_data()
