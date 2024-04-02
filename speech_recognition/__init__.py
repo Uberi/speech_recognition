@@ -1448,9 +1448,9 @@ class Recognizer(AudioSource):
                 exit (1)
             self.vosk_model = Model("model")
 
-        rec = KaldiRecognizer(self.vosk_model, 16000);
+        rec = KaldiRecognizer(self.vosk_model, 16000)
 
-        rec.AcceptWaveform(audio_data.get_raw_data(convert_rate=16000, convert_width=2));
+        rec.AcceptWaveform(audio_data.get_raw_data(convert_rate=16000, convert_width=2))
         finalRecognition = rec.FinalResult()
 
         return finalRecognition
