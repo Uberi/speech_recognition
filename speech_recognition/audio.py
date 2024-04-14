@@ -280,6 +280,7 @@ def get_flac_converter():
             "x86",
             "x86_64",
             "AMD64",
+            "arm64",
         }:
             flac_converter = os.path.join(base_path, "flac-mac")
         elif system == "Linux" and machine in {"i686", "i786", "x86"}:
