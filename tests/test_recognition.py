@@ -16,6 +16,7 @@ class TestRecognition(unittest.TestCase):
 
     def test_recognizer_attributes(self):
         r = sr.Recognizer()
+        attributes = set(dir(r))
 
         self.assertEqual(r.energy_threshold, 300)
         self.assertTrue(r.dynamic_energy_threshold)
@@ -25,6 +26,8 @@ class TestRecognition(unittest.TestCase):
         self.assertIsNone(r.operation_timeout)
         self.assertEqual(r.phrase_threshold, 0.3)
         self.assertEqual(r.non_speaking_duration, 0.5)
+        # https://github.com/Uberi/speech_recognition/issues/743
+        self.assertTrue("recognize_google" in attributes)
 
     @unittest.skipIf(sys.platform.startswith("win"), "skip on Windows")
     def test_sphinx_english(self):
