@@ -13,7 +13,7 @@ class TestSpecialFeatures(unittest.TestCase):
         self.AUDIO_FILE_EN = os.path.join(os.path.dirname(os.path.realpath(__file__)), "english.wav")
         self.addTypeEqualityFunc(str, self.assertSameWords)
 
-    @unittest.skip(sys.platform.startswith("win"), "skip on Windows")
+    @unittest.skipIf(sys.platform.startswith("win"), "skip on Windows")
     def test_sphinx_keywords(self):
         r = sr.Recognizer()
         with sr.AudioFile(self.AUDIO_FILE_EN) as source: audio = r.record(source)

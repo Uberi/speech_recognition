@@ -26,7 +26,7 @@ class TestRecognition(unittest.TestCase):
         self.assertEqual(r.phrase_threshold, 0.3)
         self.assertEqual(r.non_speaking_duration, 0.5)
 
-    @unittest.skip(sys.platform.startswith("win"), "skip on Windows")
+    @unittest.skipIf(sys.platform.startswith("win"), "skip on Windows")
     def test_sphinx_english(self):
         r = sr.Recognizer()
         with sr.AudioFile(self.AUDIO_FILE_EN) as source: audio = r.record(source)
