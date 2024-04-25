@@ -19,6 +19,7 @@ import sys
 import tempfile
 import threading
 import time
+import re
 import uuid
 import wave
 from urllib.error import HTTPError, URLError
@@ -763,7 +764,7 @@ class Recognizer(AudioSource):
             convert_rate=None if audio_data.sample_rate >= 8000 else 8000,  # audio samples must be at least 8 kHz
             convert_width=2  # audio samples should be 16-bit
         )
-        url = "https://api.wit.ai/speech?v=20170307"
+        url = "https://api.wit.ai/speech?v=20210926"    # The last version of Wit.AI API that doesn't return multiple json responses (and it's not deprecated)
         request = Request(url, data=wav_data, headers={"Authorization": "Bearer {}".format(key), "Content-Type": "audio/wav"})
         try:
             response = urlopen(request, timeout=self.operation_timeout)
@@ -776,8 +777,53 @@ class Recognizer(AudioSource):
 
         # return results
         if show_all: return result
-        if "_text" not in result or result["_text"] is None: raise UnknownValueError()
-        return result["_text"]
+        if "text" not in result or result["text"] is None: raise UnknownValueError()
+        return result["text"]
+
+    def recognize_wit_new(self, audio_data, key, show_all=False):
+            """
+            Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Wit.ai API.
+    
+            The Wit.ai API key is specified by ``key``. Unfortunately, these are not available without `signing up for an account <https://wit.ai/>`__ and creating an app. You will need to add at least one intent to the app before you can see the API key, though the actual intent settings don't matter.
+    
+            To get the API key for a Wit.ai app, go to the app's overview page, go to the section titled "Make an API request", and look for something along the lines of ``Authorization: Bearer XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX``; ``XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`` is the API key. Wit.ai API keys are 32-character uppercase alphanumeric strings.
+    
+            The recognition language is configured in the Wit.ai app settings.
+    
+            Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <https://wit.ai/docs/http/20141022#get-intent-via-text-link>`__ as a JSON dictionary.
+    
+            Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
+            
+            It calls the newest Wit.AI API <https://wit.ai/docs/http/20240304/#post__dictation_link>
+            """
+            assert isinstance(audio_data, AudioData), "Data must be audio data"
+            assert isinstance(key, str), "``key`` must be a string"
+    
+            wav_data = audio_data.get_wav_data(
+                convert_rate=None if audio_data.sample_rate >= 8000 else 8000,  # audio samples must be at least 8 kHz
+                convert_width=2  # audio samples should be 16-bit
+            )
+            
+            url = "https://api.wit.ai/dictation"
+            request = Request(url, data=wav_data, headers={"Authorization": "Bearer {}".format(key), "Content-Type": "audio/wav"})
+            try:
+                response = urlopen(request, timeout=self.operation_timeout)
+            except HTTPError as e:
+                raise RequestError("recognition request failed: {}".format(e.reason))
+            except URLError as e:
+                raise RequestError("recognition connection failed: {}".format(e.reason))
+                
+            response_text = response.read().decode("utf-8")
+            concat_json = re.sub("\n}\r\n{\n", "\n},\n{\n", response_text)
+            concat_json_str = f"[{concat_json}]"
+            results = json.loads(concat_json_str)
+    
+            # return results
+            if show_all: return results
+            for result in results:
+                if result["type"] == "FINAL_TRANSCRIPTION":
+                    if "text" not in result or result["text"] is None or result["text"] == '': raise UnknownValueError()
+                    return result["text"]
 
     def recognize_azure(self, audio_data, key, language="en-US", profanity="masked", location="westus", show_all=False):
         """
