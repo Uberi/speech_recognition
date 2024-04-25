@@ -780,7 +780,7 @@ class Recognizer(AudioSource):
         if "text" not in result or result["text"] is None: raise UnknownValueError()
         return result["text"]
 
-    def recognize_wit_new(self, audio_data, key, show_all=False):
+    def recognize_wit_new(self, audio_data, key, show_all=False, api="dictation"):
             """
             Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Wit.ai API.
     
@@ -793,8 +793,6 @@ class Recognizer(AudioSource):
             Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <https://wit.ai/docs/http/20141022#get-intent-via-text-link>`__ as a JSON dictionary.
     
             Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
-            
-            It calls the newest Wit.AI API <https://wit.ai/docs/http/20240304/#post__dictation_link>
             """
             assert isinstance(audio_data, AudioData), "Data must be audio data"
             assert isinstance(key, str), "``key`` must be a string"
@@ -804,7 +802,7 @@ class Recognizer(AudioSource):
                 convert_width=2  # audio samples should be 16-bit
             )
             
-            url = "https://api.wit.ai/dictation"
+            url = "https://api.wit.ai/" + api
             request = Request(url, data=wav_data, headers={"Authorization": "Bearer {}".format(key), "Content-Type": "audio/wav"})
             try:
                 response = urlopen(request, timeout=self.operation_timeout)
@@ -824,6 +822,8 @@ class Recognizer(AudioSource):
                 if result["type"] == "FINAL_TRANSCRIPTION":
                     if "text" not in result or result["text"] is None or result["text"] == '': raise UnknownValueError()
                     return result["text"]
+
+            return None     # If you reach here there are problem with the API response
 
     def recognize_azure(self, audio_data, key, language="en-US", profanity="masked", location="westus", show_all=False):
         """

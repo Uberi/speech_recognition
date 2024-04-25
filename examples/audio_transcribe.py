@@ -53,7 +53,7 @@ except sr.RequestError as e:
 # recognize speech using the new Wit.ai <https://wit.ai/docs/http/20240304/#post__dictation_link>
 WIT_AI_KEY_NEW = "INSERT WIT.AI API KEY HERE"  # Wit.ai keys are 32-character uppercase alphanumeric strings
 try:
-    print("Wit.ai thinks you said " + r.recognize_wit_new(audio, key=WIT_AI_KEY_NEW))
+    print("Wit.ai thinks you said " + r.recognize_wit_new(audio, key=WIT_AI_KEY_NEW, api="dictation")) # or api="speech"   
 except sr.UnknownValueError:
     print("Wit.ai could not understand audio")
 except sr.RequestError as e:
