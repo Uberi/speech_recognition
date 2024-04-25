@@ -793,9 +793,13 @@ class Recognizer(AudioSource):
             Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <https://wit.ai/docs/http/20141022#get-intent-via-text-link>`__ as a JSON dictionary.
     
             Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
+            
+            Two possible string can be passed as "api" variable: "dictation" (default) and "speech". The version can be added 
+            like (speech?v=20240304), otherwise Wit.AI will use the latest automatically
             """
             assert isinstance(audio_data, AudioData), "Data must be audio data"
             assert isinstance(key, str), "``key`` must be a string"
+            assert isinstance(api, str), "``api`` must be a string"
     
             wav_data = audio_data.get_wav_data(
                 convert_rate=None if audio_data.sample_rate >= 8000 else 8000,  # audio samples must be at least 8 kHz
