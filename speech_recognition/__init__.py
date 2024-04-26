@@ -682,7 +682,7 @@ class Recognizer(AudioSource):
 
         The ``use_enhanced`` is a boolean option that sets a flag with the same name on the Google Cloud Speech API, it will make the API uses the enhanced version of the model. More information can be found in the `Google Cloud Speech API documentation <https://cloud.google.com/speech-to-text/docs/enhanced-models>` __.
         
-        Furthermore, you can use the option ``model`` to set your desired model, the Python Google Speech API makes available the following options: 'command_and_search', 'phone_call', 'video', 'default', 'medical_conversation', 'medical_dictation'. More information can be found in the `Google Cloud Speech API documentation <https://cloud.google.com/speech-to-text/docs/transcription-model>` __.
+        Furthermore, you can use the option ``model`` to set your desired model, the Python Google Speech API makes available the following options: 'latest_long', 'latest_short', 'command_and_search', 'phone_call', 'video', 'default', 'medical_conversation', 'medical_dictation'. More information can be found in the `Google Cloud Speech API documentation <https://cloud.google.com/speech-to-text/docs/transcription-model>` __.
 
         Returns the most likely transcription if ``show_all`` is False (the default). Otherwise, returns the raw API response as a JSON dictionary.
 
@@ -694,7 +694,7 @@ class Recognizer(AudioSource):
         assert isinstance(language, str), "``language`` must be a string"
         assert preferred_phrases is None or all(isinstance(preferred_phrases, (type(""), type(u""))) for preferred_phrases in preferred_phrases), "``preferred_phrases`` must be a list of strings"
         assert isinstance(use_enhanced, bool), "``use_enhanced`` must be a boolean"
-        assert model is None or model in (None, "latest_long", "latest_short", "command_and_search", "phone_call", "video", "default", "medical_conversation", "medical_dictation"), "``model`` must be None or 'command_and_search', 'phone_call', 'video', or 'default'"
+        assert model is None or model in (None, "latest_long", "latest_short", "command_and_search", "phone_call", "video", "default", "medical_conversation", "medical_dictation"), "``model`` must be None or 'latest_long', 'latest_short', 'command_and_search', 'phone_call', 'video', or 'default'"
 
         try:
             import socket
