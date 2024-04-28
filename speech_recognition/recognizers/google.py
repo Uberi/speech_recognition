@@ -32,7 +32,7 @@ RequestHeaders = Dict[str, str]
 
 
 class RequestBuilder:
-    endpoint = "http://www.google.com/speech-api/v2/recognize"
+    endpoint = "https://www.google.com/speech-api/v2/recognize"
 
     def __init__(
         self, *, key: str, language: str, filter_level: ProfanityFilterLevel
@@ -55,7 +55,7 @@ class RequestBuilder:
         """
         >>> builder = RequestBuilder(key="awesome-key", language="en-US", filter_level=0)
         >>> builder.build_url()
-        'http://www.google.com/speech-api/v2/recognize?client=chromium&lang=en-US&key=awesome-key&pFilter=0'
+        'https://www.google.com/speech-api/v2/recognize?client=chromium&lang=en-US&key=awesome-key&pFilter=0'
         """
         params = urlencode(
             {
