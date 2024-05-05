@@ -1,0 +1,51 @@
+name: Unit tests
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python-version: "3.8"
+          - os: ubuntu-latest
+            python-version: "3.9"
+          - os: ubuntu-latest
+            python-version: "3.10"
+          - os: ubuntu-latest
+            python-version: "3.11"
+          - os: windows-latest
+            python-version: "3.11"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install build dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y libpulse-dev libasound2-dev
+      - name: Install ffmpeg (for Whisper)
+        uses: FedericoCarboni/setup-ffmpeg@v3
+      - name: Install Python dependencies (Ubuntu only)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          python -m pip install 'pocketsphinx<5'
+      - name: Install Python dependencies
+        run: |
+          python -m pip install .[whisper-local,whisper-api]
+      - name: Test with unittest
+        run: |
+          python -m doctest speech_recognition/recognizers/google.py -v
+          python -m unittest discover --verbose
