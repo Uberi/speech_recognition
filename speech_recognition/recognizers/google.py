@@ -30,13 +30,19 @@ class GoogleResponse(TypedDict):
 ProfanityFilterLevel = Literal[0, 1]
 RequestHeaders = Dict[str, str]
 
+ENDPOINT = "http://www.google.com/speech-api/v2/recognize"
+
 
 class RequestBuilder:
-    endpoint = "http://www.google.com/speech-api/v2/recognize"
-
     def __init__(
-        self, *, key: str, language: str, filter_level: ProfanityFilterLevel
+        self,
+        *,
+        endpoint: str,
+        key: str,
+        language: str,
+        filter_level: ProfanityFilterLevel,
     ) -> None:
+        self.endpoint = endpoint
         self.key = key
         self.language = language
         self.filter_level = filter_level
@@ -53,7 +59,7 @@ class RequestBuilder:
 
     def build_url(self) -> str:
         """
-        >>> builder = RequestBuilder(key="awesome-key", language="en-US", filter_level=0)
+        >>> builder = RequestBuilder(endpoint="http://www.google.com/speech-api/v2/recognize", key="awesome-key", language="en-US", filter_level=0)
         >>> builder.build_url()
         'http://www.google.com/speech-api/v2/recognize?client=chromium&lang=en-US&key=awesome-key&pFilter=0'
         """
@@ -69,7 +75,7 @@ class RequestBuilder:
 
     def build_headers(self, audio_data: AudioData) -> RequestHeaders:
         """
-        >>> builder = RequestBuilder(key="", language="", filter_level=1)
+        >>> builder = RequestBuilder(endpoint="", key="", language="", filter_level=1)
         >>> audio_data = AudioData(b"", 16_000, 1)
         >>> builder.build_headers(audio_data)
         {'Content-Type': 'audio/x-flac; rate=16000'}
@@ -99,6 +105,7 @@ class RequestBuilder:
 
 def create_request_builder(
     *,
+    endpoint: str,
     key: str | None = None,
     language: str = "en-US",
     filter_level: ProfanityFilterLevel = 0,
@@ -111,7 +118,10 @@ def create_request_builder(
     if key is None:
         key = "AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw"
     return RequestBuilder(
-        key=key, language=language, filter_level=filter_level
+        endpoint=endpoint,
+        key=key,
+        language=language,
+        filter_level=filter_level,
     )
 
 
@@ -220,6 +230,8 @@ def recognize_legacy(
     pfilter: ProfanityFilterLevel = 0,
     show_all: bool = False,
     with_confidence: bool = False,
+    *,
+    endpoint: str = ENDPOINT,
 ):
     """
     Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Google Speech Recognition API.
@@ -237,7 +249,7 @@ def recognize_legacy(
     Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
     """
     request_builder = create_request_builder(
-        key=key, language=language, filter_level=pfilter
+        endpoint=endpoint, key=key, language=language, filter_level=pfilter
     )
     request = request_builder.build(audio_data)
 
