@@ -1467,7 +1467,7 @@ class Recognizer(AudioSource):
         assert isinstance(audio_data, AudioData), "``audio_data`` must be audio data"
         assert os.path.isfile(whispercpp_main), "``whispercpp_main`` must be a valid file path"
         assert os.path.isfile(model_path), "``model_path`` must be a valid file path"
-        wav_data = audio.get_wav_data(
+        wav_data = audio_data.get_wav_data(
             convert_rate=16000,  # audio samples must be 8kHz or 16 kHz
             convert_width=2  # audio samples should be 16-bit
         )
