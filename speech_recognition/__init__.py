@@ -447,9 +447,11 @@ class Recognizer(AudioSource):
 
         return b"".join(frames), elapsed_time
 
-    def listen(self, source, timeout=None, phrase_time_limit=None, snowboy_configuration=None):
+    def listen(self, source, timeout=None, phrase_time_limit=None, snowboy_configuration=None, stream=False):
         """
         Records a single phrase from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance, which it returns.
+
+        If the ``stream`` keyword argument is ``True``, the ``listen()`` method will yield ``AudioData`` instances representing chunks of audio data as they are detected. The first yielded ``AudioData`` instance represents the first buffer of the phrase, and the last yielded ``AudioData`` instance represents the last buffer of the phrase. If ``stream`` is ``False``, the method will return a single ``AudioData`` instance representing the entire phrase.
 
         This is done by waiting until the audio has an energy above ``recognizer_instance.energy_threshold`` (the user has started speaking), and then recording until it encounters ``recognizer_instance.pause_threshold`` seconds of non-speaking or there is no more audio input. The ending silence is not included.
 
@@ -461,6 +463,13 @@ class Recognizer(AudioSource):
 
         This operation will always complete within ``timeout + phrase_timeout`` seconds if both are numbers, either by returning the audio data, or by raising a ``speech_recognition.WaitTimeoutError`` exception.
         """
+        result = self._listen(source, timeout, phrase_time_limit, snowboy_configuration, stream)
+        if not stream:
+            for a in result:
+                return a
+        return result
+
+    def _listen(self, source, timeout=None, phrase_time_limit=None, snowboy_configuration=None, stream=False):
         assert isinstance(source, AudioSource), "Source must be an audio source"
         assert source.stream is not None, "Audio source must be entered before listening, see documentation for ``AudioSource``; are you using ``source`` outside of a ``with`` statement?"
         assert self.pause_threshold >= self.non_speaking_duration >= 0
@@ -514,6 +523,12 @@ class Recognizer(AudioSource):
             # read audio input until the phrase ends
             pause_count, phrase_count = 0, 0
             phrase_start_time = elapsed_time
+
+            if stream:
+                # yield the first buffer of the phrase
+                yield AudioData(b"".join(frames), source.SAMPLE_RATE, source.SAMPLE_WIDTH)
+                frames.clear()
+
             while True:
                 # handle phrase being too long by cutting off the audio
                 elapsed_time += seconds_per_buffer
@@ -534,15 +549,31 @@ class Recognizer(AudioSource):
                 if pause_count > pause_buffer_count:  # end of the phrase
                     break
 
+                # dynamically adjust the energy threshold using asymmetric weighted average
+                if self.dynamic_energy_threshold:
+                    damping = self.dynamic_energy_adjustment_damping ** seconds_per_buffer  # account for different chunk sizes and rates
+                    target_energy = energy * self.dynamic_energy_ratio
+                    self.energy_threshold = self.energy_threshold * damping + target_energy * (1 - damping)
+
+                if stream:
+                    # yield the current chunk of audio data wrapped in AudioData
+                    yield AudioData(buffer, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
+
             # check how long the detected phrase is, and retry listening if the phrase is too short
             phrase_count -= pause_count  # exclude the buffers for the pause before the phrase
             if phrase_count >= phrase_buffer_count or len(buffer) == 0: break  # phrase is long enough or we've reached the end of the stream, so stop listening
 
-        # obtain frame data
-        for i in range(pause_count - non_speaking_buffer_count): frames.pop()  # remove extra non-speaking frames at the end
-        frame_data = b"".join(frames)
+        if stream:
+            # yield the last buffer of the phrase.
+            yield AudioData(buffer, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
+        else:
+            # obtain frame data
+            for i in range(
+                pause_count - non_speaking_buffer_count): frames.pop()  # remove extra non-speaking frames at the end
 
-        return AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
+            frame_data = b"".join(frames)
+            # yield the entire phrase as a single AudioData instance
+            yield AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
 
     def listen_in_background(self, source, callback, phrase_time_limit=None):
         """
