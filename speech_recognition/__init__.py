@@ -39,6 +39,14 @@ from .exceptions import (
     WaitTimeoutError,
 )
 
+import playsound
+# short and simple.
+#for audio output. instead of print you can get voice as output
+def voice(p):
+    myobj=gTTS(text=p,lang='en',slow=False)
+    myobj.save('try.mp3')
+    playsound('try.mp3')
+    
 __author__ = "Anthony Zhang (Uberi)"
 __version__ = "3.10.4"
 __license__ = "BSD"
