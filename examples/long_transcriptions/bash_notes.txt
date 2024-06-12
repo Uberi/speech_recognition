@@ -1,0 +1,11 @@
+(speech)[654] examples% play -r 44100 -e unsigned -b 24 -c 1 short_interview_example.raw
+
+...
+
+# think I actually used these
+(speech)[691] examples% play -r 16000 -e signed -b 16 -c 1 long_interview_example.raw
+(speech)[692] examples% mv long_interview_example.raw long_interview_example.l16
+
+...
+
+(gapis)[553] grpc% python transcribe_async.py gs://steadfast-mason-145112.appspot.com/short_interview_example.raw  --encoding=LINEAR16
