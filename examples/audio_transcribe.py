@@ -52,8 +52,9 @@ except sr.RequestError as e:
 
 # recognize speech using Microsoft Azure Speech
 AZURE_SPEECH_KEY = "INSERT AZURE SPEECH API KEY HERE"  # Microsoft Speech API keys 32-character lowercase hexadecimal strings
+AZURELOCATION = "INSERT AZURE INSTANCE LOCATION HERE" # In lower case eg. eastus
 try:
-    print("Microsoft Azure Speech thinks you said " + r.recognize_azure(audio, key=AZURE_SPEECH_KEY))
+    print("Microsoft Azure Speech thinks you said " + r.recognize_azure(audio, key=AZURE_SPEECH_KEY, location=AZURELOCATION))
 except sr.UnknownValueError:
     print("Microsoft Azure Speech could not understand audio")
 except sr.RequestError as e:
