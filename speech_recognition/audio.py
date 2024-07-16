@@ -250,6 +250,7 @@ class AudioData(object):
                 "--best",  # highest level of compression available
                 "-",  # the input FLAC file contents will be given in stdin
             ],
+            stderr=subprocess.DEVNULL,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             startupinfo=startup_info,
