@@ -447,7 +447,7 @@ class Recognizer(AudioSource):
 
         return b"".join(frames), elapsed_time
 
-    def listen(self, source, timeout=None, phrase_time_limit=None, snowboy_configuration=None):
+    def listen(self, source, timeout=None, phrase_time_limit=None, snowboy_configuration=None, flush_flag=[False]):
         """
         Records a single phrase from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance, which it returns.
 
@@ -515,6 +515,11 @@ class Recognizer(AudioSource):
             pause_count, phrase_count = 0, 0
             phrase_start_time = elapsed_time
             while True:
+                if(flush_flag[0]):
+                    flush_flag[0] = False
+                    buffer == b''
+                    break
+                
                 # handle phrase being too long by cutting off the audio
                 elapsed_time += seconds_per_buffer
                 if phrase_time_limit and elapsed_time - phrase_start_time > phrase_time_limit:
@@ -544,7 +549,7 @@ class Recognizer(AudioSource):
 
         return AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
 
-    def listen_in_background(self, source, callback, phrase_time_limit=None):
+    def listen_in_background(self, source, callback, flush_flag, phrase_time_limit=None):
         """
         Spawns a thread to repeatedly record phrases from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance and call ``callback`` with that ``AudioData`` instance as soon as each phrase are detected.
 
@@ -561,7 +566,7 @@ class Recognizer(AudioSource):
             with source as s:
                 while running[0]:
                     try:  # listen for 1 second, then check again if the stop function has been called
-                        audio = self.listen(s, 1, phrase_time_limit)
+                        audio = self.listen(s, 1, phrase_time_limit, flush_flag=flush_flag)
                     except WaitTimeoutError:  # listening timed out, just try again
                         pass
                     else:
