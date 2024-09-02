@@ -41,7 +41,7 @@ jobs:
       - name: Install Python dependencies (Ubuntu only)
         if: matrix.os == 'ubuntu-latest'
         run: |
-          python -m pip install 'pocketsphinx<5'
+          python -m pip install pocketsphinx
       - name: Install Python dependencies
         run: |
           python -m pip install .[whisper-local,whisper-api]
