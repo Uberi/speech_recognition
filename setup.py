@@ -5,7 +5,7 @@ import stat
 
 from setuptools import setup
 from setuptools.command.install import install
-from distutils import log
+from setuptools import _distutils
 
 import speech_recognition
 
@@ -19,7 +19,7 @@ class InstallWithExtraSteps(install):
         # mark the FLAC executables as executable by all users (this fixes occasional issues when file permissions get messed up)
         for output_path in self.get_outputs():
             if os.path.basename(output_path) in FILES_TO_MARK_EXECUTABLE:
-                log.info("setting executable permissions on {}".format(output_path))
+                _distutils.log.info("setting executable permissions on {}".format(output_path))
                 stat_info = os.stat(output_path)
                 OWNER_CAN_READ_EXECUTE = stat.S_IRUSR | stat.S_IXUSR
                 GROUP_CAN_READ_EXECUTE = stat.S_IRGRP | stat.S_IXGRP

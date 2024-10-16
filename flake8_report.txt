@@ -1,0 +1,4 @@
+setup.py:30:21: W503 line break before binary operator
+setup.py:31:21: W503 line break before binary operator
+setup.py:32:21: W503 line break before binary operator
+speech_recognition\audio.py:34:56: E999 IndentationError: unindent does not match any outer indentation level

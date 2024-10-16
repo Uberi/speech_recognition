@@ -1,0 +1,5 @@
+SpeechRecognition~=3.10.4
+numpy~=2.1.1
+setuptools~=75.1.0
+requests~=2.32.3
+typing_extensions~=4.12.2

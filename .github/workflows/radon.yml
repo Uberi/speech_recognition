@@ -1,0 +1,46 @@
+name: Radon Analysis
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  radon-analysis:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 2. Set up Python environment
+      - name: Set Up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version:
+
+      # 3. Install Radon
+      - name: Install Radon
+        run: |
+                python -m pip install --upgrade pip
+                pip install radon
+
+      # 4. Run Radon for Cyclomatic Complexity (CC)
+      - name: Run Radon CC
+        run: |
+          radon cc -s -a -j -o radon_cc.json .
+        # Explanation:
+        # - cc: Compute Cyclomatic Complexity
+        # - -s: Sort results by complexity
+        # - -a: Print average complexity
+        # - -j: Output in JSON format
+        # - -o: Output file
+
+      # 5. Run Radon for Maintainability Index (MI)
+      - name: Run Radon MI
+        run: | 
+          radon mi -s -j -o radon_mi.json .
+          
