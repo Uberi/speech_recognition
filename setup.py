@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 
+import logging
 import os
 import stat
 
 from setuptools import setup
 from setuptools.command.install import install
-from distutils import log
 
 import speech_recognition
+
+logger = logging.getLogger("SpeechRecognition.setup")
 
 FILES_TO_MARK_EXECUTABLE = ["flac-linux-x86", "flac-linux-x86_64", "flac-mac", "flac-win32.exe"]
 
@@ -19,7 +21,7 @@ class InstallWithExtraSteps(install):
         # mark the FLAC executables as executable by all users (this fixes occasional issues when file permissions get messed up)
         for output_path in self.get_outputs():
             if os.path.basename(output_path) in FILES_TO_MARK_EXECUTABLE:
-                log.info("setting executable permissions on {}".format(output_path))
+                logger.info("setting executable permissions on %s", output_path)
                 stat_info = os.stat(output_path)
                 OWNER_CAN_READ_EXECUTE = stat.S_IRUSR | stat.S_IXUSR
                 GROUP_CAN_READ_EXECUTE = stat.S_IRGRP | stat.S_IXGRP
