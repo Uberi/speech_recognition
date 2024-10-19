@@ -59,7 +59,7 @@ class Microphone(AudioSource):
     """
     Creates a new ``Microphone`` instance, which represents a physical microphone on the computer. Subclass of ``AudioSource``.
 
-    This will throw an ``AttributeError`` if you don't have PyAudio 0.2.11 or later installed.
+    This will throw an ``AttributeError`` if you don't have PyAudio (0.2.11 or later) installed.
 
     If ``device_index`` is unspecified or ``None``, the default microphone is used as the audio source. Otherwise, ``device_index`` should be the index of the device to use for audio input.
 
@@ -108,9 +108,6 @@ class Microphone(AudioSource):
             import pyaudio
         except ImportError:
             raise AttributeError("Could not find PyAudio; check installation")
-        from distutils.version import LooseVersion
-        if LooseVersion(pyaudio.__version__) < LooseVersion("0.2.11"):
-            raise AttributeError("PyAudio 0.2.11 or later is required (found version {})".format(pyaudio.__version__))
         return pyaudio
 
     @staticmethod
