@@ -89,7 +89,7 @@ Requirements
 
 To use all of the functionality of the library, you should have:
 
-* **Python** 3.8+ (required)
+* **Python** 3.9+ (required)
 * **PyAudio** 0.2.11+ (required only if you need to use microphone input, ``Microphone``)
 * **PocketSphinx** (required only if you need to use the Sphinx recognizer, ``recognizer_instance.recognize_sphinx``)
 * **Google API Client Library for Python** (required only if you need to use the Google Cloud Speech API, ``recognizer_instance.recognize_google_cloud``)
@@ -107,7 +107,7 @@ The following sections go over the details of each requirement.
 Python
 ~~~~~~
 
-The first software requirement is `Python 3.8+ <https://www.python.org/downloads/>`__. This is required to use the library.
+The first software requirement is `Python 3.9+ <https://www.python.org/downloads/>`__. This is required to use the library.
 
 PyAudio (for microphone users)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
