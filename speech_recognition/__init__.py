@@ -40,7 +40,7 @@ from .exceptions import (
 )
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "3.10.4"
+__version__ = "3.11.0"
 __license__ = "BSD"
 
 
