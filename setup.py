@@ -4,7 +4,7 @@ import logging
 import os
 import stat
 
-from setuptools import setup
+from setuptools import find_packages, setup
 from setuptools.command.install import install
 
 import speech_recognition
@@ -38,7 +38,7 @@ class InstallWithExtraSteps(install):
 setup(
     name="SpeechRecognition",
     version=speech_recognition.__version__,
-    packages=["speech_recognition"],
+    packages=find_packages(exclude=["tests.*", "test"]),
     include_package_data=True,
     cmdclass={"install": InstallWithExtraSteps},
 
