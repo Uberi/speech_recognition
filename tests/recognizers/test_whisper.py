@@ -23,7 +23,7 @@ class RecognizeWhisperApiTestCase(TestCase):
         BytesIO.assert_called_once_with(audio_data.get_wav_data.return_value)
         OpenAI.assert_called_once_with(api_key=None)
         client.audio.transcriptions.create.assert_called_once_with(
-            file=BytesIO.return_value, model="whisper-1"
+            file=BytesIO.return_value, language=None, model="whisper-1"
         )
 
     def test_recognize_pass_arguments(self, OpenAI, BytesIO, environ):
@@ -38,5 +38,5 @@ class RecognizeWhisperApiTestCase(TestCase):
 
         OpenAI.assert_called_once_with(api_key="OPENAI_API_KEY")
         client.audio.transcriptions.create.assert_called_once_with(
-            file=BytesIO.return_value, model="x-whisper"
+            file=BytesIO.return_value, language=None, model="x-whisper"
         )
