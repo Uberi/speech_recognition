@@ -698,7 +698,7 @@ class Recognizer(AudioSource):
         if hypothesis is not None: return hypothesis.hypstr
         raise UnknownValueError()  # no transcriptions available
 
-    def recognize_google_cloud(self, audio_data, credentials_json=None, language="en-US", preferred_phrases=None, show_all=False):
+    def recognize_google_cloud(self, audio_data, credentials_json=None, language="en-US", preferred_phrases=None, use_enhanced=False, model=None, show_all=False):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Google Cloud Speech API.
 
@@ -707,6 +707,10 @@ class Recognizer(AudioSource):
         The recognition language is determined by ``language``, which is a BCP-47 language tag like ``"en-US"`` (US English). A list of supported language tags can be found in the `Google Cloud Speech API documentation <https://cloud.google.com/speech/docs/languages>`__.
 
         If ``preferred_phrases`` is an iterable of phrase strings, those given phrases will be more likely to be recognized over similar-sounding alternatives. This is useful for things like keyword/command recognition or adding new phrases that aren't in Google's vocabulary. Note that the API imposes certain `restrictions on the list of phrase strings <https://cloud.google.com/speech/limits#content>`__.
+
+        The ``use_enhanced`` is a boolean option that sets a flag with the same name on the Google Cloud Speech API, it will make the API uses the enhanced version of the model. More information can be found in the `Google Cloud Speech API documentation <https://cloud.google.com/speech-to-text/docs/enhanced-models>` __.
+
+        Furthermore, you can use the option ``model`` to set your desired model, the Python Google Speech API makes available the following options: 'latest_long', 'latest_short', 'command_and_search', 'phone_call', 'video', 'default', 'medical_conversation', 'medical_dictation'. More information can be found in the `Google Cloud Speech API documentation <https://cloud.google.com/speech-to-text/docs/transcription-model>` __.
 
         Returns the most likely transcription if ``show_all`` is False (the default). Otherwise, returns the raw API response as a JSON dictionary.
 
@@ -717,6 +721,8 @@ class Recognizer(AudioSource):
             assert os.environ.get('GOOGLE_APPLICATION_CREDENTIALS') is not None
         assert isinstance(language, str), "``language`` must be a string"
         assert preferred_phrases is None or all(isinstance(preferred_phrases, (type(""), type(u""))) for preferred_phrases in preferred_phrases), "``preferred_phrases`` must be a list of strings"
+        assert isinstance(use_enhanced, bool), "``use_enhanced`` must be a boolean"
+        assert model is None or model in (None, "latest_long", "latest_short", "command_and_search", "phone_call", "video", "default", "medical_conversation", "medical_dictation"), "``model`` must be None or 'latest_long', 'latest_short', 'command_and_search', 'phone_call', 'video', or 'default'"
 
         try:
             import socket
@@ -740,7 +746,9 @@ class Recognizer(AudioSource):
         config = {
             'encoding': speech.RecognitionConfig.AudioEncoding.FLAC,
             'sample_rate_hertz': audio_data.sample_rate,
-            'language_code': language
+            'language_code': language,
+            'use_enhanced': use_enhanced,
+            'model': model,
         }
         if preferred_phrases is not None:
             config['speechContexts'] = [speech.SpeechContext(
