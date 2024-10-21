@@ -651,7 +651,7 @@ class Recognizer(AudioSource):
             raise RequestError("missing PocketSphinx phoneme dictionary file: \"{}\"".format(phoneme_dictionary_file))
 
         # create decoder object
-        config = pocketsphinx.Decoder.default_config()
+        config = pocketsphinx.Config()
         config.set_string("-hmm", acoustic_parameters_directory)  # set the path of the hidden Markov model (HMM) parameter files
         config.set_string("-lm", language_model_file)
         config.set_string("-dict", phoneme_dictionary_file)
@@ -669,8 +669,8 @@ class Recognizer(AudioSource):
                 f.flush()
 
                 # perform the speech recognition with the keywords file (this is inside the context manager so the file isn;t deleted until we're done)
-                decoder.set_kws("keywords", f.name)
-                decoder.set_search("keywords")
+                decoder.add_kws("keywords", f.name)
+                decoder.activate_search("keywords")
         elif grammar is not None:  # a path to a FSG or JSGF grammar
             if not os.path.exists(grammar):
                 raise ValueError("Grammar '{0}' does not exist.".format(grammar))
