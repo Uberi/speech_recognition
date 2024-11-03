@@ -2,8 +2,6 @@ import sys
 from unittest import TestCase, skipIf
 from unittest.mock import MagicMock, patch
 
-import numpy as np
-
 from speech_recognition import AudioData, Recognizer
 
 
@@ -16,6 +14,8 @@ class RecognizeWhisperTestCase(TestCase):
     def test_default_parameters(
         self, load_model, is_available, sf_read, BytesIO
     ):
+        import numpy as np
+
         whisper_model = load_model.return_value
         transcript = whisper_model.transcribe.return_value
         audio_array = MagicMock()
