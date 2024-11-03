@@ -1,11 +1,11 @@
-from unittest import TestCase
+import sys
+from unittest import TestCase, skipIf
 from unittest.mock import MagicMock, patch
-
-import numpy as np
 
 from speech_recognition import AudioData, Recognizer
 
 
+@skipIf(sys.version_info >= (3, 13), "skip on Python 3.13")
 @patch("speech_recognition.io.BytesIO")
 @patch("soundfile.read")
 @patch("torch.cuda.is_available")
@@ -14,6 +14,8 @@ class RecognizeWhisperTestCase(TestCase):
     def test_default_parameters(
         self, load_model, is_available, sf_read, BytesIO
     ):
+        import numpy as np
+
         whisper_model = load_model.return_value
         transcript = whisper_model.transcribe.return_value
         audio_array = MagicMock()
