@@ -1,5 +1,5 @@
 import sys
-from unittest import TestCase, skipif
+from unittest import TestCase, skipIf
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -7,7 +7,7 @@ import numpy as np
 from speech_recognition import AudioData, Recognizer
 
 
-@skipif(sys.version_info >= (3, 13), "skip on Python 3.13")
+@skipIf(sys.version_info >= (3, 13), "skip on Python 3.13")
 @patch("speech_recognition.io.BytesIO")
 @patch("soundfile.read")
 @patch("torch.cuda.is_available")
