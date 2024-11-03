@@ -25,11 +25,6 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-try:
-    import requests
-except (ModuleNotFoundError, ImportError):
-    pass
-
 from .audio import AudioData, get_flac_converter
 from .exceptions import (
     RequestError,
@@ -1259,6 +1254,8 @@ class Recognizer(AudioSource):
                     if not data:
                         break
                     yield data
+
+        import requests
 
         check_existing = audio_data is None and job_name
         if check_existing:
