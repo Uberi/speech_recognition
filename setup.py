@@ -70,5 +70,9 @@ setup(
         "Topic :: Multimedia :: Sound/Audio :: Speech",
     ],
     python_requires=">=3.9",
-    install_requires=["typing-extensions"],
+    install_requires=[
+        "typing-extensions",
+        "standard-aifc; python_version>='3.13'",
+        "audioop-lts; python_version>='3.13'",
+    ],
 )
