@@ -124,7 +124,7 @@ class Microphone(AudioSource):
 
         The index of each microphone's name in the returned list is the same as its device index when creating a ``Microphone`` instance - if you want to use the microphone at index 3 in the returned list, use ``Microphone(device_index=3)``.
         """
-        audio = Microphone.get_pyaudio().PyAudio()
+        audio = Microphone.get_pyaudio_v2()
         try:
             result = []
             for i in range(audio.get_device_count()):
