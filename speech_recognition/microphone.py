@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 class PyAudioWrapper:
     @staticmethod
-    def get_pyaudio_v2() -> pyaudio.PyAudio:
+    def get_pyaudio() -> pyaudio.PyAudio:
         try:
             import pyaudio
         except ImportError:
@@ -23,7 +23,7 @@ class PyAudioWrapper:
 
         The index of each microphone's name in the returned list is the same as its device index when creating a ``Microphone`` instance - if you want to use the microphone at index 3 in the returned list, use ``Microphone(device_index=3)``.
         """
-        audio = PyAudioWrapper.get_pyaudio_v2()
+        audio = PyAudioWrapper.get_pyaudio()
         try:
             result = []
             for i in range(audio.get_device_count()):
