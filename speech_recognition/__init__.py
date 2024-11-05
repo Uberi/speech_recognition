@@ -21,6 +21,7 @@ import threading
 import time
 import uuid
 import wave
+from typing import TYPE_CHECKING
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -33,6 +34,9 @@ from .exceptions import (
     UnknownValueError,
     WaitTimeoutError,
 )
+
+if TYPE_CHECKING:
+    import pyaudio
 
 __author__ = "Anthony Zhang (Uberi)"
 __version__ = "3.11.0"
@@ -104,6 +108,14 @@ class Microphone(AudioSource):
         except ImportError:
             raise AttributeError("Could not find PyAudio; check installation")
         return pyaudio
+
+    @staticmethod
+    def get_pyaudio_v2() -> pyaudio.PyAudio:
+        try:
+            import pyaudio
+        except ImportError:
+            raise AttributeError("Could not find PyAudio; check installation")
+        return pyaudio.PyAudio()
 
     @staticmethod
     def list_microphone_names():
