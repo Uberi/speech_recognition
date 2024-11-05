@@ -140,7 +140,24 @@ class TestAudioFile(unittest.TestCase):
             self.assertSimilar(audio.get_raw_data()[:32], b"\x00\x00\x00\x00\xfe\xff\x00\x02\x00\x00\xfe\xff\x00\x00\x00\xff\x01\x00\x02\xfc\xff\xfe\x01\x00\x02\xfc\xff\xfe\x07\x00\x01\xf6")
         else:
             self.assertSimilar(audio.get_raw_data()[:32], b"\x00\x00\x00\x00\x00\x00\xfe\xff\x00\x00\x02\x00\x00\x00\xfe\xff\x00\x00\x00\x00\x00\xff\x01\x00\x00\x02\xfc\xff\x00\xfe\x01\x00")
+    # Added test for MP3
+    # Test that attempting to recognize speech from an incompatible audio file raises a ValueError.
+    def test_incompatible_audio_file_error(self):
+        # Define paths to audio files
+        self.AUDIO_FILE_EN_MP3 = path.join(path.dirname(path.realpath(__file__)), "english.mp3")
+        # Create a Recognizer instance
+        r = sr.Recognizer()
+        # Verify that a ValueError is raised when an incompatible audio file is used
+        with self.assertRaises(ValueError) as context:
+            # Load the audio file for recognition
+            # Attempt to record audio from the MP3 file
+            with sr.AudioFile(self.AUDIO_FILE_EN_MP3) as source:r.record(source)
 
+        # Check that the raised ValueError contains the expected message
+        self.assertEqual(
+            str(context.exception),
+            "Audio file could not be read as PCM WAV, AIFF/AIFF-C, or Native FLAC; check if file is corrupted or in another format"
+        )
 
 if __name__ == "__main__":
     unittest.main()
