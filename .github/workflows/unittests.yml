@@ -22,6 +22,8 @@ jobs:
             python-version: "3.11"
           - os: ubuntu-latest
             python-version: "3.12"
+          - os: ubuntu-latest
+            python-version: "3.13"
           - os: windows-latest
             python-version: "3.11"
     runs-on: ${{ matrix.os }}
@@ -39,14 +41,15 @@ jobs:
           sudo apt-get install --no-install-recommends -y portaudio19-dev
       - name: Install ffmpeg (for Whisper)
         uses: FedericoCarboni/setup-ffmpeg@v3
-      - name: Install Python dependencies (Ubuntu only)
-        if: matrix.os == 'ubuntu-latest'
+      - name: Install Python dependencies (Ubuntu, <=3.12)
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version != '3.13'
         run: |
-          python -m pip install 'pocketsphinx<5'
-      - name: Install Python dependencies (Ubuntu)
-        if: matrix.os == 'ubuntu-latest'
+          python -m pip install .[dev,audio,pocketsphinx,whisper-local,whisper-api]
+      - name: Install Python dependencies (Ubuntu, 3.13)
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
         run: |
-          python -m pip install .[dev,audio,whisper-local,whisper-api]
+          python -m pip install standard-aifc setuptools
+          python -m pip install --no-build-isolation .[dev,audio,pocketsphinx,whisper-api]
       - name: Install Python dependencies (Windows)
         if: matrix.os == 'windows-latest'
         run: |
