@@ -21,7 +21,6 @@ import threading
 import time
 import uuid
 import wave
-from typing import TYPE_CHECKING
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -34,9 +33,6 @@ from .exceptions import (
     UnknownValueError,
     WaitTimeoutError,
 )
-
-if TYPE_CHECKING:
-    import pyaudio
 
 __author__ = "Anthony Zhang (Uberi)"
 __version__ = "3.11.0"
@@ -108,31 +104,6 @@ class Microphone(AudioSource):
         except ImportError:
             raise AttributeError("Could not find PyAudio; check installation")
         return pyaudio
-
-    @staticmethod
-    def get_pyaudio_v2() -> pyaudio.PyAudio:
-        try:
-            import pyaudio
-        except ImportError:
-            raise AttributeError("Could not find PyAudio; check installation")
-        return pyaudio.PyAudio()
-
-    @staticmethod
-    def list_microphone_names():
-        """
-        Returns a list of the names of all available microphones. For microphones where the name can't be retrieved, the list entry contains ``None`` instead.
-
-        The index of each microphone's name in the returned list is the same as its device index when creating a ``Microphone`` instance - if you want to use the microphone at index 3 in the returned list, use ``Microphone(device_index=3)``.
-        """
-        audio = Microphone.get_pyaudio_v2()
-        try:
-            result = []
-            for i in range(audio.get_device_count()):
-                device_info = audio.get_device_info_by_index(i)
-                result.append(device_info.get("name"))
-        finally:
-            audio.terminate()
-        return result
 
     @staticmethod
     def list_working_microphones():
