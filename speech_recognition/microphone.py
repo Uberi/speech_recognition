@@ -10,10 +10,16 @@ if TYPE_CHECKING:
 class PyAudioWrapper:
     @staticmethod
     def get_pyaudio() -> pyaudio.PyAudio:
+        """Returns pyaudio.PyAudio instance.
+
+        Checks pyaudio's installation, throws exceptions if pyaudio can't be found
+        """
         try:
             import pyaudio
         except ImportError:
-            raise AttributeError("Could not find PyAudio; check installation")
+            raise AttributeError(
+                "Could not find PyAudio; Run `pip install SpeechRecognition[audio]`"
+            )
         return pyaudio.PyAudio()
 
     @staticmethod
