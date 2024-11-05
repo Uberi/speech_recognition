@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import audioop
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
