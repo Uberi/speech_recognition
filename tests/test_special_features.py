@@ -19,12 +19,9 @@ class TestSpecialFeatures(unittest.TestCase):
     def test_sphinx_keywords(self):
         r = sr.Recognizer()
         with sr.AudioFile(self.AUDIO_FILE_EN) as source: audio = r.record(source)
-        self.assertNotEqual(r.recognize_sphinx(audio, keyword_entries=[("one", 1.0), ("two", 1.0), ("three", 1.0)]), "three two one")
-        # self.assertEqual(r.recognize_sphinx(audio, keyword_entries=[("one", 0.01), ("two", 0.02), ("three", 0.03)]), "three two one")
-        self.assertNotEqual(r.recognize_sphinx(audio, keyword_entries=[("wan", 0.95), ("too", 1.0), ("tree", 1.0)]), "tree too wan")
-        # self.assertEqual(r.recognize_sphinx(audio, keyword_entries=[("wan", 0.01), ("too", 0.02), ("tree", 0.03)]), "tree too wan")
-        self.assertNotEqual(r.recognize_sphinx(audio, keyword_entries=[("wan", 0), ("un", 0.95), ("to", 1.0), ("tee", 1.0)]), "tee to un")
-        # self.assertEqual(r.recognize_sphinx(audio, keyword_entries=[("un", 0.01), ("to", 0.02), ("tee", 0.03)]), "tee to un")
+        self.assertEqual(r.recognize_sphinx(audio, keyword_entries=[("one", 1.0), ("two", 1.0), ("three", 1.0)]), "three two one")
+        self.assertEqual(r.recognize_sphinx(audio, keyword_entries=[("wan", 0.95), ("too", 1.0), ("tree", 1.0)]), "tree too wan")
+        self.assertEqual(r.recognize_sphinx(audio, keyword_entries=[("un", 0.95), ("to", 1.0), ("tee", 1.0)]), "tee to un")
 
     # Added test for MP3
     # Test that attempting to recognize speech from an incompatible audio file raises a ValueError.
