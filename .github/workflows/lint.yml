@@ -14,13 +14,5 @@ jobs:
 
     steps:
         - uses: actions/checkout@v4
-        - uses: actions/setup-python@v5
-          with:
-            python-version: '3.11'
-        - name: Install dependencies
-          run: |
-            python -m pip install flake8
-        - name: Run flake8
-          run: |
-            # ignore errors for long lines and multi-statement lines
-            python -m flake8 --ignore=E501,E701,W503 speech_recognition tests examples setup.py
+        # ignore errors for long lines and multi-statement lines
+        - run: pipx run flake8 --ignore=E501,E701,W503 .
