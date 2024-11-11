@@ -73,4 +73,4 @@ include-package-data = true
 exclude = [ "tests.*" ] # test
 namespaces = false
 [tool.setuptools.dynamic]
-version = { attr = "speech_recognition.__version__" }
+version = { attr = "speech_recognition.__init__.__version__" }

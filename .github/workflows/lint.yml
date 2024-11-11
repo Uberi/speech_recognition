@@ -23,4 +23,4 @@ jobs:
         - name: Run flake8
           run: |
             # ignore errors for long lines and multi-statement lines
-            python -m flake8 --ignore=E501,E701,W503 speech_recognition tests examples setup.py
+            python -m flake8 --ignore=E501,E701,W503 speech_recognition tests examples

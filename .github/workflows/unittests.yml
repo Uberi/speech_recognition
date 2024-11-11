@@ -42,6 +42,7 @@ jobs:
       - name: Install Python dependencies on macOS
         if: runner.os == 'macOS'
         run: |
+          brew install portaudio
           python -m pip install .[dev,audio]
       - name: Install Python dependencies (Windows)
         if: runner.os == 'Windows'
