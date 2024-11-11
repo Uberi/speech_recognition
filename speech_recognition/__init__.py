@@ -4,8 +4,11 @@
 
 from __future__ import annotations
 
-import aifc
-import audioop
+try:
+    import aifc
+    import audioop
+except ModuleNotFoundError:
+    raise ModuleNotFoundError("Please run: pip install audioop-lts standard-aifc")
 import base64
 import collections
 import hashlib
