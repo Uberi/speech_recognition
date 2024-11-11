@@ -7,7 +7,13 @@ import stat
 from setuptools import find_packages, setup
 from setuptools.command.install import install
 
-import speech_recognition
+try:
+    import speech_recognition
+except ModuleNotFoundError:
+    import sys
+
+    sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+    import speech_recognition
 
 logger = logging.getLogger("SpeechRecognition.setup")
 
