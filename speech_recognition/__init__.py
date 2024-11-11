@@ -8,7 +8,7 @@ try:
     import aifc
     import audioop
 except ModuleNotFoundError:
-    aifc = audioop = None
+    raise ModuleNotFoundError("Please run: pip install audioop-lts standard-aifc")
 import base64
 import collections
 import hashlib
