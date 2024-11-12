@@ -62,7 +62,7 @@ optional-dependencies.dev = [
 optional-dependencies.pocketsphinx = [ "pocketsphinx<5" ]
 optional-dependencies.whisper-api = [ "openai" ]
 optional-dependencies.whisper-local = [
-  "git+https://github.com/Shonas301/whisper/tree/fix-setup-py-313.git",
+  "git+https://github.com/Shonas301/whisper.git@fix-setup-py-313",
   "soundfile",
 ]
 urls.Homepage = "https://github.com/Uberi/speech_recognition#readme"
