@@ -1411,7 +1411,7 @@ class Recognizer(AudioSource):
                 human_string = self.tflabels[node_id]
                 return human_string
 
-    def recognize_whisper(self, audio_data, model="base", show_dict=False, load_options=None, language=None, translate=False, **transcribe_options):
+    def recognize_whisper(self, audio_data, model="base", device="auto", show_dict=False, load_options=None, language=None, translate=False, **transcribe_options):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using Whisper.
 
@@ -1434,8 +1434,8 @@ class Recognizer(AudioSource):
 
         if load_options or not hasattr(self, "whisper_model") or self.whisper_model.get(model) is None:
             self.whisper_model = getattr(self, "whisper_model", {})
-            self.whisper_model[model] = whisper.load_model(model, **load_options or {})
-
+            self.whisper_model[model] = whisper.load_model(model, device=device, **load_options or {})
+            
         # 16 kHz https://github.com/openai/whisper/blob/28769fcfe50755a817ab922a7bc83483159600a9/whisper/audio.py#L98-L99
         wav_bytes = audio_data.get_wav_data(convert_rate=16000)
         wav_stream = io.BytesIO(wav_bytes)
