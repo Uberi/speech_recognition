@@ -802,6 +802,86 @@ class Recognizer(AudioSource):
         if "_text" not in result or result["_text"] is None: raise UnknownValueError()
         return result["_text"]
 
+    def recognize_yandex(self, audio_data, api_key=None, iam_token=None, folder_id=None, sample_rate=48000, topic="general", lang="en-US", profanity_filter=False, raw_results=False, show_all=False):
+        """
+        Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Yandex SpeechKit Cloud API.
+
+        This function requires a Yandex Cloud account; refer to the `Yandex SpeechKit documentation <https://cloud.yandex.com/en-ru/services/speechkit>`__ for detailed instructions and setup. Start by creating a Yandex Cloud project, enable the SpeechKit service for the project, and generate either an Service Account API key or IAM token for authentication.
+
+        The Service Account API key or IAM token should be used for the `api_key` or `iam_token` parameters, respectively. If an IAM token is used, you must also provide the `folder_id` corresponding to the Yandex Cloud directory where the SpeechKit service is enabled. If the API key or IAM token is not specified, the method will not function as these credentials are essential for accessing the SpeechKit API.
+
+        The language for recognition is determined by ``lang``, which should be a valid language code as per the Yandex SpeechKit documentation. The default value is "en-US" (English). A list of available languages can be found in the `model description <https://cloud.yandex.com/en-ru/docs/speechkit/stt/models>`__.
+
+        The ``sample_rate`` parameter specifies the sampling frequency to which the input audio_data will be converted. Acceptable values include: 48000: Converts the audio to a sampling rate of 48 kHz (default). 16000: Converts the audio to a sampling rate of 16 kHz. 8000: Converts the audio to a sampling rate of 8 kHz.
+
+        The ``topic`` parameter specifies the language model used for recognition. The available values depend on the selected language, and choosing the closest model to your context improves recognition accuracy. The default value is "general". Refer to the `acceptable values <https://cloud.yandex.com/en-ru/docs/speechkit/stt/models>`__ for more details.
+
+        The ``profanityFilter`` parameter manages the exclusion of profanity from recognition results. It accepts boolean values: `True` for filtering out profanity, and `False` (the default) for including it in the recognition results.
+
+        The ``rawResults`` parameter controls the representation of numbers in the recognition results. Set it to `True` for spelling out numbers and `False` (the default) for representing them as digits.
+
+        The ``folderId`` parameter is the ID of the folder you have access to, required for authorization with a user account. This should be provided when using an IAM token for authentication.
+
+        Returns the transcription if ``show_all`` is False (the default). Otherwise, returns the raw API response as a JSON dictionary.
+
+        Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the credentials aren't valid, or if there is no Internet connection.
+        """
+
+        # Validating audio data
+        assert isinstance(audio_data, AudioData), "Data must be audio data"
+
+        # Validating token and folder_id
+        assert (api_key is not None) != (iam_token is not None), "Either api_key or iam_token must be provided"
+
+        # Additional validation for iam_token and folder_id
+        if iam_token:
+            assert folder_id, "folder_id must be provided with iam_token"
+
+        # Validating sample_rate
+        accepted_sample_rates = [8000, 16000, 48000]
+        assert sample_rate in accepted_sample_rates, "sample_rate must be one of the following: 8000, 16000, 48000"
+
+        # Converting audio data to the correct format
+        wav_data = audio_data.get_wav_data(
+            convert_rate=None if audio_data.sample_rate != sample_rate else sample_rate,
+            convert_width=2
+        )
+
+        # Building request parameters
+        params = {
+            "topic": topic,
+            "format": "lpcm",
+            "sampleRateHertz": str(sample_rate),
+            "lang": lang,
+            "profanityFilter": "true" if profanity_filter else "false",
+            "rawResults": "true" if raw_results else "false",
+        }
+
+        # Selecting authorization method
+        if api_key:
+            headers = {"Authorization": f"Api-Key {api_key}"}
+        else:
+            headers = {"Authorization": f"Bearer {iam_token}"}
+            params["folderId"] = folder_id  # Adding folderId to parameters if iam_token is used
+
+        # Assembling URL
+        url = f"https://stt.api.cloud.yandex.net/speech/v1/stt:recognize?{'&'.join(f'{key}={value}' for key, value in params.items())}"
+
+        request = Request(url, data=wav_data, headers=headers)
+        try:
+            response = urlopen(request, timeout=self.operation_timeout)
+        except HTTPError as e:
+            raise RequestError("recognition request failed: {}".format(e.reason))
+        except URLError as e:
+            raise RequestError("recognition connection failed: {}".format(e.reason))
+        response_text = response.read().decode("utf-8")
+        result = json.loads(response_text)
+
+        # return results
+        if show_all: return result
+        if "result" not in result or result["result"] is None: raise UnknownValueError()
+        return result["result"]
+
     def recognize_azure(self, audio_data, key, language="en-US", profanity="masked", location="westus", show_all=False):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Microsoft Azure Speech API.
