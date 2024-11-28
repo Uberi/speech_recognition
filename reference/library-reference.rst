@@ -227,7 +227,7 @@ Returns the most likely transcription if ``show_all`` is false (the default). Ot
 
 Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
 
-``recognizer_instance.recognize_google_cloud(audio_data: AudioData, credentials_json: Union[str, None] = None, language: str = "en-US", preferred_phrases: Union[Iterable[str], None] = None, show_all: bool = False) -> Union[str, Dict[str, Any]]``
+``recognizer_instance.recognize_google_cloud(audio_data: AudioData, credentials_json: Union[str, None] = None, language: str = "en-US", preferred_phrases: Union[Iterable[str], None] = None, show_all: bool = False, **api_params) -> Union[str, Dict[str, Any]]``
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Google Cloud Speech API.
@@ -238,9 +238,11 @@ The recognition language is determined by ``language``, which is a BCP-47 langua
 
 If ``preferred_phrases`` is an iterable of phrase strings, those given phrases will be more likely to be recognized over similar-sounding alternatives. This is useful for things like keyword/command recognition or adding new phrases that aren't in Google's vocabulary. Note that the API imposes certain `restrictions on the list of phrase strings <https://cloud.google.com/speech/limits#content>`__.
 
-The ``use_enhanced`` is a boolean option that sets a flag with the same name on the Google Cloud Speech API, it will make the API uses the enhanced version of the model. More information can be found in the `Google Cloud Speech API documentation <https://cloud.google.com/speech-to-text/docs/enhanced-models>` __.
+``api_params`` are Cloud Speech API-specific parameters as dict (optional). For more information see <https://cloud.google.com/python/docs/reference/speech/latest/google.cloud.speech_v1.types.RecognitionConfig>
 
-Furthermore, you can use the option ``model`` to set your desired model, the Python Google Speech API makes available the following options: 'latest_long', 'latest_short', 'command_and_search', 'phone_call', 'video', 'default', 'medical_conversation', 'medical_dictation'. More information can be found in the `Google Cloud Speech API documentation <https://cloud.google.com/speech-to-text/docs/transcription-model>` __.
+The ``use_enhanced`` is a boolean option. If use_enhanced is set to true and the model field is not set, then an appropriate enhanced model is chosen if an enhanced model exists for the audio. If use_enhanced is true and an enhanced version of the specified model does not exist, 	then the speech is recognized using the standard version of the specified model.
+
+Furthermore, if the option ``use_enhanced`` has not been set the option ``model`` can be used, which can be used to select the model best suited to your domain to get best results. If a model is not explicitly specified, then we auto-select a model based on the other parameters of this method.
 
 Returns the most likely transcription if ``show_all`` is False (the default). Otherwise, returns the raw API response as a JSON dictionary.
 
