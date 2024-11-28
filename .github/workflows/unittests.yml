@@ -10,30 +10,50 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-
     strategy:
       fail-fast: true
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
-    
+        include:
+          - os: ubuntu-latest
+            python-version: "3.9"
+          - os: ubuntu-latest
+            python-version: "3.10"
+          - os: ubuntu-latest
+            python-version: "3.11"
+          - os: ubuntu-latest
+            python-version: "3.12"
+          - os: ubuntu-latest
+            python-version: "3.13"
+          - os: windows-latest
+            python-version: "3.11"
+    runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install build dependencies
+        if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y libpulse-dev libasound2-dev
-          sudo apt-get install --no-install-recommends -y ffmpeg
-      - name: Install Python dependencies
+          sudo apt-get install --no-install-recommends -y portaudio19-dev
+      - name: Install ffmpeg (for Whisper)
+        uses: FedericoCarboni/setup-ffmpeg@v3
+      - name: Install Python dependencies (Ubuntu, <=3.12)
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version != '3.13'
         run: |
-          python -m pip install 'pocketsphinx<5'
-          python -m pip install git+https://github.com/openai/whisper.git soundfile
-          python -m pip install .
+          python -m pip install .[dev,audio,pocketsphinx,whisper-local,whisper-api]
+      - name: Install Python dependencies (Ubuntu, 3.13)
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
+        run: |
+          python -m pip install standard-aifc setuptools
+          python -m pip install --no-build-isolation .[dev,audio,pocketsphinx,whisper-api]
+      - name: Install Python dependencies (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          python -m pip install .[dev,whisper-local,whisper-api]
       - name: Test with unittest
         run: |
-          python -m doctest speech_recognition/recognizers/google.py -v
-          python -m unittest discover --verbose
+          pytest --doctest-modules -v speech_recognition/recognizers/ tests/

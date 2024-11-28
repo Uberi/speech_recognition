@@ -18,7 +18,9 @@ class RequestBuilderTestCase(TestCase):
     @patch(f"{CLASS_UNDER_TEST}.build_url")
     def test_build(self, build_url, build_headers, build_data, Request):
         audio_data = MagicMock(spec=AudioData)
-        sut = google.RequestBuilder(key="", language="", filter_level=0)
+        sut = google.RequestBuilder(
+            endpoint="", key="", language="", filter_level=0
+        )
 
         actual = sut.build(audio_data)
 
@@ -36,7 +38,9 @@ class RequestBuilderTestCase(TestCase):
     def test_build_data(self, to_convert_rate):
         # mock has AudioData's attributes (e.g. sample_rate)
         audio_data = MagicMock(spec=AudioData(None, 1, 1))
-        sut = google.RequestBuilder(key="", language="", filter_level=0)
+        sut = google.RequestBuilder(
+            endpoint="", key="", language="", filter_level=0
+        )
 
         actual = sut.build_data(audio_data)
 
@@ -79,7 +83,7 @@ class OutputParserTestCase(TestCase):
 
     @patch(f"{CLASS_UNDER_TEST}.find_best_hypothesis")
     @patch(f"{CLASS_UNDER_TEST}.convert_to_result")
-    def test_parse_without_confidence(
+    def test_parse_with_confidence(
         self, convert_to_result, find_best_hypothesis
     ):
         convert_to_result.return_value = {"alternative": "dummy3"}
@@ -131,7 +135,10 @@ class RecognizeLegacyTestCase(TestCase):
 
         self.assertEqual(actual, output_parser.parse.return_value)
         create_request_builder.assert_called_once_with(
-            key=None, language="en-US", filter_level=0
+            endpoint="http://www.google.com/speech-api/v2/recognize",
+            key=None,
+            language="en-US",
+            filter_level=0,
         )
         request_builder.build.assert_called_once_with(audio_data)
         obtain_transcription.assert_called_once_with(
@@ -160,11 +167,15 @@ class RecognizeLegacyTestCase(TestCase):
             pfilter=1,
             show_all=True,
             with_confidence=False,
+            endpoint="https://www.google.com/speech-api/v2/recognize",
         )
 
         self.assertEqual(actual, output_parser.parse.return_value)
         create_request_builder.assert_called_once_with(
-            key="awesome-key", language="zh-CN", filter_level=1
+            endpoint="https://www.google.com/speech-api/v2/recognize",
+            key="awesome-key",
+            language="zh-CN",
+            filter_level=1,
         )
         request_builder.build.assert_called_once_with(audio_data)
         obtain_transcription.assert_called_once_with(

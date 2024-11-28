@@ -89,7 +89,7 @@ Requirements
 
 To use all of the functionality of the library, you should have:
 
-* **Python** 3.8+ (required)
+* **Python** 3.9+ (required)
 * **PyAudio** 0.2.11+ (required only if you need to use microphone input, ``Microphone``)
 * **PocketSphinx** (required only if you need to use the Sphinx recognizer, ``recognizer_instance.recognize_sphinx``)
 * **Google API Client Library for Python** (required only if you need to use the Google Cloud Speech API, ``recognizer_instance.recognize_google_cloud``)
@@ -107,7 +107,7 @@ The following sections go over the details of each requirement.
 Python
 ~~~~~~
 
-The first software requirement is `Python 3.8+ <https://www.python.org/downloads/>`__. This is required to use the library.
+The first software requirement is `Python 3.9+ <https://www.python.org/downloads/>`__. This is required to use the library.
 
 PyAudio (for microphone users)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -118,11 +118,11 @@ If not installed, everything in the library will still work, except attempting t
 
 The installation instructions on the PyAudio website are quite good - for convenience, they are summarized below:
 
-* On Windows, install PyAudio using `Pip <https://pip.readthedocs.org/>`__: execute ``pip install pyaudio`` in a terminal.
+* On Windows, install with PyAudio using `Pip <https://pip.readthedocs.org/>`__: execute ``pip install SpeechRecognition[audio]`` in a terminal.
 * On Debian-derived Linux distributions (like Ubuntu and Mint), install PyAudio using `APT <https://wiki.debian.org/Apt>`__: execute ``sudo apt-get install python-pyaudio python3-pyaudio`` in a terminal.
-    * If the version in the repositories is too old, install the latest release using Pip: execute ``sudo apt-get install portaudio19-dev python-all-dev python3-all-dev && sudo pip install pyaudio`` (replace ``pip`` with ``pip3`` if using Python 3).
-* On OS X, install PortAudio using `Homebrew <http://brew.sh/>`__: ``brew install portaudio``. Then, install PyAudio using `Pip <https://pip.readthedocs.org/>`__: ``pip install pyaudio``.
-* On other POSIX-based systems, install the ``portaudio19-dev`` and ``python-all-dev`` (or ``python3-all-dev`` if using Python 3) packages (or their closest equivalents) using a package manager of your choice, and then install PyAudio using `Pip <https://pip.readthedocs.org/>`__: ``pip install pyaudio`` (replace ``pip`` with ``pip3`` if using Python 3).
+    * If the version in the repositories is too old, install the latest release using Pip: execute ``sudo apt-get install portaudio19-dev python-all-dev python3-all-dev && sudo pip install SpeechRecognition[audio]`` (replace ``pip`` with ``pip3`` if using Python 3).
+* On OS X, install PortAudio using `Homebrew <http://brew.sh/>`__: ``brew install portaudio``. Then, install with PyAudio using `Pip <https://pip.readthedocs.org/>`__: ``pip install SpeechRecognition[audio]``.
+* On other POSIX-based systems, install the ``portaudio19-dev`` and ``python-all-dev`` (or ``python3-all-dev`` if using Python 3) packages (or their closest equivalents) using a package manager of your choice, and then install with PyAudio using `Pip <https://pip.readthedocs.org/>`__: ``pip install SpeechRecognition[audio]`` (replace ``pip`` with ``pip3`` if using Python 3).
 
 PyAudio `wheel packages <https://pypi.python.org/pypi/wheel>`__ for common 64-bit Python versions on Windows and Linux are included for convenience, under the ``third-party/`` `directory <https://github.com/Uberi/speech_recognition/tree/master/third-party>`__ in the repository root. To install, simply run ``pip install wheel`` followed by ``pip install ./third-party/WHEEL_FILENAME`` (replace ``pip`` with ``pip3`` if using Python 3) in the repository `root directory <https://github.com/Uberi/speech_recognition>`__.
 
@@ -133,7 +133,7 @@ PocketSphinx-Python (for Sphinx users)
 
 PocketSphinx-Python `wheel packages <https://pypi.python.org/pypi/wheel>`__ for 64-bit Python 3.4, and 3.5 on Windows are included for convenience, under the ``third-party/`` `directory <https://github.com/Uberi/speech_recognition/tree/master/third-party>`__. To install, simply run ``pip install wheel`` followed by ``pip install ./third-party/WHEEL_FILENAME`` (replace ``pip`` with ``pip3`` if using Python 3) in the SpeechRecognition folder.
 
-On Linux and other POSIX systems (such as OS X), follow the instructions under "Building PocketSphinx-Python from source" in `Notes on using PocketSphinx <https://github.com/Uberi/speech_recognition/blob/master/reference/pocketsphinx.rst>`__ for installation instructions.
+On Linux and other POSIX systems (such as OS X), run ``pip install SpeechRecognition[pocketsphinx]``. Follow the instructions under "Building PocketSphinx-Python from source" in `Notes on using PocketSphinx <https://github.com/Uberi/speech_recognition/blob/master/reference/pocketsphinx.rst>`__ for installation instructions.
 
 Note that the versions available in most package repositories are outdated and will not work with the bundled language data. Using the bundled wheel packages or building from source is recommended.
 
@@ -169,7 +169,7 @@ Whisper (for Whisper users)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Whisper is **required if and only if you want to use whisper** (``recognizer_instance.recognize_whisper``).
 
-You can install it with ``python3 -m pip install git+https://github.com/openai/whisper.git soundfile``.
+You can install it with ``python3 -m pip install SpeechRecognition[whisper-local]``.
 
 Whisper API (for Whisper API users) 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -178,7 +178,7 @@ The library `openai <https://pypi.org/project/openai/>`__ is **required if and o
 
 If not installed, everything in the library will still work, except calling ``recognizer_instance.recognize_whisper_api`` will raise an ``RequestError``.
 
-You can install it with ``python3 -m pip install openai``.
+You can install it with ``python3 -m pip install SpeechRecognition[whisper-api]``.
 
 Troubleshooting
 ---------------
@@ -276,7 +276,7 @@ To hack on this library, first make sure you have all the requirements listed in
 -  Documentation can be found in the ``reference/`` `directory <https://github.com/Uberi/speech_recognition/tree/master/reference>`__.
 -  Third-party libraries, utilities, and reference material are in the ``third-party/`` `directory <https://github.com/Uberi/speech_recognition/tree/master/third-party>`__.
 
-To install/reinstall the library locally, run ``python setup.py install`` in the project `root directory <https://github.com/Uberi/speech_recognition>`__.
+To install/reinstall the library locally, run ``python -m pip install -e .[dev]`` in the project `root directory <https://github.com/Uberi/speech_recognition>`__.
 
 Before a release, the version number is bumped in ``README.rst`` and ``speech_recognition/__init__.py``. Version tags are then created using ``git config gpg.program gpg2 && git config user.signingkey DB45F6C431DE7C2DCD99FF7904882258A4063489 && git tag -s VERSION_GOES_HERE -m "Version VERSION_GOES_HERE"``.
 
@@ -291,17 +291,19 @@ To run all the tests:
 
     python -m unittest discover --verbose
 
-Testing is also done automatically by TravisCI, upon every push. To set up the environment for offline/local Travis-like testing on a Debian-like system:
+To run static analysis:
 
 .. code:: bash
 
-    sudo docker run --volume "$(pwd):/speech_recognition" --interactive --tty quay.io/travisci/travis-python:latest /bin/bash
-    su - travis && cd /speech_recognition
-    sudo apt-get update && sudo apt-get install swig libpulse-dev
-    pip install --user pocketsphinx && pip install --user flake8 rstcheck && pip install --user -e .
-    python -m unittest discover --verbose # run unit tests
-    python -m flake8 --ignore=E501,E701 speech_recognition tests examples setup.py # ignore errors for long lines and multi-statement lines
-    python -m rstcheck README.rst reference/*.rst # ensure RST is well-formed
+    python -m flake8 --ignore=E501,E701,W503 speech_recognition tests examples setup.py
+
+To ensure RST is well-formed:
+
+.. code:: bash
+
+    python -m rstcheck README.rst reference/*.rst
+
+Testing is also done automatically by GitHub Actions, upon every push.
 
 FLAC Executables
 ~~~~~~~~~~~~~~~~
@@ -360,11 +362,11 @@ Please report bugs and suggestions at the `issue tracker <https://github.com/Ube
 
 How to cite this library (APA style):
 
-    Zhang, A. (2017). Speech Recognition (Version 3.8) [Software]. Available from https://github.com/Uberi/speech_recognition#readme.
+    Zhang, A. (2017). Speech Recognition (Version 3.11) [Software]. Available from https://github.com/Uberi/speech_recognition#readme.
 
 How to cite this library (Chicago style):
 
-    Zhang, Anthony. 2017. *Speech Recognition* (version 3.8).
+    Zhang, Anthony. 2017. *Speech Recognition* (version 3.11).
 
 Also check out the `Python Baidu Yuyin API <https://github.com/DelightRun/PyBaiduYuyin>`__, which is based on an older version of this project, and adds support for `Baidu Yuyin <http://yuyin.baidu.com/>`__. Note that Baidu Yuyin is only available inside China.
 

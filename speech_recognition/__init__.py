@@ -25,11 +25,6 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-try:
-    import requests
-except (ModuleNotFoundError, ImportError):
-    pass
-
 from .audio import AudioData, get_flac_converter
 from .exceptions import (
     RequestError,
@@ -40,7 +35,7 @@ from .exceptions import (
 )
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "3.10.1"
+__version__ = "3.11.0"
 __license__ = "BSD"
 
 
@@ -59,7 +54,7 @@ class Microphone(AudioSource):
     """
     Creates a new ``Microphone`` instance, which represents a physical microphone on the computer. Subclass of ``AudioSource``.
 
-    This will throw an ``AttributeError`` if you don't have PyAudio 0.2.11 or later installed.
+    This will throw an ``AttributeError`` if you don't have PyAudio (0.2.11 or later) installed.
 
     If ``device_index`` is unspecified or ``None``, the default microphone is used as the audio source. Otherwise, ``device_index`` should be the index of the device to use for audio input.
 
@@ -108,9 +103,6 @@ class Microphone(AudioSource):
             import pyaudio
         except ImportError:
             raise AttributeError("Could not find PyAudio; check installation")
-        from distutils.version import LooseVersion
-        if LooseVersion(pyaudio.__version__) < LooseVersion("0.2.11"):
-            raise AttributeError("PyAudio 0.2.11 or later is required (found version {})".format(pyaudio.__version__))
         return pyaudio
 
     @staticmethod
@@ -447,9 +439,11 @@ class Recognizer(AudioSource):
 
         return b"".join(frames), elapsed_time
 
-    def listen(self, source, timeout=None, phrase_time_limit=None, snowboy_configuration=None):
+    def listen(self, source, timeout=None, phrase_time_limit=None, snowboy_configuration=None, stream=False):
         """
         Records a single phrase from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance, which it returns.
+
+        If the ``stream`` keyword argument is ``True``, the ``listen()`` method will yield ``AudioData`` instances representing chunks of audio data as they are detected. The first yielded ``AudioData`` instance represents the first buffer of the phrase, and the last yielded ``AudioData`` instance represents the last buffer of the phrase. If ``stream`` is ``False``, the method will return a single ``AudioData`` instance representing the entire phrase.
 
         This is done by waiting until the audio has an energy above ``recognizer_instance.energy_threshold`` (the user has started speaking), and then recording until it encounters ``recognizer_instance.pause_threshold`` seconds of non-speaking or there is no more audio input. The ending silence is not included.
 
@@ -461,6 +455,13 @@ class Recognizer(AudioSource):
 
         This operation will always complete within ``timeout + phrase_timeout`` seconds if both are numbers, either by returning the audio data, or by raising a ``speech_recognition.WaitTimeoutError`` exception.
         """
+        result = self._listen(source, timeout, phrase_time_limit, snowboy_configuration, stream)
+        if not stream:
+            for a in result:
+                return a
+        return result
+
+    def _listen(self, source, timeout=None, phrase_time_limit=None, snowboy_configuration=None, stream=False):
         assert isinstance(source, AudioSource), "Source must be an audio source"
         assert source.stream is not None, "Audio source must be entered before listening, see documentation for ``AudioSource``; are you using ``source`` outside of a ``with`` statement?"
         assert self.pause_threshold >= self.non_speaking_duration >= 0
@@ -514,6 +515,12 @@ class Recognizer(AudioSource):
             # read audio input until the phrase ends
             pause_count, phrase_count = 0, 0
             phrase_start_time = elapsed_time
+
+            if stream:
+                # yield the first buffer of the phrase
+                yield AudioData(b"".join(frames), source.SAMPLE_RATE, source.SAMPLE_WIDTH)
+                frames.clear()
+
             while True:
                 # handle phrase being too long by cutting off the audio
                 elapsed_time += seconds_per_buffer
@@ -534,15 +541,31 @@ class Recognizer(AudioSource):
                 if pause_count > pause_buffer_count:  # end of the phrase
                     break
 
+                # dynamically adjust the energy threshold using asymmetric weighted average
+                if self.dynamic_energy_threshold:
+                    damping = self.dynamic_energy_adjustment_damping ** seconds_per_buffer  # account for different chunk sizes and rates
+                    target_energy = energy * self.dynamic_energy_ratio
+                    self.energy_threshold = self.energy_threshold * damping + target_energy * (1 - damping)
+
+                if stream:
+                    # yield the current chunk of audio data wrapped in AudioData
+                    yield AudioData(buffer, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
+
             # check how long the detected phrase is, and retry listening if the phrase is too short
             phrase_count -= pause_count  # exclude the buffers for the pause before the phrase
             if phrase_count >= phrase_buffer_count or len(buffer) == 0: break  # phrase is long enough or we've reached the end of the stream, so stop listening
 
-        # obtain frame data
-        for i in range(pause_count - non_speaking_buffer_count): frames.pop()  # remove extra non-speaking frames at the end
-        frame_data = b"".join(frames)
+        if stream:
+            # yield the last buffer of the phrase.
+            yield AudioData(buffer, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
+        else:
+            # obtain frame data
+            for i in range(
+                pause_count - non_speaking_buffer_count): frames.pop()  # remove extra non-speaking frames at the end
 
-        return AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
+            frame_data = b"".join(frames)
+            # yield the entire phrase as a single AudioData instance
+            yield AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
 
     def listen_in_background(self, source, callback, phrase_time_limit=None):
         """
@@ -1106,7 +1129,8 @@ class Recognizer(AudioSource):
             aws_secret_access_key=secret_access_key,
             region_name=region)
 
-        s3 = boto3.client('s3', 
+        s3 = boto3.client(
+            's3',
             aws_access_key_id=access_key_id,
             aws_secret_access_key=secret_access_key,
             region_name=region)
@@ -1126,7 +1150,6 @@ class Recognizer(AudioSource):
         except ClientError as exc:
             print('Error creating bucket %s: %s' % (bucket_name, exc))
         s3res = session.resource('s3')
-        bucket = s3res.Bucket(bucket_name)
         if audio_data is not None:
             print('Uploading audio data...')
             wav_data = audio_data.get_wav_data()
@@ -1143,7 +1166,7 @@ class Recognizer(AudioSource):
             try:
                 status = transcribe.get_transcription_job(TranscriptionJobName=job_name)
             except ClientError as exc:
-                print('!'*80)
+                print('!' * 80)
                 print('Error getting job:', exc.response)
                 if exc.response['Error']['Code'] == 'BadRequestException' and "The requested job couldn't be found" in str(exc):
                     # Some error caused the job we recorded to not exist on AWS.
@@ -1156,7 +1179,7 @@ class Recognizer(AudioSource):
                 else:
                     # Some other error happened, so re-raise.
                     raise
-            
+
             job = status['TranscriptionJob']
             if job['TranscriptionJobStatus'] in ['COMPLETED'] and 'TranscriptFileUri' in job['Transcript']:
 
@@ -1171,12 +1194,12 @@ class Recognizer(AudioSource):
                         confidences.append(float(item['alternatives'][0]['confidence']))
                     confidence = 0.5
                     if confidences:
-                        confidence = sum(confidences)/float(len(confidences))
+                        confidence = sum(confidences) / float(len(confidences))
                     transcript = d['results']['transcripts'][0]['transcript']
 
                     # Delete job.
                     try:
-                        transcribe.delete_transcription_job(TranscriptionJobName=job_name) # cleanup
+                        transcribe.delete_transcription_job(TranscriptionJobName=job_name)  # cleanup
                     except Exception as exc:
                         print('Warning, could not clean up transcription: %s' % exc)
                         traceback.print_exc()
@@ -1186,17 +1209,17 @@ class Recognizer(AudioSource):
 
                     return transcript, confidence
             elif job['TranscriptionJobStatus'] in ['FAILED']:
-            
+
                 # Delete job.
                 try:
-                    transcribe.delete_transcription_job(TranscriptionJobName=job_name) # cleanup
+                    transcribe.delete_transcription_job(TranscriptionJobName=job_name)  # cleanup
                 except Exception as exc:
                     print('Warning, could not clean up transcription: %s' % exc)
                     traceback.print_exc()
 
                 # Delete S3 file.
                 s3.delete_object(Bucket=bucket_name, Key=filename)
-                
+
                 exc = TranscriptionFailed()
                 exc.job_name = None
                 exc.file_key = None
@@ -1212,11 +1235,6 @@ class Recognizer(AudioSource):
         else:
 
             # Launch the transcription job.
-            # try:
-                # transcribe.delete_transcription_job(TranscriptionJobName=job_name) # pre-cleanup
-            # except:
-                # # It's ok if this fails because the job hopefully doesn't exist yet.
-                # pass
             try:
                 transcribe.start_transcription_job(
                     TranscriptionJobName=job_name,
@@ -1229,7 +1247,7 @@ class Recognizer(AudioSource):
                 exc.file_key = None
                 raise exc
             except ClientError as exc:
-                print('!'*80)
+                print('!' * 80)
                 print('Error starting job:', exc.response)
                 if exc.response['Error']['Code'] == 'LimitExceededException':
                     # Could not start job. Cancel everything.
@@ -1255,6 +1273,8 @@ class Recognizer(AudioSource):
                     if not data:
                         break
                     yield data
+
+        import requests
 
         check_existing = audio_data is None and job_name
         if check_existing:
@@ -1296,9 +1316,7 @@ class Recognizer(AudioSource):
 
             # Queue file for transcription.
             endpoint = "https://api.assemblyai.com/v2/transcript"
-            json = {
-              "audio_url": upload_url
-            }
+            json = {"audio_url": upload_url}
             headers = {
                 "authorization": api_token,
                 "content-type": "application/json"
@@ -1455,23 +1473,23 @@ class Recognizer(AudioSource):
             return result
         else:
             return result["text"]
-            
+
     def recognize_vosk(self, audio_data, language='en'):
         from vosk import KaldiRecognizer, Model
-        
+
         assert isinstance(audio_data, AudioData), "Data must be audio data"
-        
+
         if not hasattr(self, 'vosk_model'):
             if not os.path.exists("model"):
                 return "Please download the model from https://github.com/alphacep/vosk-api/blob/master/doc/models.md and unpack as 'model' in the current folder."
-                exit (1)
+                exit(1)
             self.vosk_model = Model("model")
 
-        rec = KaldiRecognizer(self.vosk_model, 16000);
-        
-        rec.AcceptWaveform(audio_data.get_raw_data(convert_rate=16000, convert_width=2));
+        rec = KaldiRecognizer(self.vosk_model, 16000)
+
+        rec.AcceptWaveform(audio_data.get_raw_data(convert_rate=16000, convert_width=2))
         finalRecognition = rec.FinalResult()
-        
+
         return finalRecognition
 
 
