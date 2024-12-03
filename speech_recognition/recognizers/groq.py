@@ -15,14 +15,14 @@ def recognize_groq(
 ):
     if not isinstance(audio_data, AudioData):
         raise ValueError("``audio_data`` must be an ``AudioData`` instance")
-    if os.environ.get("OPENAI_API_KEY") is None:
-        raise SetupError("Set environment variable ``OPENAI_API_KEY``")
+    if os.environ.get("GROQ_API_KEY") is None:
+        raise SetupError("Set environment variable ``GROQ_API_KEY``")
 
     try:
         import groq
     except ImportError:
         raise SetupError(
-            "missing openai module: ensure that groq is set up correctly."
+            "missing groq module: ensure that groq is set up correctly."
         )
 
     wav_data = BytesIO(audio_data.get_wav_data())
