@@ -11,7 +11,9 @@ from speech_recognition.recognizers import groq
 def test_transcribe_with_groq_whisper(respx_mock, monkeypatch):
     monkeypatch.setenv("GROQ_API_KEY", "gsk_grok_api_key")
 
-    respx_mock.post("https://api.groq.com/openai/v1/audio/transcriptions").mock(
+    respx_mock.post(
+        "https://api.groq.com/openai/v1/audio/transcriptions"
+    ).mock(
         return_value=httpx.Response(
             200,
             json={
