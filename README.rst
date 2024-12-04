@@ -39,7 +39,8 @@ Speech recognition engine/API support:
 * `Tensorflow <https://www.tensorflow.org/>`__
 * `Vosk API <https://github.com/alphacep/vosk-api/>`__ (works offline)
 * `OpenAI whisper <https://github.com/openai/whisper>`__ (works offline)
-* `Whisper API <https://platform.openai.com/docs/guides/speech-to-text>`__
+* `OpenAI Whisper API <https://platform.openai.com/docs/guides/speech-to-text>`__
+* `Groq Whisper API <https://console.groq.com/docs/speech-text>`__
 
 **Quickstart:** ``pip install SpeechRecognition``. See the "Installing" section for more details.
 
@@ -96,7 +97,8 @@ To use all of the functionality of the library, you should have:
 * **FLAC encoder** (required only if the system is not x86-based Windows/Linux/OS X)
 * **Vosk** (required only if you need to use Vosk API speech recognition ``recognizer_instance.recognize_vosk``)
 * **Whisper** (required only if you need to use Whisper ``recognizer_instance.recognize_whisper``)
-* **openai** (required only if you need to use Whisper API speech recognition ``recognizer_instance.recognize_whisper_api``)
+* **openai** (required only if you need to use OpenAI Whisper API speech recognition ``recognizer_instance.recognize_whisper_api``)
+* **groq** (required only if you need to use Groq Whisper API speech recognition ``recognizer_instance.recognize_groq``)
 
 The following requirements are optional, but can improve or extend functionality in some situations:
 
@@ -171,14 +173,23 @@ Whisper is **required if and only if you want to use whisper** (``recognizer_ins
 
 You can install it with ``python3 -m pip install SpeechRecognition[whisper-local]``.
 
-Whisper API (for Whisper API users) 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+OpenAI Whisper API (for OpenAI Whisper API users) 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The library `openai <https://pypi.org/project/openai/>`__ is **required if and only if you want to use Whisper API** (``recognizer_instance.recognize_whisper_api``).
+The library `openai <https://pypi.org/project/openai/>`__ is **required if and only if you want to use OpenAI Whisper API** (``recognizer_instance.recognize_whisper_api``).
 
 If not installed, everything in the library will still work, except calling ``recognizer_instance.recognize_whisper_api`` will raise an ``RequestError``.
 
 You can install it with ``python3 -m pip install SpeechRecognition[whisper-api]``.
+
+Groq Whisper API (for Groq Whisper API users)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The library `groq <https://pypi.org/project/groq/>`__ is **required if and only if you want to use Groq Whisper API** (``recognizer_instance.recognize_groq``).
+
+If not installed, everything in the library will still work, except calling ``recognizer_instance.recognize_groq`` will raise an ``RequestError``.
+
+You can install it with ``python3 -m pip install SpeechRecognition[groq]``.
 
 Troubleshooting
 ---------------
