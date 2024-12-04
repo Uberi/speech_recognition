@@ -35,6 +35,15 @@ def recognize_groq(
     model: GroqModel = "whisper-large-v3-turbo",
     **kwargs: Unpack[GroqOptionalParameters],
 ) -> str:
+    """
+    Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Groq Whisper API.
+
+    This function requires login to Groq; visit https://console.groq.com/login, then generate API Key in `API Keys <https://console.groq.com/keys>`__ menu.
+
+    Detail: https://console.groq.com/docs/speech-text
+
+    Raises a ``speech_recognition.exceptions.SetupError`` exception if there are any issues with the groq installation, or the environment variable is missing.
+    """
     if os.environ.get("GROQ_API_KEY") is None:
         raise SetupError("Set environment variable ``GROQ_API_KEY``")
 
