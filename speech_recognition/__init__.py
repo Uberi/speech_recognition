@@ -1411,6 +1411,75 @@ class Recognizer(AudioSource):
                 human_string = self.tflabels[node_id]
                 return human_string
 
+    
+    def recognize_faster_whisper(self, audio_data, model="base", show_info=False, load_options=None, language=None, translate=False, **transcribe_options):
+        """
+        Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using faster-whisper.
+
+        The recognition language is determined by ``language``, an uncapitalized full language name like "english" or "chinese". 
+        
+        If language is not set it will try auto detection.
+
+        See the full language list at https://github.com/openai/whisper/blob/main/whisper/tokenizer.py
+
+        model can be any of tiny, base, small, medium, large, distil-large-v3, large-v3-turbo, tiny.en, base.en, small.en, medium.en. See https://github.com/SYSTRAN/faster-whisper for more details.
+
+        If show_info is True, returns a tuple (info, transcription) of faster-whisper inference, Otherwise returns only the transcription.
+
+        You can translate the result to english with Whisper by passing translate=True
+
+        Other than model_size_or_path args are passed directly to WhisperModel object. Options are:
+
+        class WhisperModel(
+            model_size_or_path: str,
+            device: str = "auto",
+            device_index: int | List[int] = 0,
+            compute_type: str = "default",
+            cpu_threads: int = 0,
+            num_workers: int = 1,
+            download_root: str | None = None,
+            local_files_only: bool = False,
+            files: dict = None,
+            **model_kwargs: Any
+        )
+        """
+
+        assert isinstance(audio_data, AudioData), "Data must be audio data"
+        import numpy as np
+        import soundfile as sf
+        import torch
+        # import whisper
+        from faster_whisper import WhisperModel
+
+        if load_options or not hasattr(self, "whisper_model") or self.whisper_model.get(model) is None:
+            self.whisper_model = getattr(self, "whisper_model", {})
+            self.whisper_model[model] = WhisperModel(model, **load_options or {})
+
+        # 16 kHz https://github.com/openai/whisper/blob/28769fcfe50755a817ab922a7bc83483159600a9/whisper/audio.py#L98-L99
+        wav_bytes = audio_data.get_wav_data(convert_rate=16000)
+        wav_stream = io.BytesIO(wav_bytes)
+        audio_array, sampling_rate = sf.read(wav_stream)
+        audio_array = audio_array.astype(np.float32)
+
+        # result = self.whisper_model[model].transcribe(
+        #     audio_array,
+        #     language=language,
+        #     task="translate" if translate else None,
+        #     fp16=torch.cuda.is_available(),
+        #     **transcribe_options
+        # )
+
+        segments, info = self.whisper_model[model].transcribe(audio_array,
+                                                      language=language,
+                                                      task="translate" if translate else 'transcribe',
+        )
+        result = ''.join([seg.text for seg in segments])
+        if show_info:
+            # print(info)
+            return (info, result)
+        
+        return result
+
     def recognize_whisper(self, audio_data, model="base", show_dict=False, load_options=None, language=None, translate=False, **transcribe_options):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using Whisper.
