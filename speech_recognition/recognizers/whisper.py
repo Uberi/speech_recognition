@@ -3,6 +3,8 @@ from __future__ import annotations
 import os
 from typing import Literal
 
+from typing_extensions import Unpack
+
 from speech_recognition.audio import AudioData
 from speech_recognition.exceptions import SetupError
 from speech_recognition.recognizers.whisper_api import (
@@ -13,12 +15,27 @@ from speech_recognition.recognizers.whisper_api import (
 WhisperModel = Literal["whisper-1"]
 
 
+class OpenAIOptionalParameters:
+    """OpenAI speech transcription's optional parameters.
+
+    https://platform.openai.com/docs/api-reference/audio/createTranscription
+    """
+
+    language: str
+    prompt: str
+    # TODO Add support `Literal["text", "srt", "verbose_json", "vtt"]`
+    response_format: Literal["json"]
+    temperature: float
+    # timestamp_granularities  # TODO support
+
+
 def recognize_whisper_api(
     recognizer,
     audio_data: "AudioData",
     *,
     model: WhisperModel = "whisper-1",
     api_key: str | None = None,
+    **kwargs: Unpack[OpenAIOptionalParameters],
 ) -> str:
     """
     Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the OpenAI Whisper API.
@@ -40,4 +57,4 @@ def recognize_whisper_api(
         )
 
     recognizer = OpenAICompatibleRecognizer(openai.OpenAI(api_key=api_key))
-    return recognizer.recognize(audio_data, model)
+    return recognizer.recognize(audio_data, model, **kwargs)
