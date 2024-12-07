@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from typing import Literal, TypedDict
+
 from typing_extensions import Unpack
 
 from speech_recognition.audio import AudioData
@@ -55,4 +56,4 @@ def recognize_groq(
         )
 
     recognizer = OpenAICompatibleRecognizer(groq.Groq())
-    return recognizer.recognize(audio_data, model)
+    return recognizer.recognize(audio_data, model, **kwargs)
