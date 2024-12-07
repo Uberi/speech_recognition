@@ -1,16 +1,20 @@
 from unittest.mock import MagicMock
 
 import httpx
+import pytest
 import respx
 
 from speech_recognition import AudioData, Recognizer
 from speech_recognition.recognizers import openai
 
-
-@respx.mock(assert_all_called=True, assert_all_mocked=True)
+@pytest.fixture
+def setenv_openai_api_key(monkeypatch):
 def test_transcribe_with_openai_whisper(respx_mock, monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "sk_openai_api_key")
 
+
+@respx.mock(assert_all_called=True, assert_all_mocked=True)
+def test_transcribe_with_openai_whisper(respx_mock, setenv_openai_api_key):
     respx_mock.post(
         "https://api.openai.com/v1/audio/transcriptions",
         headers__contains={"Authorization": "Bearer sk_openai_api_key"},
@@ -34,8 +38,6 @@ def test_transcribe_with_openai_whisper(respx_mock, monkeypatch):
 @respx.mock(assert_all_called=True, assert_all_mocked=True)
 def test_transcribe_with_specified_language(respx_mock, monkeypatch):
     # https://github.com/Uberi/speech_recognition/issues/681
-    monkeypatch.setenv("OPENAI_API_KEY", "sk_openai_api_key")
-
     respx_mock.post(
         "https://api.openai.com/v1/audio/transcriptions",
         data__contains={"language": "en"},
