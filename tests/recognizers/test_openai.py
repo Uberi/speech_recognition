@@ -4,7 +4,7 @@ import httpx
 import respx
 
 from speech_recognition import AudioData, Recognizer
-from speech_recognition.recognizers import whisper
+from speech_recognition.recognizers import openai
 
 
 @respx.mock(assert_all_called=True, assert_all_mocked=True)
@@ -25,7 +25,7 @@ def test_transcribe_with_openai_whisper(respx_mock, monkeypatch):
     audio_data = MagicMock(spec=AudioData)
     audio_data.get_wav_data.return_value = b"audio_data"
 
-    actual = whisper.recognize_whisper_api(
+    actual = openai.recognize_openai(
         MagicMock(spec=Recognizer), audio_data
     )
 

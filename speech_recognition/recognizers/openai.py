@@ -29,7 +29,7 @@ class OpenAIOptionalParameters:
     # timestamp_granularities  # TODO support
 
 
-def recognize_whisper_api(
+def recognize_openai(
     recognizer,
     audio_data: "AudioData",
     *,
