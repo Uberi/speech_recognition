@@ -96,6 +96,6 @@ except sr.RequestError as e:
 # recognize speech using Whisper API
 OPENAI_API_KEY = "INSERT OPENAI API KEY HERE"
 try:
-    print(f"Whisper API thinks you said {r.recognize_whisper_api(audio, api_key=OPENAI_API_KEY)}")
+    print(f"Whisper API thinks you said {r.recognize_openai(audio, api_key=OPENAI_API_KEY)}")
 except sr.RequestError as e:
     print(f"Could not request results from Whisper API; {e}")

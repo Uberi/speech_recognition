@@ -1511,7 +1511,8 @@ except (ModuleNotFoundError, ImportError):
     pass
 else:
     Recognizer.recognize_google = google.recognize_legacy
-    Recognizer.recognize_whisper_api = openai.recognize
+    Recognizer.recognize_openai = openai.recognize
+    Recognizer.recognize_whisper_api = openai.recognize  # Deprecated
     Recognizer.recognize_groq = groq.recognize_groq
 
 

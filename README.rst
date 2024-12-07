@@ -97,7 +97,7 @@ To use all of the functionality of the library, you should have:
 * **FLAC encoder** (required only if the system is not x86-based Windows/Linux/OS X)
 * **Vosk** (required only if you need to use Vosk API speech recognition ``recognizer_instance.recognize_vosk``)
 * **Whisper** (required only if you need to use Whisper ``recognizer_instance.recognize_whisper``)
-* **openai** (required only if you need to use OpenAI Whisper API speech recognition ``recognizer_instance.recognize_whisper_api``)
+* **openai** (required only if you need to use OpenAI Whisper API speech recognition ``recognizer_instance.recognize_openai``)
 * **groq** (required only if you need to use Groq Whisper API speech recognition ``recognizer_instance.recognize_groq``)
 
 The following requirements are optional, but can improve or extend functionality in some situations:
@@ -176,9 +176,9 @@ You can install it with ``python3 -m pip install SpeechRecognition[whisper-local
 OpenAI Whisper API (for OpenAI Whisper API users) 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The library `openai <https://pypi.org/project/openai/>`__ is **required if and only if you want to use OpenAI Whisper API** (``recognizer_instance.recognize_whisper_api``).
+The library `openai <https://pypi.org/project/openai/>`__ is **required if and only if you want to use OpenAI Whisper API** (``recognizer_instance.recognize_openai``).
 
-If not installed, everything in the library will still work, except calling ``recognizer_instance.recognize_whisper_api`` will raise an ``RequestError``.
+If not installed, everything in the library will still work, except calling ``recognizer_instance.recognize_openai`` will raise an ``RequestError``.
 
 You can install it with ``python3 -m pip install SpeechRecognition[whisper-api]``.
 
