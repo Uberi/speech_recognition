@@ -26,7 +26,8 @@ def test_transcribe_with_openai_whisper(respx_mock, monkeypatch):
     audio_data.get_wav_data.return_value = b"audio_data"
 
     actual = whisper.recognize_whisper_api(
-        MagicMock(spec=Recognizer), audio_data, model="whisper-1"
+        MagicMock(spec=Recognizer), audio_data
     )
 
     assert actual == "Transcription by OpenAI Whisper"
+    audio_data.get_wav_data.assert_called_once()
