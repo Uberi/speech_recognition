@@ -314,8 +314,8 @@ You can translate the result to english with Whisper by passing translate=True
 
 Other values are passed directly to whisper. See https://github.com/openai/whisper/blob/main/whisper/transcribe.py for all options
 
-``recognizer_instance.recognize_whisper_api(audio_data: AudioData, model: str = "whisper-1", api_key: str | None = None)``
---------------------------------------------------------------------------------------------------------------------------
+``recognizer_instance.recognize_openai(audio_data: AudioData, model: str = "whisper-1", api_key: str | None = None)``
+---------------------------------------------------------------------------------------------------------------------
 
 Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the OpenAI Whisper API.
 

@@ -1,19 +1,42 @@
 from __future__ import annotations
 
 import os
-from io import BytesIO
+from typing import Literal
+
+from typing_extensions import Unpack
 
 from speech_recognition.audio import AudioData
 from speech_recognition.exceptions import SetupError
+from speech_recognition.recognizers.whisper_api import (
+    OpenAICompatibleRecognizer,
+)
+
+# https://platform.openai.com/docs/api-reference/audio/createTranscription#audio-createtranscription-model
+WhisperModel = Literal["whisper-1"]
 
 
-def recognize_whisper_api(
+class OpenAIOptionalParameters:
+    """OpenAI speech transcription's optional parameters.
+
+    https://platform.openai.com/docs/api-reference/audio/createTranscription
+    """
+
+    language: str
+    prompt: str
+    # TODO Add support `Literal["text", "srt", "verbose_json", "vtt"]`
+    response_format: Literal["json"]
+    temperature: float
+    # timestamp_granularities  # TODO support
+
+
+def recognize(
     recognizer,
     audio_data: "AudioData",
     *,
-    model: str = "whisper-1",
+    model: WhisperModel = "whisper-1",
     api_key: str | None = None,
-):
+    **kwargs: Unpack[OpenAIOptionalParameters],
+) -> str:
     """
     Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the OpenAI Whisper API.
 
@@ -23,8 +46,6 @@ def recognize_whisper_api(
 
     Raises a ``speech_recognition.exceptions.SetupError`` exception if there are any issues with the openai installation, or the environment variable is missing.
     """
-    if not isinstance(audio_data, AudioData):
-        raise ValueError("``audio_data`` must be an ``AudioData`` instance")
     if api_key is None and os.environ.get("OPENAI_API_KEY") is None:
         raise SetupError("Set environment variable ``OPENAI_API_KEY``")
 
@@ -35,9 +56,5 @@ def recognize_whisper_api(
             "missing openai module: ensure that openai is set up correctly."
         )
 
-    wav_data = BytesIO(audio_data.get_wav_data())
-    wav_data.name = "SpeechRecognition_audio.wav"
-
-    client = openai.OpenAI(api_key=api_key)
-    transcript = client.audio.transcriptions.create(file=wav_data, model=model)
-    return transcript.text
+    recognizer = OpenAICompatibleRecognizer(openai.OpenAI(api_key=api_key))
+    return recognizer.recognize(audio_data, model, **kwargs)
