@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from typing import Literal
 
 from typing_extensions import Unpack
@@ -34,7 +33,6 @@ def recognize(
     audio_data: "AudioData",
     *,
     model: WhisperModel = "whisper-1",
-    api_key: str | None = None,
     **kwargs: Unpack[OpenAIOptionalParameters],
 ) -> str:
     """
@@ -44,11 +42,8 @@ def recognize(
 
     Detail: https://platform.openai.com/docs/guides/speech-to-text
 
-    Raises a ``speech_recognition.exceptions.SetupError`` exception if there are any issues with the openai installation, or the environment variable is missing.
+    Set environment variable ``OPENAI_API_KEY``; otherwise openai library will raise a ``openai.OpenAIError``.
     """
-    if api_key is None and os.environ.get("OPENAI_API_KEY") is None:
-        raise SetupError("Set environment variable ``OPENAI_API_KEY``")
-
     try:
         import openai
     except ImportError:
@@ -56,5 +51,5 @@ def recognize(
             "missing openai module: ensure that openai is set up correctly."
         )
 
-    recognizer = OpenAICompatibleRecognizer(openai.OpenAI(api_key=api_key))
+    recognizer = OpenAICompatibleRecognizer(openai.OpenAI())
     return recognizer.recognize(audio_data, model, **kwargs)

@@ -2,6 +2,8 @@
 
 # NOTE: this example requires PyAudio because it uses the Microphone class
 
+import os
+
 import speech_recognition as sr
 
 # obtain audio from the microphone
@@ -95,7 +97,8 @@ except sr.RequestError as e:
 
 # recognize speech using Whisper API
 OPENAI_API_KEY = "INSERT OPENAI API KEY HERE"
+os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
 try:
-    print(f"Whisper API thinks you said {r.recognize_openai(audio, api_key=OPENAI_API_KEY)}")
+    print(f"OpenAI Whisper API thinks you said {r.recognize_openai(audio)}")
 except sr.RequestError as e:
-    print(f"Could not request results from Whisper API; {e}")
+    print(f"Could not request results from OpenAI Whisper API; {e}")
