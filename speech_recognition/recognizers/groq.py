@@ -29,7 +29,7 @@ class GroqOptionalParameters(TypedDict):
     language: str
 
 
-def recognize_groq(
+def recognize(
     recognizer,
     audio_data: "AudioData",
     *,

@@ -28,7 +28,7 @@ def test_transcribe_with_groq_whisper(respx_mock, monkeypatch):
     audio_data = MagicMock(spec=AudioData)
     audio_data.get_wav_data.return_value = b"audio_data"
 
-    actual = groq.recognize_groq(
+    actual = groq.recognize(
         MagicMock(spec=Recognizer), audio_data, model="whisper-large-v3"
     )
 
