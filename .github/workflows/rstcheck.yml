@@ -22,4 +22,4 @@ jobs:
           python -m pip install rstcheck
       - name: Run rstcheck
         run: |
-          python -m rstcheck README.rst reference/*.rst
+          python -m rstcheck --ignore-directives autofunction README.rst reference/*.rst
