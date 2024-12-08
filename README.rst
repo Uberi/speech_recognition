@@ -178,7 +178,7 @@ OpenAI Whisper API (for OpenAI Whisper API users)
 
 The library `openai <https://pypi.org/project/openai/>`__ is **required if and only if you want to use OpenAI Whisper API** (``recognizer_instance.recognize_openai``).
 
-You can install it with ``python3 -m pip install SpeechRecognition[whisper-api]``.
+You can install it with ``python3 -m pip install SpeechRecognition[openai]``.
 
 Please set the environment variable ``OPENAI_API_KEY`` before calling ``recognizer_instance.recognize_openai``.
 
