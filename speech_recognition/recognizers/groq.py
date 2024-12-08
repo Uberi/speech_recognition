@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import os
 from typing import Literal, TypedDict
+
 from typing_extensions import Unpack
 
 from speech_recognition.audio import AudioData
@@ -28,7 +28,7 @@ class GroqOptionalParameters(TypedDict):
     language: str
 
 
-def recognize_groq(
+def recognize(
     recognizer,
     audio_data: "AudioData",
     *,
@@ -42,11 +42,8 @@ def recognize_groq(
 
     Detail: https://console.groq.com/docs/speech-text
 
-    Raises a ``speech_recognition.exceptions.SetupError`` exception if there are any issues with the groq installation, or the environment variable is missing.
+    Set environment variable ``GROQ_API_KEY``; otherwise groq library will raise a ``groq.GroqError``.
     """
-    if os.environ.get("GROQ_API_KEY") is None:
-        raise SetupError("Set environment variable ``GROQ_API_KEY``")
-
     try:
         import groq
     except ImportError:
@@ -55,4 +52,4 @@ def recognize_groq(
         )
 
     recognizer = OpenAICompatibleRecognizer(groq.Groq())
-    return recognizer.recognize(audio_data, model)
+    return recognizer.recognize(audio_data, model, **kwargs)
