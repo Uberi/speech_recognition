@@ -325,6 +325,11 @@ Detail: https://platform.openai.com/docs/guides/speech-to-text
 
 Raises a ``speech_recognition.exceptions.SetupError`` exception if there are any issues with the openai installation, or the environment variable is missing.
 
+``recognizer_instance.recognize_groq(audio_data: AudioData, model = "whisper-large-v3-turbo", **kwargs)``
+---------------------------------------------------------------------------------------------------------
+
+.. autofunction:: speech_recognition.recognizers.groq.recognize
+
 ``AudioSource``
 ---------------
 
