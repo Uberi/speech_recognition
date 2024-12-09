@@ -14,5 +14,7 @@ jobs:
 
     steps:
         - uses: actions/checkout@v4
-        # ignore errors for long lines and multi-statement lines
-        - run: pipx run flake8 --ignore=E501,E701,W503 .
+        - name: Run flake8
+          run: |
+            # ignore errors for long lines and multi-statement lines
+            pipx run flake8 --ignore=E501,E701,W503 .
