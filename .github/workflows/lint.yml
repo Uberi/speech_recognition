@@ -9,12 +9,8 @@ on:
       - master
 
 jobs:
-  flake8:
+  ruff:
     runs-on: ubuntu-latest
-
     steps:
         - uses: actions/checkout@v4
-        - name: Run flake8
-          run: |
-            # ignore errors for long lines and multi-statement lines
-            pipx run flake8 --ignore=E501,E701,W503 .
+        - uses: astral-sh/ruff-action@v2

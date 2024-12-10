@@ -306,7 +306,7 @@ To run static analysis:
 
 .. code:: bash
 
-    python -m flake8 --ignore=E501,E701,W503 speech_recognition tests examples setup.py
+    ruff check
 
 To ensure RST is well-formed:
 

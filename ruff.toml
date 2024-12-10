@@ -1,0 +1,4 @@
+line-length = 671
+lint.ignore = ["E701"]
+lint.mccabe.max-complexity = 23
+lint.select = ["C9", "E", "F", "W"]
