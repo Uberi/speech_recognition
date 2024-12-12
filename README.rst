@@ -312,7 +312,7 @@ To ensure RST is well-formed:
 
 .. code:: bash
 
-    python -m rstcheck README.rst reference/*.rst
+    make rstcheck
 
 Testing is also done automatically by GitHub Actions, upon every push.
 
