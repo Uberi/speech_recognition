@@ -296,6 +296,8 @@ Releases are done by running ``make-release.sh VERSION_GOES_HERE`` to build the 
 Testing
 ~~~~~~~
 
+Prerequisite: `Install pipx <https://pipx.pypa.io/stable/installation/>`__.
+
 To run all the tests:
 
 .. code:: bash
@@ -306,13 +308,13 @@ To run static analysis:
 
 .. code:: bash
 
-    python -m flake8 --ignore=E501,E701,W503 speech_recognition tests examples setup.py
+    make lint
 
 To ensure RST is well-formed:
 
 .. code:: bash
 
-    python -m rstcheck README.rst reference/*.rst
+    make rstcheck
 
 Testing is also done automatically by GitHub Actions, upon every push.
 
