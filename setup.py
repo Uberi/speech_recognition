@@ -71,8 +71,8 @@ setup(
     ],
     python_requires=">=3.9",
     install_requires=[
-        "typing-extensions",
+        "setuptools; python_version>='3.13'",
         "standard-aifc; python_version>='3.13'",
-        "audioop-lts; python_version>='3.13'",
+        "typing-extensions",
     ],
 )

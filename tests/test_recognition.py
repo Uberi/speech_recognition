@@ -29,6 +29,7 @@ class TestRecognition(unittest.TestCase):
         # https://github.com/Uberi/speech_recognition/issues/743
         self.assertTrue("recognize_google" in attributes)
 
+    @unittest.skipIf(sys.platform == "darwin", "skip on macOS")
     @unittest.skipIf(sys.platform.startswith("win"), "skip on Windows")
     def test_sphinx_english(self):
         r = sr.Recognizer()
