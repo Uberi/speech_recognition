@@ -724,13 +724,6 @@ class Recognizer(AudioSource):
         assert isinstance(language, str), "``language`` must be a string"
         assert preferred_phrases is None or all(isinstance(preferred_phrases, (type(""), type(u""))) for preferred_phrases in preferred_phrases), "``preferred_phrases`` must be a list of strings"
 
-        # Implementation of assertions of common api_params
-        if "use_enhanced" in api_params:
-            assert isinstance(api_params["use_enhanced"], bool), "``use_enhanced`` must be a boolean when used"
-
-        if "model" in api_params:
-            assert api_params["model"] in (None, "latest_long", "latest_short", "command_and_search", "phone_call", "video", "default", "medical_conversation", "medical_dictation"), "``model`` must be None or 'latest_long', 'latest_short', 'command_and_search', 'phone_call', 'video', or 'default'"
-
         try:
             import socket
 
