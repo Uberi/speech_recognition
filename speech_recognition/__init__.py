@@ -693,7 +693,7 @@ class Recognizer(AudioSource):
         if hypothesis is not None: return hypothesis.hypstr
         raise UnknownValueError()  # no transcriptions available
 
-    def recognize_google_cloud(self, audio_data, credentials_json=None, language="en-US", preferred_phrases=None, show_all=False):
+    def recognize_google_cloud(self, audio_data, credentials_json=None, language="en-US", preferred_phrases=None, show_all=False, **api_params):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Google Cloud Speech API.
 
@@ -702,6 +702,17 @@ class Recognizer(AudioSource):
         The recognition language is determined by ``language``, which is a BCP-47 language tag like ``"en-US"`` (US English). A list of supported language tags can be found in the `Google Cloud Speech API documentation <https://cloud.google.com/speech/docs/languages>`__.
 
         If ``preferred_phrases`` is an iterable of phrase strings, those given phrases will be more likely to be recognized over similar-sounding alternatives. This is useful for things like keyword/command recognition or adding new phrases that aren't in Google's vocabulary. Note that the API imposes certain `restrictions on the list of phrase strings <https://cloud.google.com/speech/limits#content>`__.
+
+        ``api_params`` are Cloud Speech API-specific parameters as dict (optional). For more information see <https://cloud.google.com/python/docs/reference/speech/latest/google.cloud.speech_v1.types.RecognitionConfig>
+
+            The ``use_enhanced`` is a boolean option. If use_enhanced is set to true and the model field is not set,
+            then an appropriate enhanced model is chosen if an enhanced model exists for the audio.
+            If use_enhanced is true and an enhanced version of the specified model does not exist,
+            then the speech is recognized using the standard version of the specified model.
+
+            Furthermore, if the option ``use_enhanced`` has not been set the option ``model`` can be used, which can be used to select the model best
+            suited to your domain to get best results. If a model is not explicitly specified,
+            then we auto-select a model based on the other parameters of this method.
 
         Returns the most likely transcription if ``show_all`` is False (the default). Otherwise, returns the raw API response as a JSON dictionary.
 
@@ -735,7 +746,8 @@ class Recognizer(AudioSource):
         config = {
             'encoding': speech.RecognitionConfig.AudioEncoding.FLAC,
             'sample_rate_hertz': audio_data.sample_rate,
-            'language_code': language
+            'language_code': language,
+            **api_params,
         }
         if preferred_phrases is not None:
             config['speechContexts'] = [speech.SpeechContext(
