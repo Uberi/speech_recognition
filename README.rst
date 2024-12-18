@@ -308,7 +308,7 @@ To run static analysis:
 
 .. code:: bash
 
-    make lint
+    ruff check
 
 To ensure RST is well-formed:
 
