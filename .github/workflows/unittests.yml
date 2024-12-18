@@ -24,6 +24,10 @@ jobs:
             python-version: "3.12"
           - os: ubuntu-latest
             python-version: "3.13"
+          - os: macos-13  # runner.arch is X64 (Intel)
+            python-version: "3.13"
+          - os: macos-latest  # runner.arch is ARM64 (Apple Silicon)
+            python-version: "3.13"
           - os: windows-latest
             python-version: "3.11"
     runs-on: ${{ matrix.os }}
@@ -33,13 +37,17 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install build dependencies
+      - if: matrix.python-version >= '3.13'
+        run: |
+          python -m pip install standard-aifc setuptools
+      - name: Install Linux build dependencies
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y libpulse-dev libasound2-dev
           sudo apt-get install --no-install-recommends -y portaudio19-dev
       - name: Install ffmpeg (for Whisper)
+        if: runner.os != 'macOS'
         uses: FedericoCarboni/setup-ffmpeg@v3
       - name: Install Python dependencies (Ubuntu, <=3.12)
         if: matrix.os == 'ubuntu-latest' && matrix.python-version != '3.13'
@@ -48,8 +56,12 @@ jobs:
       - name: Install Python dependencies (Ubuntu, 3.13)
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
         run: |
-          python -m pip install standard-aifc setuptools
           python -m pip install --no-build-isolation .[dev,audio,pocketsphinx,openai,groq]
+      - name: Install ffmpeg and portaudio on macOS
+        if: runner.os == 'macOS'
+        run: |
+          brew install ffmpeg portaudio
+          python -m pip install --no-build-isolation .[dev,audio,openai,groq]
       - name: Install Python dependencies (Windows)
         if: matrix.os == 'windows-latest'
         run: |
