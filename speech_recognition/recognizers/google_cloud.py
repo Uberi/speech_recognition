@@ -37,8 +37,6 @@ def recognize(recognizer, audio_data, credentials_json=None, language="en-US", p
     assert preferred_phrases is None or all(isinstance(preferred_phrases, (type(""), type(u""))) for preferred_phrases in preferred_phrases), "``preferred_phrases`` must be a list of strings"
 
     try:
-        import socket
-
         from google.api_core.exceptions import GoogleAPICallError
         from google.cloud import speech
     except ImportError:
@@ -67,10 +65,6 @@ def recognize(recognizer, audio_data, credentials_json=None, language="en-US", p
         )]
     if show_all:
         config['enableWordTimeOffsets'] = True  # some useful extra options for when we want all the output
-
-    opts = {}
-    if recognizer.operation_timeout and socket.getdefaulttimeout() is None:
-        opts['timeout'] = recognizer.operation_timeout
 
     config = speech.RecognitionConfig(**config)
 
