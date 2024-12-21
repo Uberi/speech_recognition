@@ -6,8 +6,7 @@ from speech_recognition.exceptions import RequestError, UnknownValueError
 
 
 def recognize(recognizer, audio_data, credentials_json=None, language="en-US", preferred_phrases=None, show_all=False, **api_params):
-    """
-    Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Google Cloud Speech API.
+    """Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Google Cloud Speech-to-Text V1 API.
 
     This function requires a Google Cloud Platform account; see the `Google Cloud Speech API Quickstart <https://cloud.google.com/speech/docs/getting-started>`__ for details and instructions. Basically, create a project, enable billing for the project, enable the Google Cloud Speech API for the project, and set up Service Account Key credentials for the project. The result is a JSON file containing the API credentials. The text content of this JSON file is specified by ``credentials_json``. If not specified, the library will try to automatically `find the default API credentials JSON file <https://developers.google.com/identity/protocols/application-default-credentials>`__.
 
