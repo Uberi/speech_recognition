@@ -4,7 +4,12 @@
 
 from __future__ import annotations
 
-import aifc
+import sys
+if sys.version_info >= (3, 13):
+    import standard_aifc as aifc
+else:
+    import aifc
+    
 import audioop
 import base64
 import collections

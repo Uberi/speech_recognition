@@ -1,4 +1,9 @@
-import aifc
+import sys
+if sys.version_info >= (3, 13):
+    import standard_aifc as aifc
+else:
+    import aifc
+    
 import audioop
 import io
 import os
