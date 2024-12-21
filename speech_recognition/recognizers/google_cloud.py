@@ -86,8 +86,8 @@ def recognize(
             speech.SpeechContext(phrases=preferred_phrases)
         ]
     if show_all:
-        # some useful extra options for when we want all the output
-        config["enableWordTimeOffsets"] = True
+        # ref: https://cloud.google.com/speech-to-text/docs/async-time-offsets
+        config["enable_word_time_offsets"] = True
 
     config = speech.RecognitionConfig(**config)
 
