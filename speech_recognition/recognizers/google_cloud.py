@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from urllib.error import URLError
 
@@ -7,12 +9,12 @@ from speech_recognition.exceptions import RequestError, UnknownValueError
 
 def recognize(
     recognizer,
-    audio_data,
-    credentials_json=None,
-    language="en-US",
+    audio_data: AudioData,
+    credentials_json: str | None = None,
+    language: str = "en-US",
     preferred_phrases=None,
-    show_all=False,
-    **api_params
+    show_all: bool = False,
+    **api_params,
 ):
     """Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Google Cloud Speech-to-Text V1 API.
 
