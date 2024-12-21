@@ -3,4 +3,4 @@ lint:
 	@pipx run flake8 --ignore=E501,E701,W503 .
 
 rstcheck:
-	@pipx run rstcheck --ignore-directives autofunction README.rst reference/*.rst
+	@pipx run rstcheck[sphinx] --ignore-directives autofunction README.rst reference/*.rst
