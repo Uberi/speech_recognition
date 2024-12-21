@@ -10,7 +10,7 @@ from speech_recognition.exceptions import RequestError, UnknownValueError
 def recognize(
     recognizer,
     audio_data: AudioData,
-    credentials_json: str | None = None,
+    credentials_json_path: str | None = None,
     language: str = "en-US",
     preferred_phrases=None,
     show_all: bool = False,
@@ -42,7 +42,7 @@ def recognize(
     assert isinstance(
         audio_data, AudioData
     ), "``audio_data`` must be audio data"
-    if credentials_json is None:
+    if credentials_json_path is None:
         assert os.environ.get("GOOGLE_APPLICATION_CREDENTIALS") is not None
     assert isinstance(language, str), "``language`` must be a string"
     assert preferred_phrases is None or all(
@@ -58,12 +58,11 @@ def recognize(
             "missing google-cloud-speech module: ensure that google-cloud-speech is set up correctly."
         )
 
-    if credentials_json is not None:
-        client = speech.SpeechClient.from_service_account_json(
-            credentials_json
-        )
-    else:
-        client = speech.SpeechClient()
+    client = (
+        speech.SpeechClient.from_service_account_json(credentials_json_path)
+        if credentials_json_path
+        else speech.SpeechClient()
+    )
 
     flac_data = audio_data.get_flac_data(
         # audio sample rate must be between 8 kHz and 48 kHz inclusive - clamp sample rate into this range

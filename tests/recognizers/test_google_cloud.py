@@ -50,3 +50,33 @@ def test_transcribe_with_google_cloud_speech(SpeechClient, monkeypatch):
         ),
         audio=RecognitionAudio(content=b"flac_data"),
     )
+
+
+@patch("google.cloud.speech.SpeechClient")
+def test_transcribe_with_specified_credentials(SpeechClient):
+    client = SpeechClient.from_service_account_json.return_value
+    client.recognize.return_value = RecognizeResponse(
+        results=[
+            SpeechRecognitionResult(
+                alternatives=[
+                    SpeechRecognitionAlternative(
+                        transcript="transcript", confidence=0.9
+                    )
+                ]
+            )
+        ]
+    )
+
+    audio_data = MagicMock(spec=AudioData)
+    audio_data.sample_rate = 16_000
+    audio_data.get_flac_data.return_value = b"flac_data"
+
+    _ = recognize(
+        MagicMock(spec=Recognizer),
+        audio_data,
+        credentials_json_path="path/to/credentials.json",
+    )
+
+    SpeechClient.from_service_account_json.assert_called_once_with(
+        "path/to/credentials.json"
+    )
