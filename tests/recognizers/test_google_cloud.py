@@ -6,6 +6,7 @@ from google.cloud.speech import (
     RecognizeResponse,
     SpeechRecognitionAlternative,
     SpeechRecognitionResult,
+    WordInfo,
 )
 
 from speech_recognition import Recognizer
@@ -79,4 +80,71 @@ def test_transcribe_with_specified_credentials(SpeechClient):
 
     SpeechClient.from_service_account_json.assert_called_once_with(
         "path/to/credentials.json"
+    )
+
+
+@patch("google.cloud.speech.SpeechClient")
+def test_transcribe_show_all(SpeechClient, monkeypatch):
+    monkeypatch.setenv(
+        "GOOGLE_APPLICATION_CREDENTIALS", "path/to/credentials.json"
+    )
+
+    client = SpeechClient.return_value
+    client.recognize.return_value = RecognizeResponse(
+        results=[
+            SpeechRecognitionResult(
+                alternatives=[
+                    SpeechRecognitionAlternative(
+                        transcript="transcript",
+                        confidence=0.9,
+                        words=[
+                            WordInfo(
+                                word="transcript",
+                                start_time="0s",
+                                end_time="0.400s",
+                            )
+                        ],
+                    )
+                ],
+                language_code="en-US",
+                result_end_time="0.400s",
+            )
+        ]
+    )
+
+    audio_data = MagicMock(spec=AudioData)
+    audio_data.sample_rate = 16_000
+    audio_data.get_flac_data.return_value = b"flac_data"
+
+    actual = recognize(MagicMock(spec=Recognizer), audio_data, show_all=True)
+
+    assert actual == RecognizeResponse(
+        results=[
+            SpeechRecognitionResult(
+                alternatives=[
+                    SpeechRecognitionAlternative(
+                        transcript="transcript",
+                        confidence=0.9,
+                        words=[
+                            WordInfo(
+                                word="transcript",
+                                start_time="0s",
+                                end_time="0.400s",
+                            )
+                        ],
+                    )
+                ],
+                language_code="en-US",
+                result_end_time="0.400s",
+            )
+        ]
+    )
+    client.recognize.assert_called_once_with(
+        config=RecognitionConfig(
+            encoding=RecognitionConfig.AudioEncoding.FLAC,
+            sample_rate_hertz=16_000,
+            language_code="en-US",
+            enable_word_time_offsets=True,
+        ),
+        audio=RecognitionAudio(content=b"flac_data"),
     )
