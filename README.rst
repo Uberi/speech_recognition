@@ -155,9 +155,13 @@ Google Cloud Speech Library for Python (for Google Cloud Speech-to-Text API user
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The library `google-cloud-speech <https://pypi.org/project/google-cloud-speech/>`__ is **required if and only if you want to use Google Cloud Speech-to-Text API** (``recognizer_instance.recognize_google_cloud``).
-
 You can install it with :command:`python3 -m pip install SpeechRecognition[google-cloud]`.
-(ref: `official installation instructions <https://cloud.google.com/speech-to-text/docs/transcribe-client-libraries#install_the_client_library>`__)
+(ref: `official installation instructions <https://cloud.google.com/speech-to-text/docs/transcribe-client-libraries#client-libraries-install-python>`__)
+
+**Prerequisite**: Create local authentication credentials for your Google account
+
+* `Before you begin (Transcribe speech to text by using client libraries) <https://cloud.google.com/speech-to-text/docs/transcribe-client-libraries#before-you-begin>`__
+* Detail: `User credentials (Set up ADC for a local development environment) <https://cloud.google.com/docs/authentication/set-up-adc-local-dev-environment#local-user-cred>`__
 
 Currently only `V1 <https://cloud.google.com/speech-to-text/docs/quickstart>`__ is supported. (`V2 <https://cloud.google.com/speech-to-text/v2/docs/quickstart>`__ is not supported)
 
