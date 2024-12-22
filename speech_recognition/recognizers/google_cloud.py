@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from urllib.error import URLError
 
 from speech_recognition.audio import AudioData
