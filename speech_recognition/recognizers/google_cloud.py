@@ -105,7 +105,8 @@ def recognize(
     if len(response.results) == 0:
         raise UnknownValueError()
 
-    transcript = ""
-    for result in response.results:
-        transcript += result.alternatives[0].transcript.strip() + " "
+    transcript = " ".join(
+        result.alternatives[0].transcript.strip()
+        for result in response.results
+    )
     return transcript

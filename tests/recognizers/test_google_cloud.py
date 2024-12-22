@@ -41,7 +41,7 @@ def test_transcribe_with_google_cloud_speech(SpeechClient, monkeypatch):
 
     actual = recognize(MagicMock(spec=Recognizer), audio_data)
 
-    assert actual == "how old is the Brooklyn Bridge "
+    assert actual == "how old is the Brooklyn Bridge"
     SpeechClient.assert_called_once_with()
     client.recognize.assert_called_once_with(
         config=RecognitionConfig(
