@@ -15,11 +15,7 @@ from speech_recognition.recognizers.google_cloud import recognize
 
 
 @patch("google.cloud.speech.SpeechClient")
-def test_transcribe_with_google_cloud_speech(SpeechClient, monkeypatch):
-    monkeypatch.setenv(
-        "GOOGLE_APPLICATION_CREDENTIALS", "path/to/credentials.json"
-    )
-
+def test_transcribe_with_google_cloud_speech(SpeechClient):
     client = SpeechClient.return_value
     # ref: https://cloud.google.com/speech-to-text/docs/transcribe-gcloud?hl=ja#make_an_audio_transcription_request
     client.recognize.return_value = RecognizeResponse(
@@ -84,11 +80,7 @@ def test_transcribe_with_specified_credentials(SpeechClient):
 
 
 @patch("google.cloud.speech.SpeechClient")
-def test_transcribe_show_all(SpeechClient, monkeypatch):
-    monkeypatch.setenv(
-        "GOOGLE_APPLICATION_CREDENTIALS", "path/to/credentials.json"
-    )
-
+def test_transcribe_show_all(SpeechClient):
     client = SpeechClient.return_value
     client.recognize.return_value = RecognizeResponse(
         results=[
@@ -151,11 +143,7 @@ def test_transcribe_show_all(SpeechClient, monkeypatch):
 
 
 @patch("google.cloud.speech.SpeechClient")
-def test_transcribe_with_specified_api_parameters(SpeechClient, monkeypatch):
-    monkeypatch.setenv(
-        "GOOGLE_APPLICATION_CREDENTIALS", "path/to/credentials.json"
-    )
-
+def test_transcribe_with_specified_api_parameters(SpeechClient):
     client = SpeechClient.return_value
     client.recognize.return_value = RecognizeResponse(
         results=[

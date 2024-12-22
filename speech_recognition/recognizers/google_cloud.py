@@ -42,8 +42,6 @@ def recognize(
     assert isinstance(
         audio_data, AudioData
     ), "``audio_data`` must be audio data"
-    if credentials_json_path is None:
-        assert os.environ.get("GOOGLE_APPLICATION_CREDENTIALS") is not None
     assert isinstance(language, str), "``language`` must be a string"
     assert preferred_phrases is None or all(
         isinstance(preferred_phrases, (type(""), type("")))
