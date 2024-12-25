@@ -227,8 +227,8 @@ Returns the most likely transcription if ``show_all`` is false (the default). Ot
 
 Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
 
-``recognizer_instance.recognize_google_cloud(audio_data: AudioData, credentials_json_path: Union[str, None] = None, language: str = "en-US", preferred_phrases: Union[Iterable[str], None] = None, show_all: bool = False, **api_params) -> Union[str, Dict[str, Any]]``
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+``recognizer_instance.recognize_google_cloud(audio_data: AudioData, credentials_json_path: Union[str, None] = None, **kwargs) -> Union[str, Dict[str, Any]]``
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 .. autofunction:: speech_recognition.recognizers.google_cloud.recognize
 
