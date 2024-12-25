@@ -4,6 +4,7 @@ from google.cloud.speech import (
     RecognitionAudio,
     RecognitionConfig,
     RecognizeResponse,
+    SpeechContext,
     SpeechRecognitionAlternative,
     SpeechRecognitionResult,
     WordInfo,
@@ -165,6 +166,7 @@ def test_transcribe_with_specified_api_parameters(SpeechClient):
         MagicMock(spec=Recognizer),
         audio_data,
         language="ja-JP",
+        preferred_phrases=["numero", "hoge"],
         use_enhanced=True,
     )
 
@@ -173,6 +175,7 @@ def test_transcribe_with_specified_api_parameters(SpeechClient):
             encoding=RecognitionConfig.AudioEncoding.FLAC,
             sample_rate_hertz=16_000,
             language_code="ja-JP",
+            speech_contexts=[SpeechContext(phrases=["numero", "hoge"])],
             use_enhanced=True,
         ),
         audio=RecognitionAudio(content=b"flac_data"),

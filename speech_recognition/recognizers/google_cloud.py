@@ -79,7 +79,7 @@ def recognize(
         **api_params,
     }
     if preferred_phrases is not None:
-        config["speechContexts"] = [
+        config["speech_contexts"] = [
             speech.SpeechContext(phrases=preferred_phrases)
         ]
     if show_all:
