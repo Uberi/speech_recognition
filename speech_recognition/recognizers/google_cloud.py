@@ -7,7 +7,7 @@ from speech_recognition.audio import AudioData
 from speech_recognition.exceptions import RequestError, UnknownValueError
 
 if TYPE_CHECKING:
-    from google.cloud.speech_v1.types import (
+    from google.cloud.speech import (
         RecognitionConfig,
         RecognizeResponse,
         SpeechContext,
