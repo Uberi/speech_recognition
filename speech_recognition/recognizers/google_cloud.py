@@ -11,7 +11,7 @@ def recognize(
     audio_data: AudioData,
     credentials_json_path: str | None = None,
     language: str = "en-US",
-    preferred_phrases=None,
+    preferred_phrases: list[str] | None = None,
     show_all: bool = False,
     **api_params,
 ):
@@ -38,15 +38,6 @@ def recognize(
 
     Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the credentials aren't valid, or if there is no Internet connection.
     """
-    assert isinstance(
-        audio_data, AudioData
-    ), "``audio_data`` must be audio data"
-    assert isinstance(language, str), "``language`` must be a string"
-    assert preferred_phrases is None or all(
-        isinstance(preferred_phrases, (type(""), type("")))
-        for preferred_phrases in preferred_phrases
-    ), "``preferred_phrases`` must be a list of strings"
-
     try:
         from google.api_core.exceptions import GoogleAPICallError
         from google.cloud import speech
