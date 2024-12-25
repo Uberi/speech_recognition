@@ -1,19 +1,66 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, TypedDict
 from urllib.error import URLError
 
 from speech_recognition.audio import AudioData
 from speech_recognition.exceptions import RequestError, UnknownValueError
+
+if TYPE_CHECKING:
+    from google.cloud.speech_v1.types import RecognitionConfig, SpeechContext
+    from typing_extensions import Required
+
+
+class GoogleCloudRecognizerParameters(TypedDict, total=False):
+    # SpeechRecognition specific parameters
+    preferred_phrases: list[str]
+    show_all: bool
+
+    # Speech-to-Text V1 API's parameters
+    language_code: str
+    use_enhanced: bool
+    # TODO Add others support
+
+
+class GoogleCloudSpeechV1Parameters(TypedDict, total=False):
+    """Speech-to-Text V1 API's parameters.
+
+    https://cloud.google.com/python/docs/reference/speech/latest/google.cloud.speech_v1.types.RecognitionConfig
+    """
+
+    encoding: Required[RecognitionConfig.AudioEncoding]
+    sample_rate_hertz: Required[int]
+    language_code: Required[str]
+    speech_contexts: list[SpeechContext]
+    enable_word_time_offsets: bool
+    use_enhanced: bool
+
+
+def _build_config(
+    audio_data: AudioData, recognizer_params: GoogleCloudRecognizerParameters
+) -> RecognitionConfig:
+    from google.cloud import speech
+
+    parameters: GoogleCloudSpeechV1Parameters = {
+        "encoding": speech.RecognitionConfig.AudioEncoding.FLAC,
+        "sample_rate_hertz": audio_data.sample_rate,
+        "language_code": recognizer_params.pop("language_code", "en-US"),
+    }
+    if preferred_phrases := recognizer_params.pop("preferred_phrases", None):
+        parameters["speech_contexts"] = [
+            speech.SpeechContext(phrases=preferred_phrases)
+        ]
+    if recognizer_params.pop("show_all", False):
+        # ref: https://cloud.google.com/speech-to-text/docs/async-time-offsets
+        parameters["enable_word_time_offsets"] = True
+    return speech.RecognitionConfig(**(parameters | recognizer_params))
 
 
 def recognize(
     recognizer,
     audio_data: AudioData,
     credentials_json_path: str | None = None,
-    language_code: str = "en-US",
-    preferred_phrases: list[str] | None = None,
-    show_all: bool = False,
-    **api_params,
+    **kwargs: GoogleCloudRecognizerParameters,
 ):
     """Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Google Cloud Speech-to-Text V1 API.
 
@@ -63,21 +110,7 @@ def recognize(
     )
     audio = speech.RecognitionAudio(content=flac_data)
 
-    config = {
-        "encoding": speech.RecognitionConfig.AudioEncoding.FLAC,
-        "sample_rate_hertz": audio_data.sample_rate,
-        "language_code": language_code,
-        **api_params,
-    }
-    if preferred_phrases is not None:
-        config["speech_contexts"] = [
-            speech.SpeechContext(phrases=preferred_phrases)
-        ]
-    if show_all:
-        # ref: https://cloud.google.com/speech-to-text/docs/async-time-offsets
-        config["enable_word_time_offsets"] = True
-
-    config = speech.RecognitionConfig(**config)
+    config = _build_config(audio_data, kwargs.copy())
 
     try:
         response = client.recognize(config=config, audio=audio)
@@ -88,7 +121,7 @@ def recognize(
             "recognition connection failed: {0}".format(e.reason)
         )
 
-    if show_all:
+    if kwargs.get("show_all"):
         return response
     if len(response.results) == 0:
         raise UnknownValueError()
