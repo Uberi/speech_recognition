@@ -10,7 +10,7 @@ def recognize(
     recognizer,
     audio_data: AudioData,
     credentials_json_path: str | None = None,
-    language: str = "en-US",
+    language_code: str = "en-US",
     preferred_phrases: list[str] | None = None,
     show_all: bool = False,
     **api_params,
@@ -19,7 +19,7 @@ def recognize(
 
     This function requires a Google Cloud Platform account; see the `Google Cloud Speech API Quickstart <https://cloud.google.com/speech/docs/getting-started>`__ for details and instructions. Basically, create a project, enable billing for the project, enable the Google Cloud Speech API for the project, and set up Service Account Key credentials for the project. The result is a JSON file containing the API credentials. The text content of this JSON file is specified by ``credentials_json``. If not specified, the library will try to automatically `find the default API credentials JSON file <https://developers.google.com/identity/protocols/application-default-credentials>`__.
 
-    The recognition language is determined by ``language``, which is a BCP-47 language tag like ``"en-US"`` (US English). A list of supported language tags can be found in the `Google Cloud Speech API documentation <https://cloud.google.com/speech/docs/languages>`__.
+    The recognition language is determined by ``language_code``, which is a BCP-47 language tag like ``"en-US"`` (US English). A list of supported language tags can be found in the `Google Cloud Speech API documentation <https://cloud.google.com/speech/docs/languages>`__.
 
     If ``preferred_phrases`` is an iterable of phrase strings, those given phrases will be more likely to be recognized over similar-sounding alternatives. This is useful for things like keyword/command recognition or adding new phrases that aren't in Google's vocabulary. Note that the API imposes certain `restrictions on the list of phrase strings <https://cloud.google.com/speech/limits#content>`__.
 
@@ -66,7 +66,7 @@ def recognize(
     config = {
         "encoding": speech.RecognitionConfig.AudioEncoding.FLAC,
         "sample_rate_hertz": audio_data.sample_rate,
-        "language_code": language,
+        "language_code": language_code,
         **api_params,
     }
     if preferred_phrases is not None:
