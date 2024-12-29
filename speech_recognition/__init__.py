@@ -1383,6 +1383,56 @@ class Recognizer(AudioSource):
         else:
             return result["text"]
 
+    def recognize_whispercpp(self, audio_data, whispercpp_main, model_path, language="en", additional_options=""):
+        """
+        Adapted from code: https://github.com/eliranwong/freegenius/blob/96d2fd7751ca26f2c7adaa63082a3cb79681f3ed/package/freegenius/utils/prompts.py#L118
+
+        Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using Whisper.
+
+        ``whispercpp_main`` is the local path of the main file of whisper.cpp, it depends on how users set up their local copies of whisper.cpp
+
+        e.g., with the following setup, set '~/whisper.cpp/main' as ``whispercpp_main``:
+
+        > cd ~
+
+        > git clone https://github.com/ggerganov/whisper.cpp.git
+
+        > cd whisper.cpp
+
+        > make
+
+        ``model_path`` is the local file path of any of *.bin files downloaded from https://huggingface.co/ggerganov/whisper.cpp/tree/main.
+
+        e.g. download 'ggml-large-v3-q5_0.bin' to home directory, then ``model_path`` is '~/ggml-large-v3-q5_0.bin'
+
+        The recognition language is determined by ``language``, an uncapitalized language code like "en" or "zh". 'auto' for auto-detect. See the full language list at https://github.com/openai/whisper/blob/main/whisper/tokenizer.py
+
+        e.g. set 'en' as ``language`` for English
+
+        e.g. set 'auto' as ``language`` for non-English languages
+
+        ``additional_options`` are additional options that are passed directly to whisper.cpp. See https://github.com/ggerganov/whisper.cpp/tree/master/examples/main for all options
+
+        e.g. set '-t 12' as ``additional_options``, to use 12 threads during computation
+
+        e.g. set '-tr' as ``additional_options``, to translate from the speech to english
+        """
+        assert isinstance(audio_data, AudioData), "``audio_data`` must be audio data"
+        assert os.path.isfile(whispercpp_main), "``whispercpp_main`` must be a valid file path"
+        assert os.path.isfile(model_path), "``model_path`` must be a valid file path"
+        wav_data = audio_data.get_wav_data(
+            convert_rate=16000,  # audio samples must be 8kHz or 16 kHz
+            convert_width=2  # audio samples should be 16-bit
+        )
+        folder = os.path.dirname(os.path.realpath(__file__))
+        wav_file = os.path.join(folder, "speech.wav")
+        with open(wav_file, "wb") as fileObj:
+            fileObj.write(wav_data)
+        cli = f'''"{whispercpp_main}" -m "{model_path}" -f "{wav_file} -np -nt -l {language} {additional_options}"'''
+        process = subprocess.Popen(cli.rstrip(), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+        return stderr.decode("utf-8") if stderr and not stdout else stdout.decode("utf-8").strip()
+
     def recognize_vosk(self, audio_data, language='en'):
         from vosk import KaldiRecognizer, Model
 
