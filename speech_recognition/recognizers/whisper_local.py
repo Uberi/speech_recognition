@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import io
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING, Literal, TypedDict
 
 from speech_recognition.audio import AudioData
 
@@ -25,6 +25,8 @@ class TranscribeOptionalParameters(TypedDict, total=False):
 
     # ref: https://github.com/openai/whisper/blob/v20240930/whisper/decoding.py#L81
     # TODO Add others
+    task: Literal["transcribe", "translate"]
+    language: str
 
 
 def recognize(
@@ -32,22 +34,23 @@ def recognize(
     audio_data: AudioData,
     model: str = "base",
     show_dict: bool = False,
-    language: str | None = None,
-    translate: bool = False,
     load_options: LoadModelOptionalParameters | None = None,
     **transcribe_options: Unpack[TranscribeOptionalParameters],
 ):
     """
     Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using Whisper.
 
-    The recognition language is determined by ``language``, an uncapitalized full language name like "english" or "chinese". See the full language list at https://github.com/openai/whisper/blob/main/whisper/tokenizer.py
-
     Pick ``model`` from output of :command:`python -c 'import whisper; print(whisper.available_models())'`.
     See also https://github.com/openai/whisper?tab=readme-ov-file#available-models-and-languages.
 
     If ``show_dict`` is true, returns the full dict response from Whisper, including the detected language. Otherwise returns only the transcription.
 
-    You can translate the result to english with Whisper by passing ``translate=True``.
+    You can specify:
+
+        * ``language``: recognition language, an uncapitalized full language name like "english" or "chinese". See the full language list at https://github.com/openai/whisper/blob/main/whisper/tokenizer.py
+        * ``task``
+
+            * If you want transcribe + **translate**, set ``task="translate"``.
 
     Other values are passed directly to whisper. See https://github.com/openai/whisper/blob/main/whisper/transcribe.py for all options
     """
@@ -75,8 +78,6 @@ def recognize(
 
     result = self.whisper_model[model].transcribe(
         audio_array,
-        language=language,
-        task="translate" if translate else None,
         fp16=torch.cuda.is_available(),
         **transcribe_options,
     )

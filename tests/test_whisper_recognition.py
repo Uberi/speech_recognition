@@ -34,8 +34,6 @@ class RecognizeWhisperTestCase(TestCase):
         audio_array.astype.assert_called_once_with(np.float32)
         whisper_model.transcribe.assert_called_once_with(
             audio_array.astype.return_value,
-            language=None,
-            task=None,
             fp16=is_available.return_value,
         )
         transcript.__getitem__.assert_called_once_with("text")
@@ -64,7 +62,7 @@ class RecognizeWhisperTestCase(TestCase):
             audio_data,
             model="small",
             language="english",
-            translate=True,
+            task="translate",
             temperature=0,
         )
 
@@ -72,8 +70,8 @@ class RecognizeWhisperTestCase(TestCase):
         load_model.assert_called_once_with("small")
         whisper_model.transcribe.assert_called_once_with(
             audio_array.astype.return_value,
+            fp16=is_available.return_value,
             language="english",
             task="translate",
-            fp16=is_available.return_value,
             temperature=0,
         )
