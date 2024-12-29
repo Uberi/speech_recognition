@@ -4,3 +4,7 @@ lint:
 
 rstcheck:
 	@pipx run rstcheck[sphinx] --ignore-directives autofunction README.rst reference/*.rst
+
+distribute:
+	@pipx run build
+	@pipx run twine check dist/*
