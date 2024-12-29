@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import io
 
 from speech_recognition.audio import AudioData
@@ -5,13 +7,13 @@ from speech_recognition.audio import AudioData
 
 def recognize(
     self,
-    audio_data,
-    model="base",
-    show_dict=False,
+    audio_data: AudioData,
+    model: str = "base",
+    show_dict: bool = False,
     load_options=None,
-    language=None,
-    translate=False,
-    **transcribe_options
+    language: str | None = None,
+    translate: bool = False,
+    **transcribe_options,
 ):
     """
     Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using Whisper.
@@ -27,7 +29,6 @@ def recognize(
     Other values are passed directly to whisper. See https://github.com/openai/whisper/blob/main/whisper/transcribe.py for all options
     """
 
-    assert isinstance(audio_data, AudioData), "Data must be audio data"
     import numpy as np
     import soundfile as sf
     import torch
@@ -54,7 +55,7 @@ def recognize(
         language=language,
         task="translate" if translate else None,
         fp16=torch.cuda.is_available(),
-        **transcribe_options
+        **transcribe_options,
     )
 
     if show_dict:
