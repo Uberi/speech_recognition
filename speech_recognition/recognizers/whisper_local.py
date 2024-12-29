@@ -20,11 +20,12 @@ def recognize(
 
     The recognition language is determined by ``language``, an uncapitalized full language name like "english" or "chinese". See the full language list at https://github.com/openai/whisper/blob/main/whisper/tokenizer.py
 
-    model can be any of tiny, base, small, medium, large, tiny.en, base.en, small.en, medium.en. See https://github.com/openai/whisper for more details.
+    Pick ``model`` from output of :command:`python -c 'import whisper; print(whisper.available_models())'`.
+    See also https://github.com/openai/whisper?tab=readme-ov-file#available-models-and-languages.
 
-    If show_dict is true, returns the full dict response from Whisper, including the detected language. Otherwise returns only the transcription.
+    If ``show_dict`` is true, returns the full dict response from Whisper, including the detected language. Otherwise returns only the transcription.
 
-    You can translate the result to english with Whisper by passing translate=True
+    You can translate the result to english with Whisper by passing ``translate=True``.
 
     Other values are passed directly to whisper. See https://github.com/openai/whisper/blob/main/whisper/transcribe.py for all options
     """
