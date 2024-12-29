@@ -1,8 +1,30 @@
 from __future__ import annotations
 
 import io
+from typing import TYPE_CHECKING, TypedDict
 
 from speech_recognition.audio import AudioData
+
+if TYPE_CHECKING:
+    import torch
+    from typing_extensions import Unpack
+
+
+class LoadModelOptionalParameters(TypedDict, total=False):
+    # ref: https://github.com/openai/whisper/blob/v20240930/whisper/__init__.py#L103
+    device: str | torch.device
+    download_root: str
+    in_memory: bool
+
+
+class TranscribeOptionalParameters(TypedDict, total=False):
+    """Transcribe optional parameters & DecodingOptions parameters."""
+
+    # ref: https://github.com/openai/whisper/blob/v20240930/whisper/transcribe.py#L38
+    # TODO Add others
+
+    # ref: https://github.com/openai/whisper/blob/v20240930/whisper/decoding.py#L81
+    # TODO Add others
 
 
 def recognize(
@@ -10,10 +32,10 @@ def recognize(
     audio_data: AudioData,
     model: str = "base",
     show_dict: bool = False,
-    load_options=None,
     language: str | None = None,
     translate: bool = False,
-    **transcribe_options,
+    load_options: LoadModelOptionalParameters | None = None,
+    **transcribe_options: Unpack[TranscribeOptionalParameters],
 ):
     """
     Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using Whisper.
