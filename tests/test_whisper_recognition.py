@@ -3,10 +3,11 @@ from unittest import TestCase, skipIf
 from unittest.mock import MagicMock, patch
 
 from speech_recognition import AudioData, Recognizer
+from speech_recognition.recognizers.whisper_local import recognize
 
 
 @skipIf(sys.version_info >= (3, 13), "skip on Python 3.13")
-@patch("speech_recognition.io.BytesIO")
+@patch("speech_recognition.recognizers.whisper_local.io.BytesIO")
 @patch("soundfile.read")
 @patch("torch.cuda.is_available")
 @patch("whisper.load_model")
@@ -22,9 +23,8 @@ class RecognizeWhisperTestCase(TestCase):
         dummy_sampling_rate = 99_999
         sf_read.return_value = (audio_array, dummy_sampling_rate)
 
-        recognizer = Recognizer()
         audio_data = MagicMock(spec=AudioData)
-        actual = recognizer.recognize_whisper(audio_data)
+        actual = recognize(MagicMock(spec=Recognizer), audio_data)
 
         self.assertEqual(actual, transcript.__getitem__.return_value)
         load_model.assert_called_once_with("base")
@@ -46,9 +46,8 @@ class RecognizeWhisperTestCase(TestCase):
         dummy_sampling_rate = 99_999
         sf_read.return_value = (audio_array, dummy_sampling_rate)
 
-        recognizer = Recognizer()
         audio_data = MagicMock(spec=AudioData)
-        actual = recognizer.recognize_whisper(audio_data, show_dict=True)
+        actual = recognize(MagicMock(spec=Recognizer), audio_data, show_dict=True)
 
         self.assertEqual(actual, whisper_model.transcribe.return_value)
 
@@ -59,9 +58,9 @@ class RecognizeWhisperTestCase(TestCase):
         dummy_sampling_rate = 99_999
         sf_read.return_value = (audio_array, dummy_sampling_rate)
 
-        recognizer = Recognizer()
         audio_data = MagicMock(spec=AudioData)
-        actual = recognizer.recognize_whisper(
+        actual = recognize(
+            MagicMock(spec=Recognizer),
             audio_data,
             model="small",
             language="english",
