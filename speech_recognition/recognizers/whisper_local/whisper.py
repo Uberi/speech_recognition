@@ -47,8 +47,7 @@ def recognize(
     load_options: LoadModelOptionalParameters | None = None,
     **transcribe_options: Unpack[TranscribeOptionalParameters],
 ) -> str | TranscribeOutput:
-    """
-    Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using Whisper.
+    """Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using Whisper.
 
     Pick ``model`` from output of :command:`python -c 'import whisper; print(whisper.available_models())'`.
     See also https://github.com/openai/whisper?tab=readme-ov-file#available-models-and-languages.

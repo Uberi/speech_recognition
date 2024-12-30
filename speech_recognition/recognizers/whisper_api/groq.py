@@ -35,8 +35,7 @@ def recognize(
     model: GroqModel = "whisper-large-v3-turbo",
     **kwargs: Unpack[GroqOptionalParameters],
 ) -> str:
-    """
-    Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Groq Whisper API.
+    """Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Groq Whisper API.
 
     This function requires login to Groq; visit https://console.groq.com/login, then generate API Key in `API Keys <https://console.groq.com/keys>`__ menu.
 

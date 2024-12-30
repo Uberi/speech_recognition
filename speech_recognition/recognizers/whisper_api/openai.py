@@ -35,8 +35,7 @@ def recognize(
     model: WhisperModel = "whisper-1",
     **kwargs: Unpack[OpenAIOptionalParameters],
 ) -> str:
-    """
-    Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the OpenAI Whisper API.
+    """Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the OpenAI Whisper API.
 
     This function requires an OpenAI account; visit https://platform.openai.com/signup, then generate API Key in `User settings <https://platform.openai.com/account/api-keys>`__.
 
