@@ -45,7 +45,9 @@ class RecognizeWhisperTestCase(TestCase):
         sf_read.return_value = (audio_array, dummy_sampling_rate)
 
         audio_data = MagicMock(spec=AudioData)
-        actual = recognize(MagicMock(spec=Recognizer), audio_data, show_dict=True)
+        actual = recognize(
+            MagicMock(spec=Recognizer), audio_data, show_dict=True
+        )
 
         self.assertEqual(actual, whisper_model.transcribe.return_value)
 
