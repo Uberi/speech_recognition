@@ -32,10 +32,6 @@ class WhisperCompatibleRecognizer:
         audio_array, sampling_rate = sf.read(wav_stream)
         audio_array = audio_array.astype(np.float32)
 
-        if "fp16" not in kwargs:
-            import torch
-
-            kwargs["fp16"] = torch.cuda.is_available()
         result = self.model.transcribe(audio_array, **kwargs)
 
         if show_dict:

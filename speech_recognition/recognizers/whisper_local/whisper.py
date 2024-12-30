@@ -10,6 +10,7 @@ from speech_recognition.recognizers.whisper_local.base import (
 if TYPE_CHECKING:
     import torch
     from typing_extensions import Unpack
+    from whisper import Whisper
 
 
 class LoadModelOptionalParameters(TypedDict, total=False):
@@ -52,6 +53,19 @@ class TranscribeOutput(TypedDict):
     language: str
 
 
+class TranscribableAdapter:
+    def __init__(self, model: Whisper) -> None:
+        self.model = model
+
+    def transcribe(self, audio_array, **kwargs) -> TranscribeOutput:
+        if "fp16" not in kwargs:
+            import torch
+
+            kwargs["fp16"] = torch.cuda.is_available()
+
+        return self.model.transcribe(audio_array, **kwargs)
+
+
 def recognize(
     recognizer,
     audio_data: AudioData,
@@ -80,7 +94,9 @@ def recognize(
     import whisper
 
     whisper_model = whisper.load_model(model, **load_options or {})
-    whisper_recognizer = WhisperCompatibleRecognizer(whisper_model)
+    whisper_recognizer = WhisperCompatibleRecognizer(
+        TranscribableAdapter(whisper_model)
+    )
     return whisper_recognizer.recognize(
         audio_data, show_dict=show_dict, **transcribe_options
     )
