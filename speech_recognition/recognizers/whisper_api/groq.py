@@ -50,5 +50,5 @@ def recognize(
             "missing groq module: ensure that groq is set up correctly."
         )
 
-    recognizer = OpenAICompatibleRecognizer(groq.Groq())
-    return recognizer.recognize(audio_data, model, **kwargs)
+    groq_recognizer = OpenAICompatibleRecognizer(groq.Groq())
+    return groq_recognizer.recognize(audio_data, model, **kwargs)

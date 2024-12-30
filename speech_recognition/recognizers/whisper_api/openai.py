@@ -50,5 +50,5 @@ def recognize(
             "missing openai module: ensure that openai is set up correctly."
         )
 
-    recognizer = OpenAICompatibleRecognizer(openai.OpenAI())
-    return recognizer.recognize(audio_data, model, **kwargs)
+    openai_recognizer = OpenAICompatibleRecognizer(openai.OpenAI())
+    return openai_recognizer.recognize(audio_data, model, **kwargs)

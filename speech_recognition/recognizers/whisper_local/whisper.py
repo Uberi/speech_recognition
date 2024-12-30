@@ -53,7 +53,7 @@ class TranscribeOutput(TypedDict):
 
 
 def recognize(
-    self,
+    recognizer,
     audio_data: AudioData,
     model: str = "base",
     show_dict: bool = False,
@@ -80,7 +80,7 @@ def recognize(
     import whisper
 
     whisper_model = whisper.load_model(model, **load_options or {})
-    recognizer = WhisperCompatibleRecognizer(whisper_model)
-    return recognizer.recognize(
+    whisper_recognizer = WhisperCompatibleRecognizer(whisper_model)
+    return whisper_recognizer.recognize(
         audio_data, show_dict=show_dict, **transcribe_options
     )
