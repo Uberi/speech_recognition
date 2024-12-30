@@ -36,6 +36,14 @@ class TranscribableAdapter:
         }
 
 
+class InitOptionalParameters(TypedDict, total=False):
+    # https://github.com/SYSTRAN/faster-whisper/blob/v1.1.0/faster_whisper/transcribe.py#L575
+    device: Literal["cpu", "gpu", "auto"]
+    compute_type: str
+    download_root: str
+    # TODO Add others
+
+
 class TranscribeOptionalParameters(TypedDict, total=False):
     # https://github.com/SYSTRAN/faster-whisper/blob/v1.1.0/faster_whisper/transcribe.py#L692
     language: str
@@ -49,6 +57,7 @@ def recognize(
     audio_data: AudioData,
     model: str = "base",
     show_dict: bool = False,
+    init_options: InitOptionalParameters | None = None,
     **transcribe_options: Unpack[TranscribeOptionalParameters],
 ) -> str:
     """Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using Whisper.
@@ -71,7 +80,7 @@ def recognize(
     """
     from faster_whisper import WhisperModel
 
-    model = WhisperModel(model)
+    model = WhisperModel(model, **init_options or {})
     whisper_recognizer = WhisperCompatibleRecognizer(
         TranscribableAdapter(model)
     )

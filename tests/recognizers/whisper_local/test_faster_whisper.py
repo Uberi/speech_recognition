@@ -117,8 +117,6 @@ class TestTranscribe:
             VadOptions,
         )
 
-        sf_read, audio_array = soundfile_read
-
         def segments():
             yield Segment(
                 id=1,
@@ -208,3 +206,28 @@ class TestTranscribe:
             task="translate",
             beam_size=5,
         )
+
+    def test_init_parameters(
+        self,
+        WhisperModel,
+        audio_data,
+        segment,
+        transcription_info,
+        soundfile_read,
+    ):
+        def segments_generator():
+            yield segment
+
+        whisper_model = WhisperModel.return_value
+        whisper_model.transcribe.return_value = (
+            segments_generator(),
+            transcription_info,
+        )
+
+        _ = recognize(
+            MagicMock(spec=Recognizer),
+            audio_data,
+            init_options={"compute_type": "int8"},
+        )
+
+        WhisperModel.assert_called_once_with("base", compute_type="int8")
