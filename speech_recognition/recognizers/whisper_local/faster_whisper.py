@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING, Literal, TypedDict
 
 from speech_recognition.audio import AudioData
 from speech_recognition.recognizers.whisper_local.base import (
@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     import numpy as np
     from faster_whisper import WhisperModel
     from faster_whisper.transcribe import Segment
+    from typing_extensions import Unpack
 
 
 class TranscribeOutput(TypedDict):
@@ -35,12 +36,20 @@ class TranscribableAdapter:
         }
 
 
+class TranscribeOptionalParameters(TypedDict, total=False):
+    # https://github.com/SYSTRAN/faster-whisper/blob/v1.1.0/faster_whisper/transcribe.py#L692
+    language: str
+    task: Literal["transcribe", "translate"]
+    beam_size: int
+    # TODO Add others
+
+
 def recognize(
     recognizer,
     audio_data: AudioData,
     model: str = "base",
     show_dict: bool = False,
-    **transcribe_options,
+    **transcribe_options: Unpack[TranscribeOptionalParameters],
 ) -> str:
     import torch
     from faster_whisper import WhisperModel
