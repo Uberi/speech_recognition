@@ -1,13 +1,18 @@
 from __future__ import annotations
 
 import io
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 from speech_recognition.audio import AudioData
 
+if TYPE_CHECKING:
+    import numpy as np
+
 
 class Transcribable(Protocol):
-    def transcribe(self, audio_array, **kwargs) -> str | dict[str, Any]:
+    def transcribe(
+        self, audio_array: np.ndarray, **kwargs
+    ) -> str | dict[str, Any]:
         pass
 
 

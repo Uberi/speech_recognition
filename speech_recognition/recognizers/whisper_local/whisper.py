@@ -8,6 +8,7 @@ from speech_recognition.recognizers.whisper_local.base import (
 )
 
 if TYPE_CHECKING:
+    import numpy as np
     import torch
     from typing_extensions import Unpack
     from whisper import Whisper
@@ -57,7 +58,9 @@ class TranscribableAdapter:
     def __init__(self, model: Whisper) -> None:
         self.model = model
 
-    def transcribe(self, audio_array, **kwargs) -> TranscribeOutput:
+    def transcribe(
+        self, audio_array: np.ndarray, **kwargs
+    ) -> TranscribeOutput:
         if "fp16" not in kwargs:
             import torch
 
