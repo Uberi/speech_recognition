@@ -51,6 +51,24 @@ def recognize(
     show_dict: bool = False,
     **transcribe_options: Unpack[TranscribeOptionalParameters],
 ) -> str:
+    """Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using Whisper.
+
+    Pick ``model`` size (Same as Whisper).
+
+    If ``show_dict`` is true, returns the detailed response from Whisper, including the detected language. Otherwise returns only the transcription.
+
+    You can specify:
+
+        * ``language``: recognition language, an uncapitalized 2 letters language name like "en" or "fr".
+
+            * If not set, Faster Whisper will automatically detect the language.
+
+        * ``task``
+
+            * If you want transcribe + **translate** to english, set ``task="translate"``.
+
+    Other values are passed directly to whisper. See https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/transcribe.py for all options.
+    """
     import torch
     from faster_whisper import WhisperModel
 

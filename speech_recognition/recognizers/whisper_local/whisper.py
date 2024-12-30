@@ -87,11 +87,14 @@ def recognize(
     You can specify:
 
         * ``language``: recognition language, an uncapitalized full language name like "english" or "chinese". See the full language list at https://github.com/openai/whisper/blob/main/whisper/tokenizer.py
+
+            * If not set, Whisper will automatically detect the language.
+
         * ``task``
 
-            * If you want transcribe + **translate**, set ``task="translate"``.
+            * If you want transcribe + **translate** to english, set ``task="translate"``.
 
-    Other values are passed directly to whisper. See https://github.com/openai/whisper/blob/main/whisper/transcribe.py for all options
+    Other values are passed directly to whisper. See https://github.com/openai/whisper/blob/main/whisper/transcribe.py for all options.
     """
 
     import whisper
