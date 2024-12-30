@@ -3,7 +3,9 @@ lint:
 	@pipx run flake8 --ignore=E501,E701,W503 .
 
 rstcheck:
-	@pipx run rstcheck[sphinx] --ignore-directives autofunction README.rst reference/*.rst
+# PyPI does not support Sphinx directives and roles
+	@pipx run rstcheck README.rst 
+	@pipx run rstcheck[sphinx] --ignore-directives autofunction reference/*.rst
 
 distribute:
 	@pipx run build
