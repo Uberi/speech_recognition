@@ -59,7 +59,7 @@ def recognize(
     show_dict: bool = False,
     init_options: InitOptionalParameters | None = None,
     **transcribe_options: Unpack[TranscribeOptionalParameters],
-) -> str:
+) -> str | TranscribeOutput:
     """Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using Whisper.
 
     Pick ``model`` size (Same as Whisper).
