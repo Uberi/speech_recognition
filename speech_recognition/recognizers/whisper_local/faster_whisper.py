@@ -69,12 +69,9 @@ def recognize(
 
     Other values are passed directly to whisper. See https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/transcribe.py for all options.
     """
-    import torch
     from faster_whisper import WhisperModel
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-
-    model = WhisperModel(model, device=device)
+    model = WhisperModel(model)
     whisper_recognizer = WhisperCompatibleRecognizer(
         TranscribableAdapter(model)
     )

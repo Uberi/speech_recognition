@@ -56,9 +56,8 @@ def soundfile_read() -> Generator[tuple[MagicMock, np.ndarray], None, None]:
 )
 @patch("faster_whisper.WhisperModel")
 class TestTranscribe:
-    @patch("torch.cuda.is_available", return_value=False)
     def test_default_parameters(
-        self, is_available, WhisperModel, audio_data, soundfile_read
+        self, WhisperModel, audio_data, soundfile_read
     ):
         from faster_whisper.transcribe import (
             Segment,
@@ -101,8 +100,7 @@ class TestTranscribe:
         actual = recognize(MagicMock(spec=Recognizer), audio_data)
 
         assert actual == " 1, 2, 3"
-        is_available.assert_called_once_with()
-        WhisperModel.assert_called_once_with("base", device="cpu")
+        WhisperModel.assert_called_once_with("base")
         audio_data.get_wav_data.assert_called_once_with(convert_rate=16_000)
         sf_read.assert_called_once_with(ANY)
         assert sf_read.call_args[0][0].read() == b"audio data"
@@ -111,32 +109,7 @@ class TestTranscribe:
             audio_array.astype.return_value
         )
 
-    @patch("torch.cuda.is_available", return_value=True)
-    def test_gpu_available(
-        self,
-        is_available,
-        WhisperModel,
-        audio_data,
-        segment,
-        transcription_info,
-        soundfile_read,
-    ):
-        def segments_generator():
-            yield segment
-
-        WhisperModel.return_value.transcribe.return_value = (
-            segments_generator(),
-            transcription_info,
-        )
-
-        _ = recognize(MagicMock(spec=Recognizer), audio_data)
-
-        WhisperModel.assert_called_once_with("base", device="cuda")
-
-    @patch("torch.cuda.is_available", return_value=False)
-    def test_show_dict(
-        self, is_available, WhisperModel, audio_data, soundfile_read
-    ):
+    def test_show_dict(self, WhisperModel, audio_data, soundfile_read):
         from faster_whisper.transcribe import (
             Segment,
             TranscriptionInfo,
@@ -199,10 +172,8 @@ class TestTranscribe:
         }
         assert actual == expected
 
-    @patch("torch.cuda.is_available", return_value=False)
     def test_pass_parameters(
         self,
-        is_available,
         WhisperModel,
         audio_data,
         segment,
@@ -230,7 +201,7 @@ class TestTranscribe:
             beam_size=5,
         )
 
-        WhisperModel.assert_called_once_with("small", device="cpu")
+        WhisperModel.assert_called_once_with("small")
         whisper_model.transcribe.assert_called_once_with(
             audio_array.astype.return_value,
             language="fr",
