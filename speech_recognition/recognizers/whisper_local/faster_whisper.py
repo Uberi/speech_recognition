@@ -78,3 +78,20 @@ def recognize(
     return whisper_recognizer.recognize(
         audio_data, show_dict=show_dict, **transcribe_options
     )
+
+
+if __name__ == "__main__":
+    import argparse
+
+    import speech_recognition as sr
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("audio_file")
+    args = parser.parse_args()
+
+    r = sr.Recognizer()
+    with sr.AudioFile(args.audio_file) as source:
+        audio_data = r.listen(source)
+
+    transcription = recognize(None, audio_data)
+    print(transcription)
