@@ -6,7 +6,7 @@ from typing_extensions import Unpack
 
 from speech_recognition.audio import AudioData
 from speech_recognition.exceptions import SetupError
-from speech_recognition.recognizers.whisper_api import (
+from speech_recognition.recognizers.whisper_api.base import (
     OpenAICompatibleRecognizer,
 )
 

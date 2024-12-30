@@ -1390,7 +1390,8 @@ class PortableNamedTemporaryFile(object):
 # At this time, the dependencies are not yet installed, resulting in a ModuleNotFoundError.
 # This is a workaround to resolve this issue
 try:
-    from .recognizers import google, google_cloud, groq, openai
+    from .recognizers import google, google_cloud
+    from .recognizers.whisper_api import groq, openai
     from .recognizers.whisper_local import whisper
 except (ModuleNotFoundError, ImportError):
     pass
