@@ -1,5 +1,5 @@
-from collections.abc import Generator
 import sys
+from collections.abc import Generator
 from unittest.mock import ANY, MagicMock, patch
 
 import numpy as np
@@ -23,6 +23,18 @@ def audio_data() -> AudioData:
     audio = MagicMock(spec=AudioData)
     audio.get_wav_data.return_value = b""
     return audio
+
+
+@pytest.fixture
+def segment() -> Segment:
+    mocked_segment = MagicMock(spec=Segment(*[None] * 11))
+    mocked_segment.text = ""
+    return mocked_segment
+
+
+@pytest.fixture
+def transcription_info() -> TranscriptionInfo:
+    return MagicMock(spec=TranscriptionInfo(*[None] * 7))
 
 
 @pytest.fixture
@@ -66,7 +78,7 @@ class TestTranscribe:
             language_probability=0.9314374923706055,
             duration=2.7449375,
             duration_after_vad=2.7449375,
-            all_language_probs=[("en", 0.9314374923706055)],
+            all_language_probs=[("en", 0.9314374923706055)],  # Omitted
             transcription_options=MagicMock(spec=TranscriptionOptions),
             vad_options=MagicMock(spec=VadOptions),
         )
@@ -90,16 +102,20 @@ class TestTranscribe:
 
     @patch("torch.cuda.is_available", return_value=True)
     def test_gpu_available(
-        self, is_available, WhisperModel, audio_data, soundfile_read
+        self,
+        is_available,
+        WhisperModel,
+        audio_data,
+        segment,
+        transcription_info,
+        soundfile_read,
     ):
         def segments_generator():
-            mocked_segment = MagicMock(spec=Segment(*[None] * 11))
-            mocked_segment.text = ""
-            yield mocked_segment
+            yield segment
 
         WhisperModel.return_value.transcribe.return_value = (
             segments_generator(),
-            MagicMock(spec=TranscriptionInfo(*[None] * 7)),
+            transcription_info,
         )
 
         _ = recognize(MagicMock(spec=Recognizer), audio_data)
@@ -108,19 +124,23 @@ class TestTranscribe:
 
     @patch("torch.cuda.is_available", return_value=False)
     def test_pass_parameters(
-        self, is_available, WhisperModel, audio_data, soundfile_read
+        self,
+        is_available,
+        WhisperModel,
+        audio_data,
+        segment,
+        transcription_info,
+        soundfile_read,
     ):
         _, audio_array = soundfile_read
 
         def segments_generator():
-            mocked_segment = MagicMock(spec=Segment(*[None] * 11))
-            mocked_segment.text = ""
-            yield mocked_segment
+            yield segment
 
         whisper_model = WhisperModel.return_value
         whisper_model.transcribe.return_value = (
             segments_generator(),
-            MagicMock(spec=TranscriptionInfo(*[None] * 7)),
+            transcription_info,
         )
 
         _ = recognize(
