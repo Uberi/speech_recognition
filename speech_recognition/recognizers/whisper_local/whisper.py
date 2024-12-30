@@ -33,9 +33,22 @@ class TranscribeOptionalParameters(TypedDict, total=False):
     # TODO Add others
 
 
+class Segment(TypedDict):
+    id: int
+    seek: int
+    start: float
+    end: float
+    text: str
+    tokens: list[int]
+    temperature: float
+    avg_logprob: float
+    compression_ratio: float
+    no_speech_prob: float
+
+
 class TranscribeOutput(TypedDict):
     text: str
-    segments: list[Any]  # TODO Fix Any
+    segments: list[Segment]
     language: str
 
 
