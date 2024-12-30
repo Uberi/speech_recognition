@@ -17,6 +17,13 @@ from speech_recognition.recognizers.whisper_local.faster_whisper import (
 )
 
 
+@pytest.fixture
+def audio_data() -> AudioData:
+    audio = MagicMock(spec=AudioData)
+    audio.get_wav_data.return_value = b""
+    return audio
+
+
 @pytest.mark.skipif(
     sys.version_info >= (3, 13), reason="skip on Python 3.13 or later"
 )
@@ -24,7 +31,9 @@ from speech_recognition.recognizers.whisper_local.faster_whisper import (
 @patch("faster_whisper.WhisperModel")
 class TestTranscribe:
     @patch("torch.cuda.is_available", return_value=False)
-    def test_default_parameters(self, is_available, WhisperModel, sf_read):
+    def test_default_parameters(
+        self, is_available, WhisperModel, sf_read, audio_data
+    ):
         def segments():
             yield Segment(
                 id=1,
@@ -53,7 +62,6 @@ class TestTranscribe:
         whisper_model = WhisperModel.return_value
         whisper_model.transcribe.return_value = segments(), info
 
-        audio_data = MagicMock(spec=AudioData)
         audio_data.get_wav_data.return_value = b"audio data"
 
         audio_array = MagicMock(spec=np.ndarray)
@@ -74,7 +82,9 @@ class TestTranscribe:
         )
 
     @patch("torch.cuda.is_available", return_value=True)
-    def test_gpu_available(self, is_available, WhisperModel, sf_read):
+    def test_gpu_available(
+        self, is_available, WhisperModel, sf_read, audio_data
+    ):
         def segments_generator():
             mocked_segment = MagicMock(spec=Segment(*[None] * 11))
             mocked_segment.text = ""
@@ -85,9 +95,6 @@ class TestTranscribe:
             MagicMock(spec=TranscriptionInfo(*[None] * 7)),
         )
 
-        audio_data = MagicMock(spec=AudioData)
-        audio_data.get_wav_data.return_value = b""
-
         audio_array = MagicMock(spec=np.ndarray)
         dummy_sampling_rate = 99_999
         sf_read.return_value = (audio_array, dummy_sampling_rate)
@@ -97,7 +104,9 @@ class TestTranscribe:
         WhisperModel.assert_called_once_with("base", device="cuda")
 
     @patch("torch.cuda.is_available", return_value=False)
-    def test_pass_parameters(self, is_available, WhisperModel, sf_read):
+    def test_pass_parameters(
+        self, is_available, WhisperModel, sf_read, audio_data
+    ):
         def segments_generator():
             mocked_segment = MagicMock(spec=Segment(*[None] * 11))
             mocked_segment.text = ""
@@ -108,9 +117,6 @@ class TestTranscribe:
             segments_generator(),
             MagicMock(spec=TranscriptionInfo(*[None] * 7)),
         )
-
-        audio_data = MagicMock(spec=AudioData)
-        audio_data.get_wav_data.return_value = b""
 
         audio_array = MagicMock(spec=np.ndarray)
         dummy_sampling_rate = 99_999
