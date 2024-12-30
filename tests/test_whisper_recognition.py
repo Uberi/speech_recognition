@@ -3,11 +3,11 @@ from unittest import TestCase, skipIf
 from unittest.mock import MagicMock, patch
 
 from speech_recognition import AudioData, Recognizer
-from speech_recognition.recognizers.whisper_local import recognize
+from speech_recognition.recognizers.whisper_local.whisper import recognize
 
 
 @skipIf(sys.version_info >= (3, 13), "skip on Python 3.13")
-@patch("speech_recognition.recognizers.whisper_local.io.BytesIO")
+@patch("speech_recognition.recognizers.whisper_local.base.io.BytesIO")
 @patch("soundfile.read")
 @patch("torch.cuda.is_available")
 @patch("whisper.load_model")
