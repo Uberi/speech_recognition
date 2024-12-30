@@ -1,6 +1,6 @@
 lint:
 # ignore errors for long lines and multi-statement lines
-	@pipx run flake8 --ignore=E501,E701,W503 .
+	@pipx run flake8 --ignore=E501,E701,W503 --extend-exclude .venv,venv,build --doctests .
 
 rstcheck:
 # PyPI does not support Sphinx directives and roles
