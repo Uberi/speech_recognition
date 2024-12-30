@@ -290,20 +290,20 @@ Returns the most likely transcription if ``show_all`` is false (the default). Ot
 
 Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
 
-``recognizer_instance.recognize_whisper(audio_data: AudioData, model: str="base", show_dict: bool=False, load_options: Dict[Any, Any]=None, language:Optional[str]=None, translate:bool=False, **transcribe_options):``
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+``recognizer_instance.recognize_whisper(audio_data: AudioData, model: str="base", show_dict: bool=False, load_options=None, **transcribe_options):``
+----------------------------------------------------------------------------------------------------------------------------------------------------
 
-.. autofunction:: speech_recognition.recognizers.whisper_local.recognize
+.. autofunction:: speech_recognition.recognizers.whisper_local.whisper.recognize
 
 ``recognizer_instance.recognize_openai(audio_data: AudioData, model = "whisper-1", **kwargs)``
 ----------------------------------------------------------------------------------------------
 
-.. autofunction:: speech_recognition.recognizers.openai.recognize
+.. autofunction:: speech_recognition.recognizers.whisper_api.openai.recognize
 
 ``recognizer_instance.recognize_groq(audio_data: AudioData, model = "whisper-large-v3-turbo", **kwargs)``
 ---------------------------------------------------------------------------------------------------------
 
-.. autofunction:: speech_recognition.recognizers.groq.recognize
+.. autofunction:: speech_recognition.recognizers.whisper_api.groq.recognize
 
 ``AudioSource``
 ---------------
