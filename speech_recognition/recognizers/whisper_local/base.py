@@ -1,13 +1,18 @@
 from __future__ import annotations
 
 import io
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 from speech_recognition.audio import AudioData
 
+if TYPE_CHECKING:
+    import numpy as np
+
 
 class Transcribable(Protocol):
-    def transcribe(self, audio_array, **kwargs) -> str | dict[str, Any]:
+    def transcribe(
+        self, audio_array: np.ndarray, **kwargs
+    ) -> str | dict[str, Any]:
         pass
 
 
@@ -32,10 +37,6 @@ class WhisperCompatibleRecognizer:
         audio_array, sampling_rate = sf.read(wav_stream)
         audio_array = audio_array.astype(np.float32)
 
-        if "fp16" not in kwargs:
-            import torch
-
-            kwargs["fp16"] = torch.cuda.is_available()
         result = self.model.transcribe(audio_array, **kwargs)
 
         if show_dict:

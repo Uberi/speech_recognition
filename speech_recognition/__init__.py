@@ -1392,13 +1392,14 @@ class PortableNamedTemporaryFile(object):
 try:
     from .recognizers import google, google_cloud
     from .recognizers.whisper_api import groq, openai
-    from .recognizers.whisper_local import whisper
+    from .recognizers.whisper_local import faster_whisper, whisper
 except (ModuleNotFoundError, ImportError):
     pass
 else:
     Recognizer.recognize_google = google.recognize_legacy
     Recognizer.recognize_google_cloud = google_cloud.recognize
     Recognizer.recognize_whisper = whisper.recognize
+    Recognizer.recognize_faster_whisper = faster_whisper.recognize
     Recognizer.recognize_openai = openai.recognize
     Recognizer.recognize_whisper_api = openai.recognize  # Deprecated
     Recognizer.recognize_groq = groq.recognize

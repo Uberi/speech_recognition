@@ -8,8 +8,10 @@ from speech_recognition.recognizers.whisper_local.base import (
 )
 
 if TYPE_CHECKING:
+    import numpy as np
     import torch
     from typing_extensions import Unpack
+    from whisper import Whisper
 
 
 class LoadModelOptionalParameters(TypedDict, total=False):
@@ -52,6 +54,21 @@ class TranscribeOutput(TypedDict):
     language: str
 
 
+class TranscribableAdapter:
+    def __init__(self, model: Whisper) -> None:
+        self.model = model
+
+    def transcribe(
+        self, audio_array: np.ndarray, **kwargs
+    ) -> TranscribeOutput:
+        if "fp16" not in kwargs:
+            import torch
+
+            kwargs["fp16"] = torch.cuda.is_available()
+
+        return self.model.transcribe(audio_array, **kwargs)
+
+
 def recognize(
     recognizer,
     audio_data: AudioData,
@@ -70,17 +87,22 @@ def recognize(
     You can specify:
 
         * ``language``: recognition language, an uncapitalized full language name like "english" or "chinese". See the full language list at https://github.com/openai/whisper/blob/main/whisper/tokenizer.py
+
+            * If not set, Whisper will automatically detect the language.
+
         * ``task``
 
-            * If you want transcribe + **translate**, set ``task="translate"``.
+            * If you want transcribe + **translate** to english, set ``task="translate"``.
 
-    Other values are passed directly to whisper. See https://github.com/openai/whisper/blob/main/whisper/transcribe.py for all options
+    Other values are passed directly to whisper. See https://github.com/openai/whisper/blob/main/whisper/transcribe.py for all options.
     """
 
     import whisper
 
     whisper_model = whisper.load_model(model, **load_options or {})
-    whisper_recognizer = WhisperCompatibleRecognizer(whisper_model)
+    whisper_recognizer = WhisperCompatibleRecognizer(
+        TranscribableAdapter(whisper_model)
+    )
     return whisper_recognizer.recognize(
         audio_data, show_dict=show_dict, **transcribe_options
     )

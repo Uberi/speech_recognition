@@ -290,10 +290,15 @@ Returns the most likely transcription if ``show_all`` is false (the default). Ot
 
 Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
 
-``recognizer_instance.recognize_whisper(audio_data: AudioData, model: str="base", show_dict: bool=False, load_options=None, **transcribe_options):``
-----------------------------------------------------------------------------------------------------------------------------------------------------
+``recognizer_instance.recognize_whisper(audio_data: AudioData, model: str="base", show_dict: bool=False, load_options=None, **transcribe_options)``
+---------------------------------------------------------------------------------------------------------------------------------------------------
 
 .. autofunction:: speech_recognition.recognizers.whisper_local.whisper.recognize
+
+``recognizer_instance.recognize_faster_whisper(audio_data: AudioData, model: str="base", show_dict: bool=False, **transcribe_options)``
+---------------------------------------------------------------------------------------------------------------------------------------
+
+.. autofunction:: speech_recognition.recognizers.whisper_local.faster_whisper.recognize
 
 ``recognizer_instance.recognize_openai(audio_data: AudioData, model = "whisper-1", **kwargs)``
 ----------------------------------------------------------------------------------------------
