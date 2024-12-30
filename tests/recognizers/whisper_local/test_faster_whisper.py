@@ -95,3 +95,41 @@ class TestTranscribe:
         _ = recognize(MagicMock(spec=Recognizer), audio_data)
 
         WhisperModel.assert_called_once_with("base", device="cuda")
+
+    @patch("torch.cuda.is_available", return_value=False)
+    def test_pass_parameters(self, is_available, WhisperModel, sf_read):
+        def segments_generator():
+            mocked_segment = MagicMock(spec=Segment(*[None] * 11))
+            mocked_segment.text = ""
+            yield mocked_segment
+
+        whisper_model = WhisperModel.return_value
+        whisper_model.transcribe.return_value = (
+            segments_generator(),
+            MagicMock(spec=TranscriptionInfo(*[None] * 7)),
+        )
+
+        audio_data = MagicMock(spec=AudioData)
+        audio_data.get_wav_data.return_value = b""
+
+        audio_array = MagicMock(spec=np.ndarray)
+        dummy_sampling_rate = 99_999
+        sf_read.return_value = (audio_array, dummy_sampling_rate)
+
+        _ = recognize(
+            MagicMock(spec=Recognizer),
+            audio_data,
+            model="small",
+            show_dict=True,
+            language="fr",
+            task="translate",
+            beam_size=5,
+        )
+
+        WhisperModel.assert_called_once_with("small", device="cpu")
+        whisper_model.transcribe.assert_called_once_with(
+            audio_array.astype.return_value,
+            language="fr",
+            task="translate",
+            beam_size=5,
+        )
