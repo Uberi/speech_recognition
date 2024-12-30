@@ -123,6 +123,65 @@ class TestTranscribe:
         WhisperModel.assert_called_once_with("base", device="cuda")
 
     @patch("torch.cuda.is_available", return_value=False)
+    def test_show_dict(
+        self, is_available, WhisperModel, audio_data, soundfile_read
+    ):
+        sf_read, audio_array = soundfile_read
+
+        def segments():
+            yield Segment(
+                id=1,
+                seek=0,
+                start=0.0,
+                end=2.64,
+                text=" 1, 2, 3",
+                tokens=[50364, 502, 11, 568, 11, 805, 50496],
+                avg_logprob=-0.5378808751702309,
+                compression_ratio=0.4666666666666667,
+                no_speech_prob=0.17316274344921112,
+                words=None,
+                temperature=0.0,
+            )
+
+        info = TranscriptionInfo(
+            language="en",
+            language_probability=0.9314374923706055,
+            duration=2.7449375,
+            duration_after_vad=2.7449375,
+            all_language_probs=[("en", 0.9314374923706055)],  # Omitted
+            transcription_options=MagicMock(spec=TranscriptionOptions),
+            vad_options=MagicMock(spec=VadOptions),
+        )
+
+        whisper_model = WhisperModel.return_value
+        whisper_model.transcribe.return_value = segments(), info
+
+        actual = recognize(
+            MagicMock(spec=Recognizer), audio_data, show_dict=True
+        )
+
+        expected = {
+            "text": " 1, 2, 3",
+            "language": "en",
+            "segments": [
+                Segment(
+                    id=1,
+                    seek=0,
+                    start=0.0,
+                    end=2.64,
+                    text=" 1, 2, 3",
+                    tokens=[50364, 502, 11, 568, 11, 805, 50496],
+                    avg_logprob=-0.5378808751702309,
+                    compression_ratio=0.4666666666666667,
+                    no_speech_prob=0.17316274344921112,
+                    words=None,
+                    temperature=0.0,
+                )
+            ],
+        }
+        assert actual == expected
+
+    @patch("torch.cuda.is_available", return_value=False)
     def test_pass_parameters(
         self,
         is_available,

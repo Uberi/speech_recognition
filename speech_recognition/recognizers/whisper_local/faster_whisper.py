@@ -60,4 +60,6 @@ def recognize(
     whisper_recognizer = WhisperCompatibleRecognizer(
         TranscribableAdapter(model)
     )
-    return whisper_recognizer.recognize(audio_data, **transcribe_options)
+    return whisper_recognizer.recognize(
+        audio_data, show_dict=show_dict, **transcribe_options
+    )
