@@ -1,21 +1,21 @@
+from __future__ import annotations
+
 import sys
 from collections.abc import Generator
+from typing import TYPE_CHECKING
 from unittest.mock import ANY, MagicMock, patch
 
 import numpy as np
 import pytest
-from faster_whisper.transcribe import (
-    Segment,
-    TranscriptionInfo,
-    TranscriptionOptions,
-    VadOptions,
-)
 
 from speech_recognition import Recognizer
 from speech_recognition.audio import AudioData
 from speech_recognition.recognizers.whisper_local.faster_whisper import (
     recognize,
 )
+
+if TYPE_CHECKING:
+    from faster_whisper.transcribe import Segment, TranscriptionInfo
 
 
 @pytest.fixture
@@ -27,6 +27,8 @@ def audio_data() -> AudioData:
 
 @pytest.fixture
 def segment() -> Segment:
+    from faster_whisper.transcribe import Segment
+
     mocked_segment = MagicMock(spec=Segment(*[None] * 11))
     mocked_segment.text = ""
     return mocked_segment
@@ -34,6 +36,8 @@ def segment() -> Segment:
 
 @pytest.fixture
 def transcription_info() -> TranscriptionInfo:
+    from faster_whisper.transcribe import TranscriptionInfo
+
     return MagicMock(spec=TranscriptionInfo(*[None] * 7))
 
 
@@ -56,6 +60,13 @@ class TestTranscribe:
     def test_default_parameters(
         self, is_available, WhisperModel, audio_data, soundfile_read
     ):
+        from faster_whisper.transcribe import (
+            Segment,
+            TranscriptionInfo,
+            TranscriptionOptions,
+            VadOptions,
+        )
+
         sf_read, audio_array = soundfile_read
 
         def segments():
@@ -126,6 +137,13 @@ class TestTranscribe:
     def test_show_dict(
         self, is_available, WhisperModel, audio_data, soundfile_read
     ):
+        from faster_whisper.transcribe import (
+            Segment,
+            TranscriptionInfo,
+            TranscriptionOptions,
+            VadOptions,
+        )
+
         sf_read, audio_array = soundfile_read
 
         def segments():
