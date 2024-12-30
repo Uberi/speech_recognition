@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Literal, TypedDict
+from typing import TYPE_CHECKING, Literal, TypedDict
 
 from speech_recognition.audio import AudioData
 from speech_recognition.recognizers.whisper_local.base import (
