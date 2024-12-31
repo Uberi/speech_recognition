@@ -35,11 +35,11 @@ except sr.RequestError as e:
 
 
 # recognize preferred phrases using Google Cloud Speech
-GOOGLE_CLOUD_SPEECH_CREDENTIALS = r"""INSERT THE CONTENTS OF THE GOOGLE CLOUD SPEECH JSON CREDENTIALS FILE HERE"""
+# Before run, create local authentication credentials (``gcloud auth application-default login``)
 try:
     print("Google Cloud Speech recognition for \"numero\" with different sets of preferred phrases:")
-    print(r.recognize_google_cloud(audio_fr, credentials_json=GOOGLE_CLOUD_SPEECH_CREDENTIALS, preferred_phrases=["noomarow"]))
-    print(r.recognize_google_cloud(audio_fr, credentials_json=GOOGLE_CLOUD_SPEECH_CREDENTIALS, preferred_phrases=["newmarrow"]))
+    print(r.recognize_google_cloud(audio_fr, preferred_phrases=["noomarow"]))
+    print(r.recognize_google_cloud(audio_fr, preferred_phrases=["newmarrow"]))
 except sr.UnknownValueError:
     print("Google Cloud Speech could not understand audio")
 except sr.RequestError as e:

@@ -227,20 +227,10 @@ Returns the most likely transcription if ``show_all`` is false (the default). Ot
 
 Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
 
-``recognizer_instance.recognize_google_cloud(audio_data: AudioData, credentials_json: Union[str, None] = None, language: str = "en-US", preferred_phrases: Union[Iterable[str], None] = None, show_all: bool = False) -> Union[str, Dict[str, Any]]``
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+``recognizer_instance.recognize_google_cloud(audio_data: AudioData, credentials_json_path: Union[str, None] = None, **kwargs) -> Union[str, Dict[str, Any]]``
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Google Cloud Speech API.
-
-This function requires a Google Cloud Platform account; see the `Google Cloud Speech API Quickstart <https://cloud.google.com/speech/docs/getting-started>`__ for details and instructions. Basically, create a project, enable billing for the project, enable the Google Cloud Speech API for the project, and set up Service Account Key credentials for the project. The result is a JSON file containing the API credentials. The text content of this JSON file is specified by ``credentials_json``. If not specified, the library will try to automatically `find the default API credentials JSON file <https://developers.google.com/identity/protocols/application-default-credentials>`__.
-
-The recognition language is determined by ``language``, which is a BCP-47 language tag like ``"en-US"`` (US English). A list of supported language tags can be found in the `Google Cloud Speech API documentation <https://cloud.google.com/speech/docs/languages>`__.
-
-If ``preferred_phrases`` is an iterable of phrase strings, those given phrases will be more likely to be recognized over similar-sounding alternatives. This is useful for things like keyword/command recognition or adding new phrases that aren't in Google's vocabulary. Note that the API imposes certain `restrictions on the list of phrase strings <https://cloud.google.com/speech/limits#content>`__.
-
-Returns the most likely transcription if ``show_all`` is False (the default). Otherwise, returns the raw API response as a JSON dictionary.
-
-Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the credentials aren't valid, or if there is no Internet connection.
+.. autofunction:: speech_recognition.recognizers.google_cloud.recognize
 
 ``recognizer_instance.recognize_wit(audio_data: AudioData, key: str, show_all: bool = False) -> Union[str, Dict[str, Any]]``
 ----------------------------------------------------------------------------------------------------------------------------
@@ -300,29 +290,25 @@ Returns the most likely transcription if ``show_all`` is false (the default). Ot
 
 Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
 
-``recognizer_instance.recognize_whisper(audio_data: AudioData, model: str="base", show_dict: bool=False, load_options: Dict[Any, Any]=None, language:Optional[str]=None, translate:bool=False, **transcribe_options):``
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using Whisper.
+``recognizer_instance.recognize_whisper(audio_data: AudioData, model: str="base", show_dict: bool=False, load_options=None, **transcribe_options)``
+---------------------------------------------------------------------------------------------------------------------------------------------------
 
-The recognition language is determined by ``language``, an uncapitalized full language name like "english" or "chinese". See the full language list at https://github.com/openai/whisper/blob/main/whisper/tokenizer.py
+.. autofunction:: speech_recognition.recognizers.whisper_local.whisper.recognize
 
-model can be any of tiny, base, small, medium, large, tiny.en, base.en, small.en, medium.en. See https://github.com/openai/whisper for more details.
+``recognizer_instance.recognize_faster_whisper(audio_data: AudioData, model: str="base", show_dict: bool=False, **transcribe_options)``
+---------------------------------------------------------------------------------------------------------------------------------------
 
-If show_dict is true, returns the full dict response from Whisper, including the detected language. Otherwise returns only the transcription.
-
-You can translate the result to english with Whisper by passing translate=True
-
-Other values are passed directly to whisper. See https://github.com/openai/whisper/blob/main/whisper/transcribe.py for all options
+.. autofunction:: speech_recognition.recognizers.whisper_local.faster_whisper.recognize
 
 ``recognizer_instance.recognize_openai(audio_data: AudioData, model = "whisper-1", **kwargs)``
 ----------------------------------------------------------------------------------------------
 
-.. autofunction:: speech_recognition.recognizers.openai.recognize
+.. autofunction:: speech_recognition.recognizers.whisper_api.openai.recognize
 
 ``recognizer_instance.recognize_groq(audio_data: AudioData, model = "whisper-large-v3-turbo", **kwargs)``
 ---------------------------------------------------------------------------------------------------------
 
-.. autofunction:: speech_recognition.recognizers.groq.recognize
+.. autofunction:: speech_recognition.recognizers.whisper_api.groq.recognize
 
 ``AudioSource``
 ---------------

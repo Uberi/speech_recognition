@@ -5,7 +5,7 @@ import pytest
 import respx
 
 from speech_recognition import AudioData, Recognizer
-from speech_recognition.recognizers import openai
+from speech_recognition.recognizers.whisper_api import openai
 
 
 @pytest.fixture
