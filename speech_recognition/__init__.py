@@ -1401,7 +1401,6 @@ else:
     Recognizer.recognize_whisper = whisper.recognize
     Recognizer.recognize_faster_whisper = faster_whisper.recognize
     Recognizer.recognize_openai = openai.recognize
-    Recognizer.recognize_whisper_api = openai.recognize  # Deprecated
     Recognizer.recognize_groq = groq.recognize
 
 
