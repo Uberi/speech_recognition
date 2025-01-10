@@ -56,6 +56,16 @@ except sr.UnknownValueError:
 except sr.RequestError as e:
     print("Could not request results from Wit.ai service; {0}".format(e))
 
+# recognize speech using the new Wit.ai <https://wit.ai/docs/http/20240304/#post__dictation_link>
+WIT_AI_KEY_NEW = "INSERT WIT.AI API KEY HERE"  # Wit.ai keys are 32-character uppercase alphanumeric strings
+try:
+    print("Wit.ai recognition results:")
+    pprint(r.recognize_wit_new(audio, key=WIT_AI_KEY_NEW, show_all=True, api="dictation"))  # or api="speech"  
+except sr.UnknownValueError:
+    print("Wit.ai could not understand audio")
+except sr.RequestError as e:
+    print("Could not request results from Wit.ai service; {0}".format(e))
+
 # recognize speech using Microsoft Bing Voice Recognition
 BING_KEY = "INSERT BING API KEY HERE"  # Microsoft Bing Voice Recognition API keys 32-character lowercase hexadecimal strings
 try:
