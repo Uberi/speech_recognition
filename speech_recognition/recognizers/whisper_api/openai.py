@@ -6,7 +6,7 @@ from typing_extensions import Unpack
 
 from speech_recognition.audio import AudioData
 from speech_recognition.exceptions import SetupError
-from speech_recognition.recognizers.whisper_api import (
+from speech_recognition.recognizers.whisper_api.base import (
     OpenAICompatibleRecognizer,
 )
 
@@ -35,8 +35,7 @@ def recognize(
     model: WhisperModel = "whisper-1",
     **kwargs: Unpack[OpenAIOptionalParameters],
 ) -> str:
-    """
-    Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the OpenAI Whisper API.
+    """Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the OpenAI Whisper API.
 
     This function requires an OpenAI account; visit https://platform.openai.com/signup, then generate API Key in `User settings <https://platform.openai.com/account/api-keys>`__.
 
@@ -51,5 +50,5 @@ def recognize(
             "missing openai module: ensure that openai is set up correctly."
         )
 
-    recognizer = OpenAICompatibleRecognizer(openai.OpenAI())
-    return recognizer.recognize(audio_data, model, **kwargs)
+    openai_recognizer = OpenAICompatibleRecognizer(openai.OpenAI())
+    return openai_recognizer.recognize(audio_data, model, **kwargs)

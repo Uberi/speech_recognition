@@ -97,6 +97,7 @@ To use all of the functionality of the library, you should have:
 * **FLAC encoder** (required only if the system is not x86-based Windows/Linux/OS X)
 * **Vosk** (required only if you need to use Vosk API speech recognition ``recognizer_instance.recognize_vosk``)
 * **Whisper** (required only if you need to use Whisper ``recognizer_instance.recognize_whisper``)
+* **Faster Whisper** (required only if you need to use Faster Whisper ``recognizer_instance.recognize_faster_whisper``)
 * **openai** (required only if you need to use OpenAI Whisper API speech recognition ``recognizer_instance.recognize_openai``)
 * **groq** (required only if you need to use Groq Whisper API speech recognition ``recognizer_instance.recognize_groq``)
 
@@ -151,14 +152,20 @@ You also have to install Vosk Models:
 
 `Here <https://alphacephei.com/vosk/models>`__ are models avaiable for download. You have to place them in models folder of your project, like "your-project-folder/models/your-vosk-model"
 
-Google Cloud Speech Library for Python (for Google Cloud Speech API users)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Google Cloud Speech Library for Python (for Google Cloud Speech-to-Text API users)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-`Google Cloud Speech library for Python <https://cloud.google.com/speech-to-text/docs/quickstart>`__ is required if and only if you want to use the Google Cloud Speech API (``recognizer_instance.recognize_google_cloud``).
+The library `google-cloud-speech <https://pypi.org/project/google-cloud-speech/>`__ is **required if and only if you want to use Google Cloud Speech-to-Text API** (``recognizer_instance.recognize_google_cloud``).
+You can install it with ``python3 -m pip install SpeechRecognition[google-cloud]``.
+(ref: `official installation instructions <https://cloud.google.com/speech-to-text/docs/transcribe-client-libraries#client-libraries-install-python>`__)
 
-If not installed, everything in the library will still work, except calling ``recognizer_instance.recognize_google_cloud`` will raise an ``RequestError``.
+**Prerequisite**: Create local authentication credentials for your Google account
 
-According to the `official installation instructions <https://cloud.google.com/speech-to-text/docs/quickstart>`__, the recommended way to install this is using `Pip <https://pip.readthedocs.org/>`__: execute ``pip install google-cloud-speech`` (replace ``pip`` with ``pip3`` if using Python 3).
+* Digest: `Before you begin (Transcribe speech to text by using client libraries) <https://cloud.google.com/speech-to-text/docs/transcribe-client-libraries#before-you-begin>`__
+* `Set up Speech-to-Text <https://cloud.google.com/speech-to-text/docs/before-you-begin>`__
+* `User credentials (Set up ADC for a local development environment) <https://cloud.google.com/docs/authentication/set-up-adc-local-dev-environment#local-user-cred>`__
+
+Currently only `V1 <https://cloud.google.com/speech-to-text/docs/quickstart>`__ is supported. (`V2 <https://cloud.google.com/speech-to-text/v2/docs/quickstart>`__ is not supported)
 
 FLAC (for some systems)
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -172,6 +179,13 @@ Whisper (for Whisper users)
 Whisper is **required if and only if you want to use whisper** (``recognizer_instance.recognize_whisper``).
 
 You can install it with ``python3 -m pip install SpeechRecognition[whisper-local]``.
+
+Faster Whisper (for Faster Whisper users)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The library `faster-whisper <https://pypi.org/project/faster-whisper/>`__ is **required if and only if you want to use Faster Whisper** (``recognizer_instance.recognize_faster_whisper``).
+
+You can install it with ``python3 -m pip install SpeechRecognition[faster-whisper]``.
 
 OpenAI Whisper API (for OpenAI Whisper API users) 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -296,6 +310,8 @@ Releases are done by running ``make-release.sh VERSION_GOES_HERE`` to build the 
 Testing
 ~~~~~~~
 
+Prerequisite: `Install pipx <https://pipx.pypa.io/stable/installation/>`__.
+
 To run all the tests:
 
 .. code:: bash
@@ -306,13 +322,13 @@ To run static analysis:
 
 .. code:: bash
 
-    python -m flake8 --ignore=E501,E701,W503 speech_recognition tests examples setup.py
+    make lint
 
 To ensure RST is well-formed:
 
 .. code:: bash
 
-    python -m rstcheck README.rst reference/*.rst
+    make rstcheck
 
 Testing is also done automatically by GitHub Actions, upon every push.
 
@@ -384,7 +400,7 @@ Also check out the `Python Baidu Yuyin API <https://github.com/DelightRun/PyBaid
 License
 -------
 
-Copyright 2014-2017 `Anthony Zhang (Uberi) <http://anthonyz.ca/>`__. The source code for this library is available online at `GitHub <https://github.com/Uberi/speech_recognition>`__.
+Copyright 2014- `Anthony Zhang (Uberi) <http://anthonyz.ca/>`__. The source code for this library is available online at `GitHub <https://github.com/Uberi/speech_recognition>`__.
 
 SpeechRecognition is made available under the 3-clause BSD license. See ``LICENSE.txt`` in the project's `root directory <https://github.com/Uberi/speech_recognition>`__ for more information.
 
