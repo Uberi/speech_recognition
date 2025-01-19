@@ -16,13 +16,13 @@ jobs:
         include:
           - os: ubuntu-22.04
             python-version: "3.9"
-          - os: ubuntu-22.04-arm
+          - os: ubuntu-22.04
             python-version: "3.10"
           - os: ubuntu-22.04
             python-version: "3.11"
           - os: ubuntu-22.04
             python-version: "3.12"
-          - os: ubuntu-22.04-arm
+          - os: ubuntu-22.04
             python-version: "3.13"
           - os: macos-13  # runner.arch is X64 (Intel)
             python-version: "3.13"
@@ -62,7 +62,7 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           brew install ffmpeg portaudio
-          python -m pip install --no-build-isolation google .[dev,audio,openai,groq]
+          python -m pip install --no-build-isolation google-cloud-speech .[dev,audio,openai,groq]
       - name: Install Python dependencies (Windows)
         if: runner.os == 'Windows'
         run: |
