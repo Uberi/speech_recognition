@@ -6,7 +6,7 @@ from typing_extensions import Unpack
 
 from speech_recognition.audio import AudioData
 from speech_recognition.exceptions import SetupError
-from speech_recognition.recognizers.whisper_api import (
+from speech_recognition.recognizers.whisper_api.base import (
     OpenAICompatibleRecognizer,
 )
 
@@ -35,8 +35,7 @@ def recognize(
     model: GroqModel = "whisper-large-v3-turbo",
     **kwargs: Unpack[GroqOptionalParameters],
 ) -> str:
-    """
-    Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Groq Whisper API.
+    """Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Groq Whisper API.
 
     This function requires login to Groq; visit https://console.groq.com/login, then generate API Key in `API Keys <https://console.groq.com/keys>`__ menu.
 
@@ -51,5 +50,5 @@ def recognize(
             "missing groq module: ensure that groq is set up correctly."
         )
 
-    recognizer = OpenAICompatibleRecognizer(groq.Groq())
-    return recognizer.recognize(audio_data, model, **kwargs)
+    groq_recognizer = OpenAICompatibleRecognizer(groq.Groq())
+    return groq_recognizer.recognize(audio_data, model, **kwargs)

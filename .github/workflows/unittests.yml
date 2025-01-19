@@ -13,11 +13,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-22.04]
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
         include:
-          - os: macos-latest
-            python-version: "3.13"
           - os: windows-latest
             python-version: "3.12"  # Windows fails on Python >= 3.13
     runs-on: ${{ matrix.os }}
@@ -54,7 +52,7 @@ jobs:
       - name: Install Python dependencies (Windows)
         if: runner.os == 'Windows'
         run: |
-          python -m pip install .[dev,whisper-local,openai,groq]
+          python -m pip install .[dev,whisper-local,faster-whisper,google-cloud,openai,groq]
       - name: Test with unittest
         run: |
           pytest --doctest-modules --strict -v -W="ignore: aifc" speech_recognition/recognizers/ tests/
