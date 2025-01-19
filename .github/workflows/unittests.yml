@@ -11,7 +11,7 @@ on:
 jobs:
   build:
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-22.04
@@ -62,7 +62,7 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           brew install ffmpeg portaudio
-          python -m pip install --no-build-isolation .[dev,audio,openai,groq]
+          python -m pip install --no-build-isolation google .[dev,audio,openai,groq]
       - name: Install Python dependencies (Windows)
         if: runner.os == 'Windows'
         run: |
