@@ -35,7 +35,7 @@ from .exceptions import (
 )
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "3.14.0"
+__version__ = "3.14.1"
 __license__ = "BSD"
 
 
