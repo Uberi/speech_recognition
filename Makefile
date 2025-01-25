@@ -10,3 +10,8 @@ rstcheck:
 distribute:
 	@pipx run build
 	@pipx run twine check dist/*
+
+publish:
+# Set PYPI_API_TOKEN before `make publish`
+	@test -n "${PYPI_API_TOKEN}"
+	@pipx run twine upload -u __token__ -p ${PYPI_API_TOKEN} dist/*
