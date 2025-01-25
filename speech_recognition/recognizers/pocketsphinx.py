@@ -41,16 +41,10 @@ def recognize(
     # TODO Move this validation into KeywordEntry initialization
     assert keyword_entries is None or all(isinstance(keyword, (type(""), type(u""))) and 0 <= sensitivity <= 1 for keyword, sensitivity in keyword_entries), "``keyword_entries`` must be ``None`` or a list of pairs of strings and numbers between 0 and 1"
 
-    # import the PocketSphinx speech recognition module
     try:
         from pocketsphinx import FsgModel, Jsgf, pocketsphinx
-
     except ImportError:
         raise RequestError("missing PocketSphinx module: ensure that PocketSphinx is set up correctly.")
-    except ValueError:
-        raise RequestError("bad PocketSphinx installation; try reinstalling PocketSphinx version 0.0.9 or better.")
-    if not hasattr(pocketsphinx, "Decoder") or not hasattr(pocketsphinx.Decoder, "default_config"):
-        raise RequestError("outdated PocketSphinx installation; ensure you have PocketSphinx version 0.0.9 or better.")
 
     if isinstance(language, str):  # directory containing language data
         language_directory = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "pocketsphinx-data", language)
