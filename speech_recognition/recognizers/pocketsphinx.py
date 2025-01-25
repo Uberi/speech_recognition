@@ -1,11 +1,30 @@
+from __future__ import annotations
+
 import os
+from collections.abc import Sequence
 
 from speech_recognition import PortableNamedTemporaryFile
 from speech_recognition.audio import AudioData
 from speech_recognition.exceptions import RequestError, UnknownValueError
 
+AcousticParametersDirectoryPath = str
+LanguageModelFilePath = str
+PhonemeDictionaryFilePath = str
+SphinxDataFilePaths = tuple[AcousticParametersDirectoryPath, LanguageModelFilePath, PhonemeDictionaryFilePath]
 
-def recognize(recognizer, audio_data, language="en-US", keyword_entries=None, grammar=None, show_all=False):
+Keyword = str
+Sensitivity = float
+KeywordEntry = tuple[Keyword, Sensitivity]
+
+
+def recognize(
+    recognizer,
+    audio_data: AudioData,
+    language: str | SphinxDataFilePaths = "en-US",
+    keyword_entries: Sequence[KeywordEntry] | None = None,
+    grammar: str | None = None,
+    show_all: bool = False,
+):
     """
     Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using CMU Sphinx.
 
@@ -19,8 +38,7 @@ def recognize(recognizer, audio_data, language="en-US", keyword_entries=None, gr
 
     Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if there are any issues with the Sphinx installation.
     """
-    assert isinstance(audio_data, AudioData), "``audio_data`` must be audio data"
-    assert isinstance(language, str) or (isinstance(language, tuple) and len(language) == 3), "``language`` must be a string or 3-tuple of Sphinx data file paths of the form ``(acoustic_parameters, language_model, phoneme_dictionary)``"
+    # TODO Move this validation into KeywordEntry initialization
     assert keyword_entries is None or all(isinstance(keyword, (type(""), type(u""))) and 0 <= sensitivity <= 1 for keyword, sensitivity in keyword_entries), "``keyword_entries`` must be ``None`` or a list of pairs of strings and numbers between 0 and 1"
 
     # import the PocketSphinx speech recognition module
