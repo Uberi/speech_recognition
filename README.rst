@@ -129,12 +129,12 @@ The installation instructions on the PyAudio website are quite good - for conven
 
 PyAudio `wheel packages <https://pypi.python.org/pypi/wheel>`__ for common 64-bit Python versions on Windows and Linux are included for convenience, under the ``third-party/`` `directory <https://github.com/Uberi/speech_recognition/tree/master/third-party>`__ in the repository root. To install, simply run ``pip install wheel`` followed by ``pip install ./third-party/WHEEL_FILENAME`` (replace ``pip`` with ``pip3`` if using Python 3) in the repository `root directory <https://github.com/Uberi/speech_recognition>`__.
 
-PocketSphinx-Python (for Sphinx users)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+PocketSphinx (for Sphinx users)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-`PocketSphinx-Python <https://github.com/bambocher/pocketsphinx-python>`__ is **required if and only if you want to use the Sphinx recognizer** (``recognizer_instance.recognize_sphinx``).
+`PocketSphinx <https://github.com/cmusphinx/pocketsphinx>`__ is **required if and only if you want to use the Sphinx recognizer** (``recognizer_instance.recognize_sphinx``).
 
-PocketSphinx-Python `wheel packages <https://pypi.python.org/pypi/wheel>`__ for 64-bit Python 3.4, and 3.5 on Windows are included for convenience, under the ``third-party/`` `directory <https://github.com/Uberi/speech_recognition/tree/master/third-party>`__. To install, simply run ``pip install wheel`` followed by ``pip install ./third-party/WHEEL_FILENAME`` (replace ``pip`` with ``pip3`` if using Python 3) in the SpeechRecognition folder.
+`Pocketsphinx-Python <https://github.com/bambocher/pocketsphinx-python>`__ `wheel packages <https://pypi.python.org/pypi/wheel>`__ for 64-bit Python 3.4, and 3.5 on Windows are included for convenience, under the ``third-party/`` `directory <https://github.com/Uberi/speech_recognition/tree/master/third-party>`__. To install, simply run ``pip install wheel`` followed by ``pip install ./third-party/WHEEL_FILENAME`` (replace ``pip`` with ``pip3`` if using Python 3) in the SpeechRecognition folder.
 
 On Linux and other POSIX systems (such as OS X), run ``pip install SpeechRecognition[pocketsphinx]``. Follow the instructions under "Building PocketSphinx-Python from source" in `Notes on using PocketSphinx <https://github.com/Uberi/speech_recognition/blob/master/reference/pocketsphinx.rst>`__ for installation instructions.
 
