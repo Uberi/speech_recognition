@@ -1,3 +1,8 @@
+---
+name: Issue
+about: Use this template for bug reports (and so on).
+---
+
 Steps to reproduce
 ------------------
 
