@@ -31,8 +31,6 @@ Once installed, you can simply specify the language using the ``language`` param
 Building PocketSphinx-Python from source
 ----------------------------------------
 
-For Windows, it is recommended to install the precompiled Wheel packages in the ``third-party`` directory. These are provided because building Pocketsphinx on Windows requires a lot of work, and can take hours to download and install all the surrounding software.
-
 For Linux and other POSIX systems (like OS X), you'll want to build from source. It should take less than two minutes on a fast machine.
 
 * On any Debian-derived Linux distributions (like Ubuntu and Mint):
