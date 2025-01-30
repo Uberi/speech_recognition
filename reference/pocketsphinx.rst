@@ -45,12 +45,12 @@ For Linux and other POSIX systems (like OS X), you'll want to build from source.
     2. Install PocketSphinx-Python using Pip: ``pip install pocketsphinx``.
 * On Windows:
     1. Install `Python <https://www.python.org/downloads/>`__, `Pip <https://pip.pypa.io/en/stable/installing/>`__, `SWIG <http://www.swig.org/download.html>`__, and `Git <https://git-scm.com/downloads>`__, preferably using a package manager.
-    3. Add the folders containing the Python, SWIG, and Git binaries to your ``PATH`` environment variable.
+    2. Add the folders containing the Python, SWIG, and Git binaries to your ``PATH`` environment variable.
         * My ``PATH`` environment variable looks something like: ``C:\Users\Anthony\Desktop\swigwin-3.0.8;C:\Program Files\Git\cmd;(A BUNCH OF OTHER PATHS)``.
-    4. Reboot to apply changes.
-    5. Download the full PocketSphinx-Python source code by running ``git clone --recursive --depth 1 https://github.com/cmusphinx/pocketsphinx-python`` (downloading the ZIP archive from GitHub will not work).
-    6. Run ``python setup.py install`` in the PocketSphinx-Python source code folder to compile and install PocketSphinx.
-    7. Side note: when I build the precompiled Wheel packages, I skip steps 5 and 6 and do the following instead:
+    3. Reboot to apply changes.
+    4. Download the full PocketSphinx-Python source code by running ``git clone --recursive --depth 1 https://github.com/cmusphinx/pocketsphinx-python`` (downloading the ZIP archive from GitHub will not work).
+    5. Run ``python setup.py install`` in the PocketSphinx-Python source code folder to compile and install PocketSphinx.
+    6. Side note: when I build the precompiled Wheel packages, I skip steps 5 and 6 and do the following instead:
         * For Python 3.4: ``C:\Python34\python.exe setup.py bdist_wheel``.
         * For Python 3.5: ``C:\Users\Anthony\AppData\Local\Programs\Python\Python35\python.exe setup.py bdist_wheel``.
         * The resulting packages are located in the ``dist`` folder of the PocketSphinx-Python project directory.
