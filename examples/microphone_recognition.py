@@ -99,6 +99,6 @@ except sr.RequestError as e:
 OPENAI_API_KEY = "INSERT OPENAI API KEY HERE"
 os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
 try:
-    print(f"OpenAI Whisper API thinks you said {r.recognize_openai(audio)}")
+    print(f"OpenAI Whisper API thinks you said {r.recognize_whisper_api(audio)}")
 except sr.RequestError as e:
     print(f"Could not request results from OpenAI Whisper API; {e}")
