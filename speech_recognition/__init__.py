@@ -316,11 +316,11 @@ class AudioFile(AudioSource):
 
 
 class Recognizer(AudioSource):
-    def __init__(self):
+    def __init__(self, energy_threshold=300):
         """
         Creates a new ``Recognizer`` instance, which represents a collection of speech recognition functionality.
         """
-        self.energy_threshold = 300  # minimum audio energy to consider for recording
+        self.energy_threshold = energy_threshold  # minimum audio energy to consider for recording
         self.dynamic_energy_threshold = True
         self.dynamic_energy_adjustment_damping = 0.15
         self.dynamic_energy_ratio = 1.5
