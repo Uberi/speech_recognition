@@ -141,6 +141,16 @@ class TestAudioFile(unittest.TestCase):
         else:
             self.assertSimilar(audio.get_raw_data()[:32], b"\x00\x00\x00\x00\x00\x00\xfe\xff\x00\x00\x02\x00\x00\x00\xfe\xff\x00\x00\x00\x00\x00\xff\x01\x00\x00\x02\xfc\xff\x00\xfe\x01\x00")
 
+    def test_incompatible_audio_file_error(self):
+        self.AUDIO_FILE_EN_MP3 = path.join(path.dirname(path.realpath(__file__)), "english.mp3")
+        r = sr.Recognizer()
+        with self.assertRaises(ValueError) as context:
+            with sr.AudioFile(self.AUDIO_FILE_EN_MP3) as source:r.record(source)
+
+        self.assertEqual(
+            str(context.exception),
+            "Audio file could not be read as PCM WAV, AIFF/AIFF-C, or Native FLAC; check if file is corrupted or in another format"
+        )
 
 if __name__ == "__main__":
     unittest.main()
