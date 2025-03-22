@@ -11,7 +11,9 @@ from speech_recognition.recognizers.whisper_api.base import (
 )
 
 # https://platform.openai.com/docs/api-reference/audio/createTranscription#audio-createtranscription-model
-WhisperModel = Literal["whisper-1"]
+WhisperModel = Literal[
+    "whisper-1", "gpt-4o-transcribe", "gpt-4o-mini-transcribe"
+]
 
 
 class OpenAIOptionalParameters:
