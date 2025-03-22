@@ -52,3 +52,24 @@ def recognize(
 
     openai_recognizer = OpenAICompatibleRecognizer(openai.OpenAI())
     return openai_recognizer.recognize(audio_data, model, **kwargs)
+
+
+if __name__ == "__main__":
+    import argparse
+    from typing import get_args
+
+    import speech_recognition as sr
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("audio_file")
+    parser.add_argument(
+        "--model", choices=get_args(WhisperModel), default="whisper-1"
+    )
+    args = parser.parse_args()
+
+    r = sr.Recognizer()
+    with sr.AudioFile(args.audio_file) as source:
+        audio_data = r.listen(source)
+
+    transcription = recognize(None, audio_data, model=args.model)
+    print(transcription)
