@@ -15,8 +15,8 @@ class TestSpecialFeatures(unittest.TestCase):
 
     @unittest.skipIf(sys.platform.startswith("win"), "skip on Windows")
     def test_sphinx_keywords(self):
+        audio = sr.AudioData.from_file(self.AUDIO_FILE_EN)
         r = sr.Recognizer()
-        with sr.AudioFile(self.AUDIO_FILE_EN) as source: audio = r.record(source)
         self.assertEqual(r.recognize_sphinx(audio, keyword_entries=[("one", 1.0), ("two", 1.0), ("three", 1.0)]), "three two one")
         # pocketsphinx < 5 recognizes tree but pocketsphinx >= 5 ignores it (TODO need to research why)
         self.assertEqual(r.recognize_sphinx(audio, keyword_entries=[("wan", 0.95), ("too", 1.0), ("tree", 1.0)]), "too wan")
