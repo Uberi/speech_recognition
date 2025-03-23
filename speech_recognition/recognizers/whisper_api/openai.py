@@ -70,10 +70,7 @@ if __name__ == "__main__":
     parser.add_argument("-l", "--language")
     args = parser.parse_args()
 
-    r = sr.Recognizer()
-    with sr.AudioFile(args.audio_file) as source:
-        audio_data = r.listen(source)
-
+    audio_data = sr.AudioData.from_file(args.audio_file)
     if args.language:
         transcription = recognize(
             None, audio_data, model=args.model, language=args.language
