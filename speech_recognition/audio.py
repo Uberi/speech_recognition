@@ -34,7 +34,8 @@ class AudioData(object):
         self.sample_width = int(sample_width)
 
     @classmethod
-    def from_file(cls, file_path) -> AudioData:
+    def from_file(cls, file_path: str) -> AudioData:
+        """Creates a new ``AudioData`` instance from an audio file."""
         import speech_recognition as sr
 
         r = sr.Recognizer()
