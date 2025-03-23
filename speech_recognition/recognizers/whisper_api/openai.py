@@ -11,7 +11,9 @@ from speech_recognition.recognizers.whisper_api.base import (
 )
 
 # https://platform.openai.com/docs/api-reference/audio/createTranscription#audio-createtranscription-model
-WhisperModel = Literal["whisper-1"]
+WhisperModel = Literal[
+    "whisper-1", "gpt-4o-transcribe", "gpt-4o-mini-transcribe"
+]
 
 
 class OpenAIOptionalParameters:
@@ -52,3 +54,30 @@ def recognize(
 
     openai_recognizer = OpenAICompatibleRecognizer(openai.OpenAI())
     return openai_recognizer.recognize(audio_data, model, **kwargs)
+
+
+if __name__ == "__main__":
+    import argparse
+    from typing import get_args
+
+    import speech_recognition as sr
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("audio_file")
+    parser.add_argument(
+        "--model", choices=get_args(WhisperModel), default="whisper-1"
+    )
+    parser.add_argument("-l", "--language")
+    args = parser.parse_args()
+
+    r = sr.Recognizer()
+    with sr.AudioFile(args.audio_file) as source:
+        audio_data = r.listen(source)
+
+    if args.language:
+        transcription = recognize(
+            None, audio_data, model=args.model, language=args.language
+        )
+    else:
+        transcription = recognize(None, audio_data, model=args.model)
+    print(transcription)
