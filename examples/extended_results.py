@@ -10,11 +10,9 @@ from os import path
 AUDIO_FILE = path.join(path.dirname(path.realpath(__file__)), "english.wav")
 # AUDIO_FILE = path.join(path.dirname(path.realpath(__file__)), "french.aiff")
 # AUDIO_FILE = path.join(path.dirname(path.realpath(__file__)), "chinese.flac")
+audio = sr.AudioData.from_file(AUDIO_FILE)
 
-# use the audio file as the audio source
 r = sr.Recognizer()
-with sr.AudioFile(AUDIO_FILE) as source:
-    audio = r.record(source)  # read the entire audio file
 
 # recognize speech using Sphinx
 try:
