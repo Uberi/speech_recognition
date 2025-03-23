@@ -67,11 +67,17 @@ if __name__ == "__main__":
     parser.add_argument(
         "--model", choices=get_args(WhisperModel), default="whisper-1"
     )
+    parser.add_argument("-l", "--language")
     args = parser.parse_args()
 
     r = sr.Recognizer()
     with sr.AudioFile(args.audio_file) as source:
         audio_data = r.listen(source)
 
-    transcription = recognize(None, audio_data, model=args.model)
+    if args.language:
+        transcription = recognize(
+            None, audio_data, model=args.model, language=args.language
+        )
+    else:
+        transcription = recognize(None, audio_data, model=args.model)
     print(transcription)
