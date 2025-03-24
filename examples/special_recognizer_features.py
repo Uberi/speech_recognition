@@ -5,13 +5,10 @@ import speech_recognition as sr
 from os import path
 AUDIO_FILE_EN = path.join(path.dirname(path.realpath(__file__)), "english.wav")
 AUDIO_FILE_FR = path.join(path.dirname(path.realpath(__file__)), "french.aiff")
+audio_en = sr.AudioData.from_file(AUDIO_FILE_EN)
+audio_fr = sr.AudioData.from_file(AUDIO_FILE_FR)
 
-# use the audio file as the audio source
 r = sr.Recognizer()
-with sr.AudioFile(AUDIO_FILE_EN) as source:
-    audio_en = r.record(source)  # read the entire audio file
-with sr.AudioFile(AUDIO_FILE_FR) as source:
-    audio_fr = r.record(source)  # read the entire audio file
 
 # recognize keywords using Sphinx
 try:

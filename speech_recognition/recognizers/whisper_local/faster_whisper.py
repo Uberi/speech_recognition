@@ -98,9 +98,6 @@ if __name__ == "__main__":
     parser.add_argument("audio_file")
     args = parser.parse_args()
 
-    r = sr.Recognizer()
-    with sr.AudioFile(args.audio_file) as source:
-        audio_data = r.listen(source)
-
+    audio_data = sr.AudioData.from_file(args.audio_file)
     transcription = recognize(None, audio_data)
     print(transcription)

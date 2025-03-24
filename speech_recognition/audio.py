@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import aifc
 import audioop
 import io
@@ -30,6 +32,15 @@ class AudioData(object):
         self.frame_data = frame_data
         self.sample_rate = sample_rate
         self.sample_width = int(sample_width)
+
+    @classmethod
+    def from_file(cls, file_path: str) -> AudioData:
+        """Creates a new ``AudioData`` instance from an audio file."""
+        import speech_recognition as sr
+
+        r = sr.Recognizer()
+        with sr.AudioFile(file_path) as source:
+            return r.record(source)
 
     def get_segment(self, start_ms=None, end_ms=None):
         """
