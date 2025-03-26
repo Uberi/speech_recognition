@@ -19,6 +19,7 @@ import sys
 import tempfile
 import threading
 import time
+from typing import List, Optional
 import uuid
 import wave
 from urllib.error import HTTPError, URLError
@@ -439,7 +440,77 @@ class Recognizer(AudioSource):
 
         return b"".join(frames), elapsed_time
 
-    def listen(self, source, timeout=None, phrase_time_limit=None, snowboy_configuration=None, stream=False):
+    def porcupine_wait_for_hot_word(self, source, 
+        access_key: str,
+        library_path: Optional[str] = None,
+        model_path: Optional[str] = None,
+        keyword_paths: Optional[List[str]] = None,
+        keywords: Optional[List[str]] = None,
+        sensitivities: Optional[List[float]] = None,
+        timeout=None):
+        import pvporcupine
+        import struct
+
+        porcupine = pvporcupine.create(access_key=access_key, 
+                                       library_path=library_path,
+                                       model_path=model_path,
+                                       keyword_paths=keyword_paths,
+                                       keywords=keywords,
+                                       sensitivities=sensitivities
+                                       )
+        try:
+            porcupine_sample_rate = porcupine.sample_rate
+
+            elapsed_time = 0
+            chunk_size = min(source.CHUNK, porcupine.frame_length)
+            seconds_per_buffer = float(chunk_size) / source.SAMPLE_RATE
+            resampling_state = None
+
+            # buffers capable of holding 5 seconds of original audio
+            five_seconds_buffer_count = int(math.ceil(5 / seconds_per_buffer))
+            # buffers capable of holding 0.5 seconds of resampled audio
+            half_second_buffer_count = int(math.ceil(0.5 / seconds_per_buffer))
+            
+            frames = collections.deque(maxlen=five_seconds_buffer_count)
+            resampled_frames = collections.deque(maxlen=half_second_buffer_count)
+
+            bytes_per_sample = 2
+
+            check_interval = 0.05
+            last_check = time.time()
+
+            found = False
+            
+            while not found:
+                elapsed_time += seconds_per_buffer
+                if timeout and elapsed_time > timeout:
+                    raise WaitTimeoutError("listening timed out while waiting for hotword to be said")
+
+                buffer = source.stream.read(chunk_size)
+                if len(buffer) == 0: break  # reached end of the stream
+                frames.append(buffer)
+
+                # resample audio to the required sample rate
+                resampled_buffer, resampling_state = audioop.ratecv(buffer, source.SAMPLE_WIDTH, 1, source.SAMPLE_RATE, porcupine_sample_rate, resampling_state)
+                resampled_frames.append(resampled_buffer)
+                
+                while (sum(len(x) for x in resampled_frames) >= porcupine.frame_length * bytes_per_sample):
+                    buffer = b"".join(resampled_frames)
+                    data = buffer[:porcupine.frame_length * bytes_per_sample]
+                    buffer = buffer[porcupine.frame_length * bytes_per_sample:]
+                    resampled_frames.clear()
+                    resampled_frames.append(buffer)
+                    pcm = struct.unpack("h" * porcupine.frame_length, data)
+                    result = porcupine.process(pcm)
+                    if result >= 0: 
+                        found = True
+                        break
+
+            return b"".join(frames), elapsed_time
+        finally:
+            porcupine.delete()
+
+    def listen(self, source, timeout=None, phrase_time_limit=None, snowboy_configuration=None, porcupine_configuration=None, stream=False):
         """
         Records a single phrase from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance, which it returns.
 
@@ -453,15 +524,17 @@ class Recognizer(AudioSource):
 
         The ``snowboy_configuration`` parameter allows integration with `Snowboy <https://snowboy.kitt.ai/>`__, an offline, high-accuracy, power-efficient hotword recognition engine. When used, this function will pause until Snowboy detects a hotword, after which it will unpause. This parameter should either be ``None`` to turn off Snowboy support, or a tuple of the form ``(SNOWBOY_LOCATION, LIST_OF_HOT_WORD_FILES)``, where ``SNOWBOY_LOCATION`` is the path to the Snowboy root directory, and ``LIST_OF_HOT_WORD_FILES`` is a list of paths to Snowboy hotword configuration files (`*.pmdl` or `*.umdl` format).
 
+        The ``porcupine_configuration`` parameter allows integration with `Porcupine <https://picovoice.ai/platform/porcupine/>`__, an offline, high-accuracy, power-efficient hotword recognition engine. When used, this function will pause until Porcupine detects a hotword, after which it will unpause. This parameter should either be ``None`` to turn off Porcupine support, or a dictionary of the form ``{access_key: str, library_path: Optional[str], model_path: Optional[str], keyword_paths: Optional[List[str]], keywords: Optional[List[str]], sensitivities: Optional[List[float]]}``, see https://picovoice.ai/docs/api/porcupine-python/ for the use of these parameters.
+
         This operation will always complete within ``timeout + phrase_timeout`` seconds if both are numbers, either by returning the audio data, or by raising a ``speech_recognition.WaitTimeoutError`` exception.
         """
-        result = self._listen(source, timeout, phrase_time_limit, snowboy_configuration, stream)
+        result = self._listen(source, timeout, phrase_time_limit, snowboy_configuration, porcupine_configuration, stream)
         if not stream:
             for a in result:
                 return a
         return result
 
-    def _listen(self, source, timeout=None, phrase_time_limit=None, snowboy_configuration=None, stream=False):
+    def _listen(self, source, timeout=None, phrase_time_limit=None, snowboy_configuration=None, porcupine_configuration=None, stream=False):
         assert isinstance(source, AudioSource), "Source must be an audio source"
         assert source.stream is not None, "Audio source must be entered before listening, see documentation for ``AudioSource``; are you using ``source`` outside of a ``with`` statement?"
         assert self.pause_threshold >= self.non_speaking_duration >= 0
@@ -481,7 +554,7 @@ class Recognizer(AudioSource):
         while True:
             frames = collections.deque()
 
-            if snowboy_configuration is None:
+            if snowboy_configuration is None and porcupine_configuration is None:
                 # store audio input until the phrase starts
                 while True:
                     # handle waiting too long for phrase by raising an exception
@@ -504,10 +577,15 @@ class Recognizer(AudioSource):
                         damping = self.dynamic_energy_adjustment_damping ** seconds_per_buffer  # account for different chunk sizes and rates
                         target_energy = energy * self.dynamic_energy_ratio
                         self.energy_threshold = self.energy_threshold * damping + target_energy * (1 - damping)
-            else:
+            elif snowboy_configuration is not None:
                 # read audio input until the hotword is said
                 snowboy_location, snowboy_hot_word_files = snowboy_configuration
                 buffer, delta_time = self.snowboy_wait_for_hot_word(snowboy_location, snowboy_hot_word_files, source, timeout)
+                elapsed_time += delta_time
+                if len(buffer) == 0: break  # reached end of the stream
+                frames.append(buffer)
+            else: # porcupine mode
+                buffer, delta_time = self.porcupine_wait_for_hot_word(source=source, **porcupine_configuration)
                 elapsed_time += delta_time
                 if len(buffer) == 0: break  # reached end of the stream
                 frames.append(buffer)
