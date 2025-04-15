@@ -1253,7 +1253,7 @@ class Recognizer(AudioSource):
 
         if not hasattr(self, 'vosk_model'):
             if not os.path.exists("model"):
-                return "Please download the model from https://github.com/alphacep/vosk-api/blob/master/doc/models.md and unpack as 'model' in the current folder."
+                return "Please download the model from https://alphacephei.com/vosk/models and unpack as 'model' in the current folder."
                 exit(1)
             self.vosk_model = Model("model")
 
