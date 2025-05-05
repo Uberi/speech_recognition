@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import Literal
 
 from typing_extensions import Unpack
@@ -69,7 +70,19 @@ if __name__ == "__main__":
     )
     parser.add_argument("-l", "--language")
     parser.add_argument("-p", "--prompt")
+    parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
+
+    if args.verbose:
+        speech_recognition_logger = logging.getLogger("speech_recognition")
+        speech_recognition_logger.setLevel(logging.DEBUG)
+
+        console_handler = logging.StreamHandler()
+        console_formatter = logging.Formatter(
+            "%(asctime)s | %(levelname)s | %(name)s:%(funcName)s:%(lineno)d - %(message)s"
+        )
+        console_handler.setFormatter(console_formatter)
+        speech_recognition_logger.addHandler(console_handler)
 
     audio_data = sr.AudioData.from_file(args.audio_file)
 
