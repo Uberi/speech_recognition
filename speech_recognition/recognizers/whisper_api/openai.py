@@ -65,7 +65,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("audio_file")
     parser.add_argument(
-        "--model", choices=get_args(WhisperModel), default="whisper-1"
+        "-m", "--model", choices=get_args(WhisperModel), default="whisper-1"
     )
     parser.add_argument("-l", "--language")
     parser.add_argument("-p", "--prompt")
