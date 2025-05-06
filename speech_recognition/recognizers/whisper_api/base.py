@@ -1,6 +1,9 @@
+import logging
 from io import BytesIO
 
 from speech_recognition.audio import AudioData
+
+logger = logging.getLogger(__name__)
 
 
 class OpenAICompatibleRecognizer:
@@ -16,7 +19,10 @@ class OpenAICompatibleRecognizer:
         wav_data = BytesIO(audio_data.get_wav_data())
         wav_data.name = "SpeechRecognition_audio.wav"
 
+        parameters = {"model": model, **kwargs}
+        logger.debug(parameters)
+
         transcript = self.client.audio.transcriptions.create(
-            file=wav_data, model=model, **kwargs
+            file=wav_data, **parameters
         )
         return transcript.text
