@@ -20,6 +20,7 @@ def setup_vosk_model(model_url: str, model_dir: str) -> None:
 
     print(f"Downloading model {model_filename} ...")
     response = requests.get(model_url, stream=True)
+    response.raise_for_status()
     total_size = int(response.headers.get("content-length", 0))
 
     with tempfile.TemporaryDirectory() as temp_dir:
