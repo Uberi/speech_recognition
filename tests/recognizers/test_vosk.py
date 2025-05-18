@@ -1,25 +1,25 @@
 from pathlib import Path
 
+import pytest
+
 from speech_recognition import AudioData, Recognizer
 
 
-def test_recognize_vosk():
+@pytest.fixture
+def audio_data() -> AudioData:
     audio_file = str(Path(__file__).parent.parent / "english.wav")
-    audio_data = AudioData.from_file(audio_file)
-    sut = Recognizer()
-
-    actual = sut.recognize_vosk(audio_data)
-
-    expected = "one two three"
-    assert actual == expected
+    return AudioData.from_file(audio_file)
 
 
-def test_recognize_vosk_verbose():
-    audio_file = str(Path(__file__).parent.parent / "english.wav")
-    audio_data = AudioData.from_file(audio_file)
-    sut = Recognizer()
+def test_recognize_vosk(audio_data):
+    recognizer = Recognizer()
+    actual = recognizer.recognize_vosk(audio_data)
 
-    actual = sut.recognize_vosk(audio_data, verbose=True)
+    assert actual == "one two three"
 
-    expected = {"text": "one two three"}
-    assert actual == expected
+
+def test_recognize_vosk_verbose(audio_data):
+    recognizer = Recognizer()
+    actual = recognizer.recognize_vosk(audio_data, verbose=True)
+
+    assert actual == {"text": "one two three"}
