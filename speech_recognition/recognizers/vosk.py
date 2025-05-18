@@ -2,13 +2,31 @@ from __future__ import annotations
 
 import json
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal, TypedDict, Union, cast, overload
 
 if TYPE_CHECKING:
     from speech_recognition.audio import AudioData
 
 
-def recognize(recognizer, audio_data: AudioData, *, verbose: bool = False):
+class VoskResponse(TypedDict):
+    text: str
+
+
+@overload
+def recognize(
+    recognizer, audio_data: AudioData, *, verbose: Literal[False]
+) -> str: ...
+
+
+@overload
+def recognize(
+    recognizer, audio_data: AudioData, *, verbose: Literal[True]
+) -> VoskResponse: ...
+
+
+def recognize(
+    recognizer, audio_data: AudioData, *, verbose: bool = False
+) -> Union[str, VoskResponse]:
     """
     Perform speech recognition on ``audio_data`` using Vosk.
 
@@ -29,10 +47,10 @@ def recognize(recognizer, audio_data: AudioData, *, verbose: bool = False):
     rec.AcceptWaveform(
         audio_data.get_raw_data(convert_rate=SAMPLE_RATE, convert_width=2)
     )
-    final_recognition = rec.FinalResult()
+    final_recognition: str = rec.FinalResult()
 
-    result = json.loads(final_recognition)
+    result = cast(VoskResponse, json.loads(final_recognition))
     if verbose:
         return result
 
-    return result.get("text", "")
+    return result["text"]
