@@ -363,7 +363,7 @@ class Recognizer(AudioSource):
         frames.close()
         return AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
 
-    def adjust_for_ambient_noise(self, source, duration=1):
+    def adjust_for_ambient_noise(self, source: AudioSource, duration=1):
         """
         Adjusts the energy threshold dynamically using audio from ``source`` (an ``AudioSource`` instance) to account for ambient noise.
 
@@ -439,7 +439,7 @@ class Recognizer(AudioSource):
 
         return b"".join(frames), elapsed_time
 
-    def listen(self, source, timeout=None, phrase_time_limit=None, snowboy_configuration=None, stream=False):
+    def listen(self, source: AudioSource, timeout=None, phrase_time_limit=None, snowboy_configuration=None, stream=False):
         """
         Records a single phrase from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance, which it returns.
 
