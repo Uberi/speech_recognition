@@ -1246,24 +1246,6 @@ class Recognizer(AudioSource):
                 human_string = self.tflabels[node_id]
                 return human_string
 
-    def recognize_vosk(self, audio_data, language='en'):
-        from vosk import KaldiRecognizer, Model
-
-        assert isinstance(audio_data, AudioData), "Data must be audio data"
-
-        if not hasattr(self, 'vosk_model'):
-            if not os.path.exists("model"):
-                return "Please download the model from https://alphacephei.com/vosk/models and unpack as 'model' in the current folder."
-                exit(1)
-            self.vosk_model = Model("model")
-
-        rec = KaldiRecognizer(self.vosk_model, 16000)
-
-        rec.AcceptWaveform(audio_data.get_raw_data(convert_rate=16000, convert_width=2))
-        finalRecognition = rec.FinalResult()
-
-        return finalRecognition
-
 
 class PortableNamedTemporaryFile(object):
     """Limited replacement for ``tempfile.NamedTemporaryFile``, except unlike ``tempfile.NamedTemporaryFile``, the file can be opened again while it's currently open, even on Windows."""
@@ -1297,7 +1279,7 @@ class PortableNamedTemporaryFile(object):
 # At this time, the dependencies are not yet installed, resulting in a ModuleNotFoundError.
 # This is a workaround to resolve this issue
 try:
-    from .recognizers import google, google_cloud, pocketsphinx
+    from .recognizers import google, google_cloud, pocketsphinx, vosk
     from .recognizers.whisper_api import groq, openai
     from .recognizers.whisper_local import faster_whisper, whisper
 except (ModuleNotFoundError, ImportError):
@@ -1310,6 +1292,7 @@ else:
     Recognizer.recognize_openai = openai.recognize
     Recognizer.recognize_groq = groq.recognize
     Recognizer.recognize_sphinx = pocketsphinx.recognize
+    Recognizer.recognize_vosk = vosk.recognize
 
 
 # ===============================
