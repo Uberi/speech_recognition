@@ -14,18 +14,18 @@ class VoskResponse(TypedDict):
 
 @overload
 def recognize(  # noqa: E704
-    recognizer, audio_data: AudioData, *, verbose: Literal[False]
+    _recognizer, audio_data: AudioData, *, verbose: Literal[False]
 ) -> str: ...
 
 
 @overload
 def recognize(  # noqa: E704
-    recognizer, audio_data: AudioData, *, verbose: Literal[True]
+    _recognizer, audio_data: AudioData, *, verbose: Literal[True]
 ) -> VoskResponse: ...
 
 
 def recognize(
-    recognizer, audio_data: AudioData, *, verbose: bool = False
+    _recognizer, audio_data: AudioData, *, verbose: bool = False
 ) -> Union[str, VoskResponse]:
     """
     Perform speech recognition on ``audio_data`` using Vosk.
