@@ -17,7 +17,9 @@ def download_vosk_model(url: str, model_dir: str) -> None:
         total_size = int(response.headers.get("Content-Length", 0))
         with tempfile.TemporaryDirectory() as temp_dir:
             download_path = os.path.join(temp_dir, model_filename)
-            with open(download_path, "wb") as f, tqdm(total=total_size, unit="B", unit_scale=True) as pbar:
+            with open(download_path, "wb") as f, tqdm(
+                total=total_size, unit="B", unit_scale=True
+            ) as pbar:
                 while True:
                     chunk = response.read(8192)
                     if not chunk:
@@ -65,4 +67,3 @@ def main(argv=None) -> None:
 
 if __name__ == "__main__":
     main()
-
