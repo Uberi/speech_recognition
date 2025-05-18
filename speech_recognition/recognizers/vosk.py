@@ -13,13 +13,13 @@ class VoskResponse(TypedDict):
 
 
 @overload
-def recognize(
+def recognize(  # noqa: E704
     recognizer, audio_data: AudioData, *, verbose: Literal[False]
 ) -> str: ...
 
 
 @overload
-def recognize(
+def recognize(  # noqa: E704
     recognizer, audio_data: AudioData, *, verbose: Literal[True]
 ) -> VoskResponse: ...
 
