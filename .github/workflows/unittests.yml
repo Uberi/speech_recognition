@@ -57,7 +57,7 @@ jobs:
         run: |
           python -m pip install .[dev,whisper-local,faster-whisper,google-cloud,openai,groq,vosk]
       - name: Set up vosk model
-        run: pipx run setup_vosk.py
+        run: sprc download vosk
       - name: Test with unittest
         run: |
           pytest --doctest-modules -v speech_recognition/recognizers/ tests/
