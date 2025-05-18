@@ -142,7 +142,7 @@ Vosk (for Vosk users)
 ~~~~~~~~~~~~~~~~~~~~~
 Vosk API is **required if and only if you want to use Vosk recognizer** (``recognizer_instance.recognize_vosk``).
 
-You can install it with ``python3 -m pip install vosk``.
+You can install it with ``python3 -m pip install SpeechRecognition[vosk]``.
 
 You also have to install Vosk Models:
 
