@@ -75,4 +75,7 @@ setup(
         "standard-aifc; python_version>='3.13'",
         "audioop-lts; python_version>='3.13'",
     ],
+    entry_points={
+        "console_scripts": ["sprc=speech_recognition.cli:main"],
+    },
 )
