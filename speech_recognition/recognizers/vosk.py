@@ -41,7 +41,6 @@ def recognize(
 
     # Look for the model in the speech_recognition package directory
     package_model_dir = os.path.join(os.path.dirname(speech_recognition.__file__), "model")
-    
     # Check if model exists in the package directory
     if os.path.exists(package_model_dir):
         model_path = package_model_dir

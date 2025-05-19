@@ -51,7 +51,6 @@ def main(argv=None) -> None:
         "--url",
         default="https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip",
     )
-    
     # Get the default model directory path within the speech_recognition package
     import speech_recognition
     default_model_dir = os.path.join(os.path.dirname(speech_recognition.__file__), "model")
