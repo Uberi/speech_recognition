@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
-import os
+from pathlib import Path
 from typing import TYPE_CHECKING, Literal, TypedDict, Union, cast, overload
+
+from speech_recognition.exceptions import SetupError
 
 if TYPE_CHECKING:
     from speech_recognition.audio import AudioData
@@ -37,21 +39,16 @@ def recognize(
     """
 
     from vosk import KaldiRecognizer, Model
-    import speech_recognition
 
-    # Look for the model in the speech_recognition package directory
-    package_model_dir = os.path.join(os.path.dirname(speech_recognition.__file__), "model")
-    # Check if model exists in the package directory
-    if os.path.exists(package_model_dir):
-        model_path = package_model_dir
-    # Fallback to current directory for backward compatibility
-    elif os.path.exists("model"):
-        model_path = "model"
-    else:
-        return "Please download the model using 'sprc download vosk' command."
+    vosk_model_path = Path(__file__).parent.parent / "models" / "vosk"
+    if not vosk_model_path.exists():
+        raise SetupError(
+            "Vosk model not found. "
+            "Please download the model using `sprc download vosk` command."
+        )
 
     SAMPLE_RATE = 16_000
-    rec = KaldiRecognizer(Model(model_path), SAMPLE_RATE)
+    rec = KaldiRecognizer(Model(str(vosk_model_path)), SAMPLE_RATE)
 
     rec.AcceptWaveform(
         audio_data.get_raw_data(convert_rate=SAMPLE_RATE, convert_width=2)

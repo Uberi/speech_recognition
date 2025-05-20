@@ -3,6 +3,7 @@ import os
 import shutil
 import tempfile
 import zipfile
+from pathlib import Path
 from urllib.request import urlopen
 
 from tqdm import tqdm
@@ -51,13 +52,11 @@ def main(argv=None) -> None:
         "--url",
         default="https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip",
     )
-    # Get the default model directory path within the speech_recognition package
-    import speech_recognition
-    default_model_dir = os.path.join(os.path.dirname(speech_recognition.__file__), "model")
-    vosk_parser.add_argument("--dir", default=default_model_dir)
 
     def _download_vosk(args):
-        download_vosk_model(args.url, args.dir)
+        download_vosk_model(
+            args.url, str(Path(__file__).parent / "models" / "vosk")
+        )
 
     vosk_parser.set_defaults(func=_download_vosk)
 
