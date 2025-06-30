@@ -581,14 +581,20 @@ class Recognizer(AudioSource):
         running = [True]
 
         def threaded_listen():
-            with source as s:
-                while running[0]:
-                    try:  # listen for 1 second, then check again if the stop function has been called
-                        audio = self.listen(s, 1, phrase_time_limit)
-                    except WaitTimeoutError:  # listening timed out, just try again
-                        pass
-                    else:
-                        if running[0]: callback(self, audio)
+            while running[0]:
+                try:
+                    with source as s:
+                        while running[0]:
+                            try:  # listen for 1 second, then check again if the stop function has been called
+                                audio = self.listen(s, 1, phrase_time_limit)
+                            except WaitTimeoutError:  # listening timed out, just try again
+                                pass
+                            except (OSError, AttributeError):
+                                break
+                            else:
+                                if running[0]: callback(self, audio)
+                except OSError as Error:
+                    time.sleep(5)
 
         def stopper(wait_for_stop=True):
             running[0] = False
