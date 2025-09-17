@@ -81,6 +81,58 @@ def test_transcribe_with_specified_credentials(SpeechClient):
 
 
 @patch("google.cloud.speech.SpeechClient")
+def test_transcribe_with_specified_credentials_json(SpeechClient):
+    client = SpeechClient.from_service_account_info.return_value
+    client.recognize.return_value = RecognizeResponse(
+        results=[
+            SpeechRecognitionResult(
+                alternatives=[
+                    SpeechRecognitionAlternative(
+                        transcript="transcript", confidence=0.9
+                    )
+                ]
+            )
+        ]
+    )
+
+    audio_data = MagicMock(spec=AudioData)
+    audio_data.sample_rate = 16_000
+    audio_data.get_flac_data.return_value = b"flac_data"
+
+    _ = recognize(
+        MagicMock(spec=Recognizer),
+        audio_data,
+        credentials_json={
+            "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "client_email": "",
+            "client_id": "",
+            "client_x509_cert_url": "",
+            "private_key": "",
+            "private_key_id": "",
+            "project_id": "",
+            "token_uri": "https://oauth2.googleapis.com/token",
+            "type": "service_account"
+        },
+    )
+
+    SpeechClient.from_service_account_info.assert_called_once_with(
+        {
+            "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "client_email": "",
+            "client_id": "",
+            "client_x509_cert_url": "",
+            "private_key": "",
+            "private_key_id": "",
+            "project_id": "",
+            "token_uri": "https://oauth2.googleapis.com/token",
+            "type": "service_account"
+        }
+    )
+
+
+@patch("google.cloud.speech.SpeechClient")
 def test_transcribe_show_all(SpeechClient):
     client = SpeechClient.return_value
     client.recognize.return_value = RecognizeResponse(
