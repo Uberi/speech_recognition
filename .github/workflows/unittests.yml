@@ -60,4 +60,4 @@ jobs:
         run: sprc download vosk
       - name: Test with unittest
         run: |
-          pytest --doctest-modules -v speech_recognition/recognizers/ tests/
+          pytest --doctest-modules -s -v speech_recognition/recognizers/ tests/
