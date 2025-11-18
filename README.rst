@@ -23,6 +23,14 @@ SpeechRecognition
 
 Library for performing speech recognition, with support for several engines and APIs, online and offline.
 
+Recall.ai - Meeting Transcription API
+-------------------------------------
+
+If you’re working with speech detection or transcription for meetings, consider checking out `Recall.ai <https://www.recall.ai/product/meeting-transcription-api?utm_source=github&utm_medium=sponsorship&utm_campaign=uberi-speech_recognition>`__, an API that works with Zoom, Google Meet, Microsoft Teams, and more. Recall.ai diarizes by pulling the speaker data and separate audio streams from the meeting platforms, which means 100% accurate speaker diarization with actual speaker names and speaker emails.
+
+Getting Started
+---------------
+
 Speech recognition engine/API support:
 
 * `CMU Sphinx <http://cmusphinx.sourceforge.net/wiki/>`__ (works offline)
@@ -49,11 +57,6 @@ Project links:
 -  `PyPI <https://pypi.python.org/pypi/SpeechRecognition/>`__
 -  `Source code <https://github.com/Uberi/speech_recognition>`__
 -  `Issue tracker <https://github.com/Uberi/speech_recognition/issues>`__
-
-Recall.ai - Meeting Transcription API
--------------------------------------
-
-If you’re working with speech detection or transcription for meetings, consider checking out `Recall.ai <https://www.recall.ai/product/meeting-transcription-api?utm_source=github&utm_medium=sponsorship&utm_campaign=uberi-speech_recognition>`__, an API that works with Zoom, Google Meet, Microsoft Teams, and more. Recall.ai diarizes by pulling the speaker data and separate audio streams from the meeting platforms, which means 100% accurate speaker diarization with actual speaker names and speaker emails.
 
 Library Reference
 -----------------
@@ -407,4 +410,5 @@ For convenience, all the official distributions of SpeechRecognition already inc
 SpeechRecognition distributes language files from `CMU Sphinx <http://cmusphinx.sourceforge.net/>`__. These files are BSD-licensed and redistributable as long as copyright notices are correctly retained. See ``speech_recognition/pocketsphinx-data/*/LICENSE*.txt`` for license details for individual parts.
 
 SpeechRecognition distributes binaries from `FLAC <https://xiph.org/flac/>`__ - ``speech_recognition/flac-win32.exe``, ``speech_recognition/flac-linux-x86``, and ``speech_recognition/flac-mac``. These files are GPLv2-licensed and redistributable, as long as the terms of the GPL are satisfied. The FLAC binaries are an `aggregate <https://www.gnu.org/licenses/gpl-faq.html#MereAggregation>`__ of `separate programs <https://www.gnu.org/licenses/gpl-faq.html#NFUseGPLPlugins>`__, so these GPL restrictions do not apply to the library or your programs that use the library, only to FLAC itself. See ``LICENSE-FLAC.txt`` for license details.
+
 
