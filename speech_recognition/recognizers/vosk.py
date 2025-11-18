@@ -41,10 +41,9 @@ def recognize(
     from vosk import KaldiRecognizer, Model
 
     vosk_model_path = Path(__file__).parent.parent / "models" / "vosk"
-    print(vosk_model_path)
     if not vosk_model_path.exists():
         raise SetupError(
-            "Vosk model not found. "
+            f"Vosk model not found at {vosk_model_path}. "
             "Please download the model using `sprc download vosk` command."
         )
 
