@@ -82,12 +82,13 @@ def recognize(
     recognizer,
     audio_data: AudioData,
     credentials_json_path: str | None = None,
+    credentials_json: dict | None = None,
     **kwargs: GoogleCloudRecognizerParameters,
 ) -> str | RecognizeResponse:
     """Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Google Cloud Speech-to-Text V1 API.
 
     This function requires a Google Cloud Platform account; see the `Set up Speech-to-Text <https://cloud.google.com/speech-to-text/docs/before-you-begin>`__ for details and instructions. Basically, create a project, enable billing for the project, enable the Google Cloud Speech API for the project.
-    And create local authentication credentials for your user account. The result is a JSON file containing the API credentials. You can specify the JSON file by ``credentials_json_path``. If not specified, the library will try to automatically `find the default API credentials JSON file <https://developers.google.com/identity/protocols/application-default-credentials>`__.
+    And create local authentication credentials for your user account. The result is a JSON file containing the API credentials. You can specify the JSON file by ``credentials_json_path`` or JSON dictionary by ``credentials_json``. If not specified, the library will try to automatically `find the default API credentials JSON file <https://developers.google.com/identity/protocols/application-default-credentials>`__.
 
     Returns the most likely transcription if ``show_all`` is False (the default). Otherwise, returns the raw API response as a JSON dictionary.
     For other parameters, see :py:class:`GoogleCloudRecognizerParameters`.
@@ -105,6 +106,8 @@ def recognize(
     client = (
         speech.SpeechClient.from_service_account_json(credentials_json_path)
         if credentials_json_path
+        else speech.SpeechClient.from_service_account_info(credentials_json)
+        if credentials_json
         else speech.SpeechClient()
     )
 
