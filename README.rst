@@ -46,7 +46,7 @@ Speech recognition engine/API support:
 * `Vosk API <https://github.com/alphacep/vosk-api/>`__ (works offline)
 * `OpenAI whisper <https://github.com/openai/whisper>`__ (works offline)
 * `OpenAI Whisper API <https://platform.openai.com/docs/guides/speech-to-text>`__
-* `Groq Whisper API <https://console.groq.com/docs/speech-text>`__
+* `Groq Whisper API <https://console.groq.com/docs/speech-to-text>`__
 
 **Quickstart:** ``pip install SpeechRecognition``. See the "Installing" section for more details.
 
