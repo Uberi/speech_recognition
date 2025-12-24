@@ -16,7 +16,7 @@ GroqModel = Literal[
 ]
 
 
-class GroqOptionalParameters(TypedDict):
+class GroqOptionalParameters(TypedDict, total=False):
     """Groq speech transcription's optional parameters.
 
     https://console.groq.com/docs/speech-text#transcription-endpoint-usage
