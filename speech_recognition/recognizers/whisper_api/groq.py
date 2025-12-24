@@ -10,16 +10,16 @@ from speech_recognition.recognizers.whisper_api.base import (
     OpenAICompatibleRecognizer,
 )
 
-# https://console.groq.com/docs/speech-text#supported-models
+# https://console.groq.com/docs/speech-to-text#supported-models
 GroqModel = Literal[
-    "whisper-large-v3-turbo", "whisper-large-v3", "distil-whisper-large-v3-en"
+    "whisper-large-v3-turbo", "whisper-large-v3"
 ]
 
 
 class GroqOptionalParameters(TypedDict, total=False):
     """Groq speech transcription's optional parameters.
 
-    https://console.groq.com/docs/speech-text#transcription-endpoint-usage
+    https://console.groq.com/docs/api-reference#audio-transcription
     """
 
     prompt: str
@@ -39,7 +39,7 @@ def recognize(
 
     This function requires login to Groq; visit https://console.groq.com/login, then generate API Key in `API Keys <https://console.groq.com/keys>`__ menu.
 
-    Detail: https://console.groq.com/docs/speech-text
+    Detail: https://console.groq.com/docs/speech-to-text
 
     Set environment variable ``GROQ_API_KEY``; otherwise groq library will raise a ``groq.GroqError``.
     """
