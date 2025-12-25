@@ -12,7 +12,7 @@ if TYPE_CHECKING:
         RecognizeResponse,
         SpeechContext,
     )
-    from typing_extensions import Required
+    from typing_extensions import Required, Unpack
 
 
 class GoogleCloudRecognizerParameters(TypedDict, total=False):
@@ -82,7 +82,7 @@ def recognize(
     recognizer,
     audio_data: AudioData,
     credentials_json_path: str | None = None,
-    **kwargs: GoogleCloudRecognizerParameters,
+    **kwargs: Unpack[GoogleCloudRecognizerParameters],
 ) -> str | RecognizeResponse:
     """Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Google Cloud Speech-to-Text V1 API.
 
