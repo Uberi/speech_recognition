@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Literal
+from typing import Literal, TypedDict
 
 from typing_extensions import Unpack
 
@@ -17,7 +17,7 @@ WhisperModel = Literal[
 ]
 
 
-class OpenAIOptionalParameters:
+class OpenAIOptionalParameters(TypedDict, total=False):
     """OpenAI speech transcription's optional parameters.
 
     https://platform.openai.com/docs/api-reference/audio/createTranscription
