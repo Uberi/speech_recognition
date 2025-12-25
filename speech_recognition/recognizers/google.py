@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import Dict, Literal, TypedDict
+from typing import Dict, Literal, Optional, TypedDict
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -92,7 +92,7 @@ class RequestBuilder:
         return flac_data
 
     @staticmethod
-    def to_convert_rate(sample_rate: int) -> int:
+    def to_convert_rate(sample_rate: int) -> Optional[int]:
         """Audio samples must be at least 8 kHz
 
         >>> RequestBuilder.to_convert_rate(16_000)
@@ -195,16 +195,17 @@ class OutputParser:
           ...
         speech_recognition.exceptions.UnknownValueError
         """
+        best_hypothesis: Alternative
         if "confidence" in alternatives:
             # BUG: actual_result["alternative"] (=alternatives) is list, not dict
             # return alternative with highest confidence score
-            best_hypothesis: Alternative = max(
+            best_hypothesis = max(
                 alternatives,
                 key=lambda alternative: alternative["confidence"],
             )
         else:
             # when there is no confidence available, we arbitrarily choose the first hypothesis.
-            best_hypothesis: Alternative = alternatives[0]
+            best_hypothesis = alternatives[0]
         if "transcript" not in best_hypothesis:
             raise UnknownValueError()
         return best_hypothesis
