@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import io
-from typing import TYPE_CHECKING, Generic, Protocol, TypedDict, TypeVar
+from typing import TYPE_CHECKING, Generic, Protocol, TypeVar
 
 from speech_recognition.audio import AudioData
+from typing_extensions import TypedDict
 
 if TYPE_CHECKING:
     import numpy as np
