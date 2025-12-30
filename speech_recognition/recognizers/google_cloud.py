@@ -49,7 +49,7 @@ class GoogleCloudSpeechV1Parameters(TypedDict, total=False):
     https://cloud.google.com/python/docs/reference/speech/latest/google.cloud.speech_v1.types.RecognitionConfig
     """
 
-    encoding: Required[RecognitionConfig.AudioEncoding]
+    encoding: Required[int]
     sample_rate_hertz: Required[int]
     language_code: Required[str]
     speech_contexts: list[SpeechContext]
