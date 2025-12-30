@@ -1,4 +1,4 @@
-.PHONY: lint rstcheck distribute publish
+.PHONY: lint rstcheck typecheck distribute publish
 
 lint:
 # ignore errors for long lines and multi-statement lines
