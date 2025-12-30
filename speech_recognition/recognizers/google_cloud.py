@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING, TypedDict, cast
 from urllib.error import URLError
 
 from speech_recognition.audio import AudioData
@@ -64,7 +64,7 @@ def _build_config(
     from google.cloud import speech
 
     parameters: GoogleCloudSpeechV1Parameters = {
-        "encoding": speech.RecognitionConfig.AudioEncoding.FLAC,
+        "encoding": cast(speech.RecognitionConfig.AudioEncoding, speech.RecognitionConfig.AudioEncoding.FLAC),
         "sample_rate_hertz": audio_data.sample_rate,
         "language_code": recognizer_params.pop("language_code", "en-US"),
     }

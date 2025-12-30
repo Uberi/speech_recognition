@@ -373,18 +373,18 @@ class Recognizer(AudioSource):
         The ``duration`` parameter is the maximum number of seconds that it will dynamically adjust the threshold for before returning. This value should be at least 0.5 in order to get a representative sample of the ambient noise.
         """
         assert isinstance(source, AudioSource), "Source must be an audio source"
-        assert source.stream is not None, "Audio source must be entered before adjusting, see documentation for ``AudioSource``; are you using ``source`` outside of a ``with`` statement?"
+        assert source.stream is not None, "Audio source must be entered before adjusting, see documentation for ``AudioSource``; are you using ``source`` outside of a ``with`` statement?"  # type: ignore[attr-defined]
         assert self.pause_threshold >= self.non_speaking_duration >= 0
 
-        seconds_per_buffer = (source.CHUNK + 0.0) / source.SAMPLE_RATE
+        seconds_per_buffer = (source.CHUNK + 0.0) / source.SAMPLE_RATE  # type: ignore[attr-defined]
         elapsed_time = 0
 
         # adjust energy threshold until a phrase starts
         while True:
             elapsed_time += seconds_per_buffer
             if elapsed_time > duration: break
-            buffer = source.stream.read(source.CHUNK)
-            energy = audioop.rms(buffer, source.SAMPLE_WIDTH)  # energy of the audio signal
+            buffer = source.stream.read(source.CHUNK)  # type: ignore[attr-defined]
+            energy = audioop.rms(buffer, source.SAMPLE_WIDTH)  # type: ignore[attr-defined]  # energy of the audio signal
 
             # dynamically adjust the energy threshold using asymmetric weighted average
             damping = self.dynamic_energy_adjustment_damping ** seconds_per_buffer  # account for different chunk sizes and rates
@@ -1037,17 +1037,17 @@ class Recognizer(AudioSource):
                 # Delete S3 file.
                 s3.delete_object(Bucket=bucket_name, Key=filename)
 
-                exc = TranscriptionFailed()
-                exc.job_name = None
-                exc.file_key = None
-                raise exc
+                failed = TranscriptionFailed()
+                failed.job_name = None
+                failed.file_key = None
+                raise failed
             else:
                 # Keep waiting.
                 print('Keep waiting.')
-                exc = TranscriptionNotReady()
-                exc.job_name = job_name
-                exc.file_key = None
-                raise exc
+                not_ready = TranscriptionNotReady()
+                not_ready.job_name = job_name
+                not_ready.file_key = None
+                raise not_ready
 
         else:
 
@@ -1059,10 +1059,10 @@ class Recognizer(AudioSource):
                     MediaFormat='wav',
                     LanguageCode='en-US'
                 )
-                exc = TranscriptionNotReady()
-                exc.job_name = job_name
-                exc.file_key = None
-                raise exc
+                not_ready = TranscriptionNotReady()
+                not_ready.job_name = job_name
+                not_ready.file_key = None
+                raise not_ready
             except ClientError as exc:
                 print('!' * 80)
                 print('Error starting job:', exc.response)
@@ -1286,14 +1286,14 @@ try:
 except (ModuleNotFoundError, ImportError):
     pass
 else:
-    Recognizer.recognize_google = google.recognize_legacy
-    Recognizer.recognize_google_cloud = google_cloud.recognize
-    Recognizer.recognize_whisper = whisper.recognize
-    Recognizer.recognize_faster_whisper = faster_whisper.recognize
-    Recognizer.recognize_openai = openai.recognize
-    Recognizer.recognize_groq = groq.recognize
-    Recognizer.recognize_sphinx = pocketsphinx.recognize
-    Recognizer.recognize_vosk = vosk.recognize
+    Recognizer.recognize_google = google.recognize_legacy  # type: ignore[attr-defined]
+    Recognizer.recognize_google_cloud = google_cloud.recognize  # type: ignore[attr-defined]
+    Recognizer.recognize_whisper = whisper.recognize  # type: ignore[attr-defined]
+    Recognizer.recognize_faster_whisper = faster_whisper.recognize  # type: ignore[attr-defined]
+    Recognizer.recognize_openai = openai.recognize  # type: ignore[attr-defined]
+    Recognizer.recognize_groq = groq.recognize  # type: ignore[attr-defined]
+    Recognizer.recognize_sphinx = pocketsphinx.recognize  # type: ignore[attr-defined]
+    Recognizer.recognize_vosk = vosk.recognize  # type: ignore[attr-defined]
 
 
 # ===============================
@@ -1323,4 +1323,4 @@ def recognize_api(self, audio_data, client_access_token, language="en", session_
     return result["result"]["resolvedQuery"]
 
 
-Recognizer.recognize_api = classmethod(recognize_api)  # API.AI Speech Recognition is deprecated/not recommended as of 3.5.0, and currently is only optionally available for paid plans
+Recognizer.recognize_api = classmethod(recognize_api)  # type: ignore[attr-defined]  # API.AI Speech Recognition is deprecated/not recommended as of 3.5.0, and currently is only optionally available for paid plans

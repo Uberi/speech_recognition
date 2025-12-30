@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Literal, TypedDict
 
 from speech_recognition.audio import AudioData
 from speech_recognition.recognizers.whisper_local.base import (
-    WhisperCompatibleRecognizer,
+    TranscribeOutputBase, WhisperCompatibleRecognizer,
 )
 
 if TYPE_CHECKING:
@@ -14,19 +14,13 @@ if TYPE_CHECKING:
     from typing_extensions import Unpack
 
 
-class TranscribeOutput(TypedDict):
-    text: str
-    segments: list[Segment]
-    language: str
-
-
 class TranscribableAdapter:
     def __init__(self, model: WhisperModel) -> None:
         self.model = model
 
     def transcribe(
         self, audio_array: np.ndarray, **kwargs
-    ) -> TranscribeOutput:
+    ) -> TranscribeOutputBase[Segment]:
         segments_generator, info = self.model.transcribe(audio_array, **kwargs)
         segments = list(segments_generator)
         return {
@@ -59,7 +53,7 @@ def recognize(
     show_dict: bool = False,
     init_options: InitOptionalParameters | None = None,
     **transcribe_options: Unpack[TranscribeOptionalParameters],
-) -> str | TranscribeOutput:
+) -> str | TranscribeOutputBase[Segment]:
     """Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using Whisper.
 
     Pick ``model`` size (Same as Whisper).

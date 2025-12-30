@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Literal, TypedDict
 
 from speech_recognition.audio import AudioData
 from speech_recognition.recognizers.whisper_local.base import (
-    WhisperCompatibleRecognizer,
+    TranscribeOutputBase, WhisperCompatibleRecognizer,
 )
 
 if TYPE_CHECKING:
@@ -48,19 +48,13 @@ class Segment(TypedDict):
     no_speech_prob: float
 
 
-class TranscribeOutput(TypedDict):
-    text: str
-    segments: list[Segment]
-    language: str
-
-
 class TranscribableAdapter:
     def __init__(self, model: Whisper) -> None:
         self.model = model
 
     def transcribe(
         self, audio_array: np.ndarray, **kwargs
-    ) -> TranscribeOutput:
+    ) -> TranscribeOutputBase[Segment]:
         if "fp16" not in kwargs:
             import torch
 
@@ -76,7 +70,7 @@ def recognize(
     show_dict: bool = False,
     load_options: LoadModelOptionalParameters | None = None,
     **transcribe_options: Unpack[TranscribeOptionalParameters],
-) -> str | TranscribeOutput:
+) -> str | TranscribeOutputBase[Segment]:
     """Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using Whisper.
 
     Pick ``model`` from output of :command:`python -c 'import whisper; print(whisper.available_models())'`.
