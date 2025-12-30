@@ -1,18 +1,26 @@
 from __future__ import annotations
 
 import io
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Generic, Protocol, TypedDict, TypeVar
 
 from speech_recognition.audio import AudioData
 
 if TYPE_CHECKING:
     import numpy as np
 
+SegmentT = TypeVar("SegmentT")
 
-class Transcribable(Protocol):
+
+class TranscribeOutputBase(TypedDict, Generic[SegmentT]):
+    text: str
+    segments: list[SegmentT]
+    language: str
+
+
+class Transcribable(Protocol, Generic[SegmentT]):
     def transcribe(
         self, audio_array: np.ndarray, **kwargs
-    ) -> str | dict[str, Any]:
+    ) -> TranscribeOutputBase[SegmentT]:
         pass
 
 
@@ -22,7 +30,7 @@ class WhisperCompatibleRecognizer:
 
     def recognize(
         self, audio_data: AudioData, show_dict: bool = False, **kwargs
-    ):
+    ) -> str | TranscribeOutputBase[SegmentT]:
         if not isinstance(audio_data, AudioData):
             raise ValueError(
                 "``audio_data`` must be an ``AudioData`` instance"
@@ -37,7 +45,7 @@ class WhisperCompatibleRecognizer:
         audio_array, sampling_rate = sf.read(wav_stream)
         audio_array = audio_array.astype(np.float32)
 
-        result = self.model.transcribe(audio_array, **kwargs)
+        result: TranscribeOutputBase[SegmentT] = self.model.transcribe(audio_array, **kwargs)
 
         if show_dict:
             return result
