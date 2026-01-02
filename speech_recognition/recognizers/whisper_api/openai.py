@@ -40,7 +40,7 @@ def recognize(
 ) -> str:
     """Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the OpenAI Whisper API (and OpenAI-compatible self-hosted endpoints).
 
-    OpenAI hosted service: requires an OpenAI account; visit https://platform.openai.com/signup, then generate API Key in `User settings <https://platform.openai.com/account/api-keys>`__.
+    OpenAI hosted service: requires an OpenAI account; visit https://platform.openai.com/signup, then generate API Key in `API keys <https://platform.openai.com/api-keys>`__ in your project.
     Set environment variable ``OPENAI_API_KEY``; otherwise openai library will raise a ``openai.OpenAIError``.
 
     Detail: https://platform.openai.com/docs/guides/speech-to-text
