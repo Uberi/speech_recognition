@@ -18,7 +18,7 @@ class TranscribeOutputBase(TypedDict, Generic[SegmentT]):
     language: str
 
 
-class Transcribable(Protocol, Generic[SegmentT]):
+class Transcribable(Protocol[SegmentT]):
     def transcribe(
         self, audio_array: np.ndarray, **kwargs
     ) -> TranscribeOutputBase[SegmentT]:
