@@ -103,6 +103,7 @@ To use all of the functionality of the library, you should have:
 * **Whisper** (required only if you need to use Whisper ``recognizer_instance.recognize_whisper``)
 * **Faster Whisper** (required only if you need to use Faster Whisper ``recognizer_instance.recognize_faster_whisper``)
 * **openai** (required only if you need to use OpenAI Whisper API speech recognition ``recognizer_instance.recognize_openai``)
+    * OpenAI compatible self-hosted endpoints (e.g. vLLM, Ollama) are also supported
 * **groq** (required only if you need to use Groq Whisper API speech recognition ``recognizer_instance.recognize_groq``)
 
 The following requirements are optional, but can improve or extend functionality in some situations:
@@ -196,6 +197,13 @@ The library `openai <https://pypi.org/project/openai/>`__ is **required if and o
 You can install it with ``python3 -m pip install SpeechRecognition[openai]``.
 
 Please set the environment variable ``OPENAI_API_KEY`` before calling ``recognizer_instance.recognize_openai``.
+
+OpenAI-compatible self-hosted Whisper endpoints (for users of vLLM, Ollama, etc.)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``recognizer_instance.recognize_openai`` also supports OpenAI-compatible endpoints.
+
+Set ``OPENAI_BASE_URL`` to point to your custom endpoint with dummy ``OPENAI_API_KEY``.
 
 Groq Whisper API (for Groq Whisper API users)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
