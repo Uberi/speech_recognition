@@ -46,6 +46,7 @@ Speech recognition engine/API support:
 * `Vosk API <https://github.com/alphacep/vosk-api/>`__ (works offline)
 * `OpenAI whisper <https://github.com/openai/whisper>`__ (works offline)
 * `OpenAI Whisper API <https://platform.openai.com/docs/guides/speech-to-text>`__
+    * OpenAI compatible self-hosted endpoints (e.g. vLLM, Ollama)
 * `Groq Whisper API <https://console.groq.com/docs/speech-to-text>`__
 
 **Quickstart:** ``pip install SpeechRecognition``. See the "Installing" section for more details.
@@ -103,7 +104,7 @@ To use all of the functionality of the library, you should have:
 * **Whisper** (required only if you need to use Whisper ``recognizer_instance.recognize_whisper``)
 * **Faster Whisper** (required only if you need to use Faster Whisper ``recognizer_instance.recognize_faster_whisper``)
 * **openai** (required only if you need to use OpenAI Whisper API speech recognition ``recognizer_instance.recognize_openai``)
-    * OpenAI compatible self-hosted endpoints (e.g. vLLM, Ollama) are also supported
+    * includes OpenAI compatible self-hosted endpoints (e.g. vLLM, Ollama)
 * **groq** (required only if you need to use Groq Whisper API speech recognition ``recognizer_instance.recognize_groq``)
 
 The following requirements are optional, but can improve or extend functionality in some situations:
