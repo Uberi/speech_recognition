@@ -38,13 +38,14 @@ def recognize(
     model: WhisperModel = "whisper-1",
     **kwargs: Unpack[OpenAIOptionalParameters],
 ) -> str:
-    """Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the OpenAI Whisper API.
+    """Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the OpenAI Whisper API (and OpenAI-compatible self-hosted endpoints).
 
-    This function requires an OpenAI account; visit https://platform.openai.com/signup, then generate API Key in `User settings <https://platform.openai.com/account/api-keys>`__.
+    OpenAI hosted service: requires an OpenAI account; visit https://platform.openai.com/signup, then generate API Key in `User settings <https://platform.openai.com/account/api-keys>`__.
+    Set environment variable ``OPENAI_API_KEY``; otherwise openai library will raise a ``openai.OpenAIError``.
 
     Detail: https://platform.openai.com/docs/guides/speech-to-text
 
-    Set environment variable ``OPENAI_API_KEY``; otherwise openai library will raise a ``openai.OpenAIError``.
+    OpenAI-compatible self-hosted endpoints (e.g., vLLM, Ollama): set ``OPENAI_BASE_URL`` to your custom endpoint URL with dummy ``OPENAI_API_KEY``.
     """
     try:
         import openai
