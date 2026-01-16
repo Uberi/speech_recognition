@@ -1,0 +1,22 @@
+name: Publish Python Package
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build package
+        run: make distribute
+      - name: Publish package
+        uses: pypa/gh-action-pypi-publish@release/v1
