@@ -21,6 +21,10 @@ SpeechRecognition
     :target: https://travis-ci.org/Uberi/speech_recognition
     :alt: Continuous Integration Test Results
 
+.. image:: https://s3.amazonaws.com/prod.app.slai.io/static/media/SlaiEmbedWidget100x20.svg
+    :target: https://www.slai.io/s/5jwjr
+    :alt: Deploy SpeechRecognition on Slai
+
 Library for performing speech recognition, with support for several engines and APIs, online and offline.
 
 Recall.ai - Meeting Transcription API
