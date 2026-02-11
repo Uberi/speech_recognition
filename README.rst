@@ -215,6 +215,23 @@ You can install it with ``python3 -m pip install SpeechRecognition[groq]``.
 
 Please set the environment variable ``GROQ_API_KEY`` before calling ``recognizer_instance.recognize_groq``.
 
+Proxy Support
+~~~~~~~~~~~~~
+
+All cloud-based recognizers support proxying via the ``recognizer_instance.proxy_url`` attribute:
+
+.. code:: python
+
+    import speech_recognition as sr
+    r = sr.Recognizer()
+    r.proxy_url = "http://proxy.example.com:8080"  # HTTP proxy
+    # r.proxy_url = "socks5://proxy.example.com:1080"  # SOCKS5 proxy (requires PySocks)
+    # r.proxy_url = ""  # explicitly disable proxies
+
+By default ``proxy_url`` is ``None``, which preserves existing behaviour (system/environment proxy settings are used).
+
+SOCKS proxy support requires the ``PySocks`` package: ``pip install PySocks``.
+
 Troubleshooting
 ---------------
 

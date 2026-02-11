@@ -54,7 +54,16 @@ def recognize(
             "missing openai module: ensure that openai is set up correctly."
         )
 
-    openai_recognizer = OpenAICompatibleRecognizer(openai.OpenAI())
+    proxy_url = getattr(recognizer, "proxy_url", None)
+    client_kwargs = {}
+    if proxy_url is not None:
+        from speech_recognition.proxy import build_httpx_client
+
+        http_client = build_httpx_client(proxy_url)
+        if http_client is not None:
+            client_kwargs["http_client"] = http_client
+
+    openai_recognizer = OpenAICompatibleRecognizer(openai.OpenAI(**client_kwargs))
     return openai_recognizer.recognize(audio_data, model, **kwargs)
 
 

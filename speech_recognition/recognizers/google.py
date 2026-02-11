@@ -4,12 +4,13 @@ import json
 from typing import Dict, Literal, Optional, TypedDict
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
-from urllib.request import Request, urlopen
+from urllib.request import Request
 
 from typing_extensions import NotRequired
 
 from speech_recognition.audio import AudioData
 from speech_recognition.exceptions import RequestError, UnknownValueError
+from speech_recognition.proxy import urlopen_with_proxy
 
 
 class Alternative(TypedDict):
@@ -211,9 +212,9 @@ class OutputParser:
         return best_hypothesis
 
 
-def obtain_transcription(request: Request, timeout: int) -> str:
+def obtain_transcription(request: Request, timeout: int, proxy_url: str | None = None) -> str:
     try:
-        response = urlopen(request, timeout=timeout)
+        response = urlopen_with_proxy(request, timeout=timeout, proxy_url=proxy_url)
     except HTTPError as e:
         raise RequestError("recognition request failed: {}".format(e.reason))
     except URLError as e:
@@ -254,7 +255,8 @@ def recognize_legacy(
     request = request_builder.build(audio_data)
 
     response_text = obtain_transcription(
-        request, timeout=recognizer.operation_timeout
+        request, timeout=recognizer.operation_timeout,
+        proxy_url=getattr(recognizer, "proxy_url", None),
     )
 
     output_parser = OutputParser(
