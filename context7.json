@@ -1,24 +1,4 @@
 {
-  "$schema": "https://context7.com/schema/context7.json",
-  "projectTitle": "SpeechRecognition",
-  "description": "Python speech recognition library supporting multiple online and offline engines.",
-  "branch": "master",
-  "folders": [
-    "speech_recognition",
-    "reference",
-    "examples"
-  ],
-  "excludeFolders": [
-    ".devin",
-    ".github",
-    "tests",
-    "third-party"
-  ],
-  "excludeFiles": [
-    "LICENSE.txt",
-    "LICENSE-FLAC.txt",
-    "make-release.sh"
-  ],
   "url": "https://context7.com/uberi/speech_recognition",
   "public_key": "pk_jk0QQFG5PRVeveyepXRum"
 }
