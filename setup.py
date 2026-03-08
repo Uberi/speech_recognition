@@ -38,7 +38,7 @@ class InstallWithExtraSteps(install):
 setup(
     name="SpeechRecognition",
     version=speech_recognition.__version__,
-    packages=find_packages(exclude=["tests.*", "test"]),
+    packages=find_packages(exclude=["tests.*", "test", "speech_recognition.models"]),
     include_package_data=True,
     cmdclass={"install": InstallWithExtraSteps},
 
