@@ -25,6 +25,10 @@ SpeechRecognition
     :target: https://deepwiki.com/Uberi/speech_recognition
     :alt: Ask DeepWiki
 
+.. image:: https://img.shields.io/badge/docs-Mintlify-0ea5e9?logo=mintlify&logoColor=white
+    :target: https://mintlify.com/Uberi/speech_recognition
+    :alt: Mintlify Docs (Auto generated)
+
 Library for performing speech recognition, with support for several engines and APIs, online and offline.
 
 Recall.ai - Meeting Transcription API
