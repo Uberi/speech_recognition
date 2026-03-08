@@ -18,5 +18,7 @@
     "LICENSE.txt",
     "LICENSE-FLAC.txt",
     "make-release.sh"
-  ]
+  ],
+  "url": "https://context7.com/uberi/speech_recognition",
+  "public_key": "pk_jk0QQFG5PRVeveyepXRum"
 }
