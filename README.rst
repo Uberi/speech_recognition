@@ -21,6 +21,10 @@ SpeechRecognition
     :target: https://travis-ci.org/Uberi/speech_recognition
     :alt: Continuous Integration Test Results
 
+.. image:: https://deepwiki.com/badge.svg
+    :target: https://deepwiki.com/Uberi/speech_recognition
+    :alt: Ask DeepWiki
+
 Library for performing speech recognition, with support for several engines and APIs, online and offline.
 
 Recall.ai - Meeting Transcription API
