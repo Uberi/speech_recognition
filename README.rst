@@ -25,6 +25,11 @@ SpeechRecognition
     :target: https://deepwiki.com/Uberi/speech_recognition
     :alt: Ask DeepWiki
 
+.. image:: https://www.gstatic.com/_/boq-sdlc-agents-ui/_/r/Mvosg4klCA4.svg
+    :target: https://codewiki.google/github.com/Uberi/speech_recognition
+    :alt: Ask Code Wiki
+    :height: 20px
+
 Library for performing speech recognition, with support for several engines and APIs, online and offline.
 
 Recall.ai - Meeting Transcription API
