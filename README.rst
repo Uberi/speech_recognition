@@ -29,6 +29,10 @@ SpeechRecognition
     :target: https://mintlify.com/Uberi/speech_recognition
     :alt: Mintlify Docs (Auto generated)
 
+.. image:: https://img.shields.io/badge/Docs-Context7-6C47FF
+    :target: https://context7.com/uberi/speech_recognition
+    :alt: Context7
+
 Library for performing speech recognition, with support for several engines and APIs, online and offline.
 
 Recall.ai - Meeting Transcription API
