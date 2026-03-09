@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "SpeechRecognition"
-version = "3.14.6"
+dynamic = ["version"]
 description = "Library for performing speech recognition, with support for several engines and APIs, online and offline."
 readme = { file = "README.rst", content-type = "text/x-rst" }
 requires-python = ">=3.9"
-license = { text = "BSD" }
+license = "BSD-3-Clause"
 authors = [
   { name = "Anthony Zhang (Uberi)", email = "azhang9@gmail.com" },
 ]
@@ -20,7 +20,6 @@ classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Developers",
   "Natural Language :: English",
-  "License :: OSI Approved :: BSD License",
   "Operating System :: Microsoft :: Windows",
   "Operating System :: POSIX :: Linux",
   "Operating System :: MacOS :: MacOS X",
@@ -83,3 +82,7 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 exclude = ["tests.*", "test", "speech_recognition.models"]
+
+
+[tool.setuptools.dynamic]
+version = { attr = "speech_recognition.__version__" }
