@@ -77,9 +77,6 @@ groq = [
 assemblyai = ["requests"]
 vosk = ["vosk"]
 
-[tool.setuptools]
-include-package-data = true
-
 [tool.setuptools.package-data]
 speech_recognition = ["version.txt"]
 
