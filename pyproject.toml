@@ -8,7 +8,7 @@ dynamic = ["version"]
 description = "Library for performing speech recognition, with support for several engines and APIs, online and offline."
 readme = { file = "README.rst", content-type = "text/x-rst" }
 requires-python = ">=3.9"
-license = "BSD-3-Clause"
+license = { file = "LICENSE.txt" }
 authors = [
   { name = "Anthony Zhang (Uberi)", email = "azhang9@gmail.com" },
 ]
