@@ -100,7 +100,7 @@ The easiest way to install this is using ``pip install SpeechRecognition``.
 
 Otherwise, download the source distribution from `PyPI <https://pypi.python.org/pypi/SpeechRecognition/>`__, and extract the archive.
 
-In the folder, run ``python setup.py install``.
+In the folder, run ``python -m pip install .``.
 
 Requirements
 ------------
