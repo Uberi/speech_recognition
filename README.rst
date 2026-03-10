@@ -325,7 +325,7 @@ To hack on this library, first make sure you have all the requirements listed in
 
 To install/reinstall the library locally, run ``python -m pip install -e .[dev]`` in the project `root directory <https://github.com/Uberi/speech_recognition>`__.
 
-Before a release, the version number is bumped in ``README.rst`` and ``speech_recognition/__init__.py``. Version tags are then created using ``git config gpg.program gpg2 && git config user.signingkey DB45F6C431DE7C2DCD99FF7904882258A4063489 && git tag -s VERSION_GOES_HERE -m "Version VERSION_GOES_HERE"``.
+Before a release, the version number is bumped in ``README.rst`` and ``speech_recognition/version.txt``. Version tags are then created using ``git config gpg.program gpg2 && git config user.signingkey DB45F6C431DE7C2DCD99FF7904882258A4063489 && git tag -s VERSION_GOES_HERE -m "Version VERSION_GOES_HERE"``.
 
 Releases are done by running ``make-release.sh VERSION_GOES_HERE`` to build the Python source packages, sign them, and upload them to PyPI.
 

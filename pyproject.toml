@@ -80,9 +80,12 @@ vosk = ["vosk"]
 [tool.setuptools]
 include-package-data = true
 
+[tool.setuptools.package-data]
+speech_recognition = ["version.txt"]
+
 [tool.setuptools.packages.find]
 exclude = ["tests.*", "test", "speech_recognition.models"]
 
 
 [tool.setuptools.dynamic]
-version = { attr = "speech_recognition.__version__" }
+version = { file = "speech_recognition/version.txt" }
