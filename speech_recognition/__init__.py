@@ -14,6 +14,7 @@ import io
 import json
 import math
 import os
+from pathlib import Path
 import subprocess
 import sys
 import tempfile
@@ -36,7 +37,7 @@ from .exceptions import (
 )
 
 __author__ = "Anthony Zhang (Uberi)"
-__version__ = "3.14.5"
+__version__ = Path(__file__).with_name("version.txt").read_text(encoding="utf-8").strip()
 __license__ = "BSD"
 
 

@@ -1,0 +1,89 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "SpeechRecognition"
+dynamic = ["version"]
+description = "Library for performing speech recognition, with support for several engines and APIs, online and offline."
+readme = { file = "README.rst", content-type = "text/x-rst" }
+requires-python = ">=3.9"
+license = "BSD-3-Clause"
+license-files = ["LICENSE.txt", "LICENSE-FLAC.txt"]
+authors = [
+  { name = "Anthony Zhang (Uberi)", email = "azhang9@gmail.com" },
+]
+maintainers = [
+  { name = "nikkie", email = "takuyafjp+develop@gmail.com" },
+]
+keywords = ["speech", "recognition", "voice", "sphinx", "google", "wit", "bing", "api", "houndify", "ibm", "snowboy"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "Natural Language :: English",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: MacOS :: MacOS X",
+  "Operating System :: Other OS",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: Multimedia :: Sound/Audio :: Speech",
+]
+dependencies = [
+  "typing-extensions",
+  "standard-aifc; python_version >= '3.13'",
+  "audioop-lts; python_version >= '3.13'",
+]
+
+[project.urls]
+Homepage = "https://github.com/Uberi/speech_recognition#readme"
+
+[project.scripts]
+sprc = "speech_recognition.cli:main"
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "pytest-randomly",
+  "respx",
+  "numpy",
+  "pytest-httpserver",
+  "mypy",
+  "types-requests",
+]
+audio = ["PyAudio >= 0.2.11"]
+pocketsphinx = ["pocketsphinx"]
+google-cloud = ["google-cloud-speech"]
+whisper-local = [
+  "openai-whisper",
+  "soundfile",
+]
+faster-whisper = [
+  "faster-whisper",
+  "soundfile",
+]
+openai = [
+  "openai",
+  "httpx < 0.28",
+]
+groq = [
+  "groq",
+  "httpx < 0.28",
+]
+assemblyai = ["requests"]
+vosk = ["vosk"]
+
+[tool.setuptools.package-data]
+speech_recognition = ["version.txt"]
+
+[tool.setuptools.packages.find]
+exclude = ["tests.*", "tests", "speech_recognition.models"]
+namespaces = false
+
+[tool.setuptools.dynamic]
+version = { file = "speech_recognition/version.txt" }
