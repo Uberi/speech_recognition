@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,7 +8,8 @@ dynamic = ["version"]
 description = "Library for performing speech recognition, with support for several engines and APIs, online and offline."
 readme = { file = "README.rst", content-type = "text/x-rst" }
 requires-python = ">=3.9"
-license = { file = "LICENSE.txt" }
+license = "BSD-3-Clause"
+license-files = ["LICENSE.txt", "LICENSE-FLAC.txt"]
 authors = [
   { name = "Anthony Zhang (Uberi)", email = "azhang9@gmail.com" },
 ]
