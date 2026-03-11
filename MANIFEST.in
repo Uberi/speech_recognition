@@ -1,5 +1,6 @@
 graft speech_recognition
 graft reference
+prune speech_recognition/models
 recursive-exclude speech_recognition *.pyc
 include README.rst
 include LICENSE.txt

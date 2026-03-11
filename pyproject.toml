@@ -87,7 +87,6 @@ speech_recognition = [
   "flac-linux-x86_64",
   "flac-mac",
   "flac-win32.exe",
-  "models/vosk/**/*",
   "pocketsphinx-data/**/*",
 ]
 
