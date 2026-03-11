@@ -77,8 +77,19 @@ groq = [
 assemblyai = ["requests"]
 vosk = ["vosk"]
 
+[tool.setuptools]
+include-package-data = false
+
 [tool.setuptools.package-data]
-speech_recognition = ["version.txt"]
+speech_recognition = [
+  "version.txt",
+  "flac-linux-x86",
+  "flac-linux-x86_64",
+  "flac-mac",
+  "flac-win32.exe",
+  "models/vosk/**/*",
+  "pocketsphinx-data/**/*",
+]
 
 [tool.setuptools.packages.find]
 exclude = ["tests.*", "tests", "speech_recognition.models"]
