@@ -1,0 +1,24 @@
+{
+  "repo_notes": [
+    {
+      "author": "maintainer",
+      "content": "This repository is the SpeechRecognition Python library. The core implementation is centered in speech_recognition/__init__.py (Recognizer, AudioSource, Microphone, AudioFile), while audio format conversion and FLAC handling are in speech_recognition/audio.py."
+    },
+    {
+      "author": "maintainer",
+      "content": "Engine-specific recognition logic lives under speech_recognition/recognizers/ (google, google_cloud, pocketsphinx, vosk, whisper_local, whisper_api). New recognizer integrations and engine-specific bug fixes should primarily be documented in this area."
+    },
+    {
+      "author": "maintainer",
+      "content": "Execution entry points: speech_recognition/__main__.py for the demo (python -m speech_recognition), and speech_recognition/cli.py for the sprc CLI including Vosk model download."
+    },
+    {
+      "author": "maintainer",
+      "content": "Tests are split between tests/ (core audio and recognizer behavior) and tests/recognizers/ (engine-specific tests). Some tests require optional dependencies or external credentials and may be skipped in local environments."
+    },
+    {
+      "author": "maintainer",
+      "content": "Optional functionality is driven by extras in setup.cfg (audio, pocketsphinx, google-cloud, whisper-local, faster-whisper, openai, groq, vosk). Documentation should make dependency requirements explicit per recognizer."
+    }
+  ]
+}
