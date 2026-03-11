@@ -25,6 +25,11 @@ SpeechRecognition
     :target: https://deepwiki.com/Uberi/speech_recognition
     :alt: Ask DeepWiki
 
+.. image:: https://www.gstatic.com/_/boq-sdlc-agents-ui/_/r/Mvosg4klCA4.svg
+    :target: https://codewiki.google/github.com/Uberi/speech_recognition
+    :alt: Ask Code Wiki
+    :height: 20px
+
 .. image:: https://img.shields.io/badge/docs-Mintlify-0ea5e9?logo=mintlify&logoColor=white
     :target: https://mintlify.com/Uberi/speech_recognition
     :alt: Mintlify Docs (Auto generated)
