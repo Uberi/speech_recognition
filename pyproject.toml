@@ -82,6 +82,7 @@ speech_recognition = ["version.txt"]
 
 [tool.setuptools.packages.find]
 exclude = ["tests.*", "test", "speech_recognition.models"]
+namespaces = false
 
 
 [tool.setuptools.dynamic]
