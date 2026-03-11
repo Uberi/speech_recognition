@@ -102,33 +102,38 @@ def recognize(
             "missing google-cloud-speech module: ensure that google-cloud-speech is set up correctly."
         )
 
-    client = (
-        speech.SpeechClient.from_service_account_json(credentials_json_path)
-        if credentials_json_path
-        else speech.SpeechClient()
-    )
+    proxy_url = getattr(recognizer, "proxy_url", None)
 
-    flac_data = audio_data.get_flac_data(
-        # audio sample rate must be between 8 kHz and 48 kHz inclusive - clamp sample rate into this range
-        convert_rate=(
-            None
-            if 8000 <= audio_data.sample_rate <= 48000
-            else max(8000, min(audio_data.sample_rate, 48000))
-        ),
-        convert_width=2,  # audio samples must be 16-bit
-    )
-    audio = speech.RecognitionAudio(content=flac_data)
+    from speech_recognition.proxy import grpc_proxy_env
 
-    config = _build_config(audio_data, kwargs.copy())
-
-    try:
-        response = client.recognize(config=config, audio=audio)
-    except GoogleAPICallError as e:
-        raise RequestError(e)
-    except URLError as e:
-        raise RequestError(
-            "recognition connection failed: {0}".format(e.reason)
+    with grpc_proxy_env(proxy_url):
+        client = (
+            speech.SpeechClient.from_service_account_json(credentials_json_path)
+            if credentials_json_path
+            else speech.SpeechClient()
         )
+
+        flac_data = audio_data.get_flac_data(
+            # audio sample rate must be between 8 kHz and 48 kHz inclusive - clamp sample rate into this range
+            convert_rate=(
+                None
+                if 8000 <= audio_data.sample_rate <= 48000
+                else max(8000, min(audio_data.sample_rate, 48000))
+            ),
+            convert_width=2,  # audio samples must be 16-bit
+        )
+        audio = speech.RecognitionAudio(content=flac_data)
+
+        config = _build_config(audio_data, kwargs.copy())
+
+        try:
+            response = client.recognize(config=config, audio=audio)
+        except GoogleAPICallError as e:
+            raise RequestError(e)
+        except URLError as e:
+            raise RequestError(
+                "recognition connection failed: {0}".format(e.reason)
+            )
 
     if kwargs.get("show_all"):
         return response
