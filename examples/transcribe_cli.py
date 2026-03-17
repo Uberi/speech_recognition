@@ -179,7 +179,7 @@ class SpacebarLiveTranscriber:
 
         with self._lock:
             frame_data = bytes(self._frames)
-            remainder = frame_data[self._processed_bytes :]
+            remainder = frame_data[self._processed_bytes:]
 
         total_seconds = len(frame_data) / (source.SAMPLE_RATE * source.SAMPLE_WIDTH)
         if total_seconds < MIN_DURATION_SECONDS:
