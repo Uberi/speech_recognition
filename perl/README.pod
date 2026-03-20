@@ -1,0 +1,81 @@
+=head1 NAME
+
+Speech::Recognition - Perl library for speech recognition with multiple engine/API support
+
+=head1 DESCRIPTION
+
+This is a Perl port of the Python
+L<SpeechRecognition|https://pypi.org/project/SpeechRecognition/> library.
+
+See L<Speech::Recognition> for full documentation.
+
+=head1 QUICK START
+
+    use Speech::Recognition;
+
+    my $r    = Speech::Recognition::Recognizer->new;
+    my $audio;
+
+    Speech::Recognition::AudioFile->new(filename => 'speech.wav')->with(sub ($src) {
+        $audio = $r->record($src);
+    });
+
+    my $text = $r->recognize_google($audio);
+    print "$text\n";
+
+=head1 INSTALLATION
+
+    cd perl
+    perl Makefile.PL
+    make
+    make test
+    make install
+
+Requires Perl 5.36 or later and L<LWP::UserAgent> (from C<libwww-perl>).
+
+For FLAC file support, install the C<flac> command-line tool:
+
+    # Debian/Ubuntu
+    apt-get install flac
+
+    # macOS (Homebrew)
+    brew install flac
+
+For microphone input, install C<arecord> (part of C<alsa-utils>) or C<sox>:
+
+    apt-get install alsa-utils
+    # or
+    apt-get install sox
+
+=head1 SUPPORTED BACKENDS
+
+=over 4
+
+=item * Google Speech API v2 (C<recognize_google>)
+
+=item * Wit.ai (C<recognize_wit>)
+
+=item * Microsoft Azure Speech (C<recognize_azure>)
+
+=item * Microsoft Bing Speech — legacy (C<recognize_bing>)
+
+=item * Houndify (C<recognize_houndify>)
+
+=item * IBM Watson Speech to Text (C<recognize_ibm>)
+
+=item * OpenAI Whisper API (C<recognize_openai>)
+
+=item * Groq Whisper API (C<recognize_groq>)
+
+=back
+
+=head1 UNIMPLEMENTED
+
+Offline backends (PocketSphinx, Vosk, local Whisper) and several other
+features are not yet implemented.  See F<TODO.md>.
+
+=head1 LICENSE
+
+BSD 3-Clause License.
+
+=cut

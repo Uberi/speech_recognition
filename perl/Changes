@@ -1,0 +1,14 @@
+Revision history for Speech-Recognition (Perl)
+
+0.01  2026-03-20
+    - Initial Perl port of the Python SpeechRecognition library.
+    - Core classes: Recognizer, AudioData, AudioFile, Microphone.
+    - Exception hierarchy matching the Python original.
+    - Online recognition backends: Google (legacy), Wit.ai, Microsoft Azure,
+      Microsoft Bing (legacy), Houndify, IBM Watson, OpenAI Whisper API,
+      Groq Whisper API.
+    - WAV and AIFF read/write in pure Perl.
+    - FLAC read/write via the 'flac' command-line tool.
+    - Microphone capture via 'arecord' or 'sox rec'.
+    - Background listening via Perl threads.
+    - Inline Perldoc documentation throughout.
