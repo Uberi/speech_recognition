@@ -1,0 +1,114 @@
+package Speech::Recognition::Recognizer::_Base;
+
+use v5.36;
+use Carp qw(croak);
+use LWP::UserAgent ();
+use HTTP::Request  ();
+
+our $VERSION = '0.01';
+
+=head1 NAME
+
+Speech::Recognition::Recognizer::_Base - Shared helpers for recognition backends
+
+=head1 DESCRIPTION
+
+Internal module.  Not for direct use.
+
+=cut
+
+# ---------------------------------------------------------------------------
+# JSON (prefer JSON::XS for speed; fall back to JSON::PP from core)
+# ---------------------------------------------------------------------------
+
+my $_json_decode;
+my $_json_encode;
+
+BEGIN {
+    if ( eval { require JSON::XS; 1 } ) {
+        $_json_decode = \&JSON::XS::decode_json;
+        $_json_encode = \&JSON::XS::encode_json;
+    }
+    else {
+        require JSON::PP;
+        $_json_decode = \&JSON::PP::decode_json;
+        $_json_encode = \&JSON::PP::encode_json;
+    }
+}
+
+sub decode_json ($text)  { $_json_decode->($text) }
+sub encode_json ($data)  { $_json_encode->($data) }
+
+# ---------------------------------------------------------------------------
+# LWP user-agent factory
+# ---------------------------------------------------------------------------
+
+sub make_ua ( $timeout = 30 ) {
+    my $ver = $Speech::Recognition::VERSION // '0.01';
+    my $ua = LWP::UserAgent->new(
+        timeout => $timeout // 30,
+        agent   => "Speech-Recognition-Perl/$ver",
+    );
+    $ua->env_proxy;
+    return $ua;
+}
+
+# ---------------------------------------------------------------------------
+# Convenience: throw typed exceptions
+# ---------------------------------------------------------------------------
+
+sub throw_request ($msg) {
+    require Speech::Recognition::Exception;
+    Speech::Recognition::Exception::RequestError->throw($msg);
+}
+
+sub throw_unknown {
+    require Speech::Recognition::Exception;
+    Speech::Recognition::Exception::UnknownValueError->throw();
+}
+
+# ---------------------------------------------------------------------------
+# Check and return audio_data
+# ---------------------------------------------------------------------------
+
+sub assert_audio ($audio_data) {
+    require Speech::Recognition::AudioData;
+    croak 'audio_data must be a Speech::Recognition::AudioData instance'
+        unless ref $audio_data
+        && $audio_data->isa('Speech::Recognition::AudioData');
+    return $audio_data;
+}
+
+# ---------------------------------------------------------------------------
+# Multipart form-data builder (for Whisper-style APIs)
+# ---------------------------------------------------------------------------
+
+# Returns (content_type_header, body_bytes) for a multipart/form-data POST.
+#
+# $fields is a list of [name, value] pairs.
+# $files  is a list of [name, filename, mime_type, data] tuples.
+#
+sub build_multipart ( $fields, $files ) {
+    my $boundary = sprintf 'Boundary%016x', int( rand(2**64) );
+    my $body     = '';
+
+    for my $f (@$fields) {
+        my ( $name, $value ) = @$f;
+        $body .= "--$boundary\r\n"
+            . "Content-Disposition: form-data; name=\"$name\"\r\n\r\n"
+            . "$value\r\n";
+    }
+
+    for my $f (@$files) {
+        my ( $name, $filename, $mime, $data ) = @$f;
+        $body .= "--$boundary\r\n"
+            . "Content-Disposition: form-data; name=\"$name\"; filename=\"$filename\"\r\n"
+            . "Content-Type: $mime\r\n\r\n"
+            . $data . "\r\n";
+    }
+
+    $body .= "--$boundary--\r\n";
+    return ( "multipart/form-data; boundary=$boundary", $body );
+}
+
+1;
