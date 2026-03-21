@@ -1,33 +1,74 @@
-SpeechRecognition
-=================
+Speech::Recognition — Perl Port
+================================
 
-.. image:: https://img.shields.io/pypi/v/SpeechRecognition.svg
-    :target: https://pypi.python.org/pypi/SpeechRecognition/
-    :alt: Latest Version
+This is a fork of `Uberi/speech_recognition <https://github.com/Uberi/speech_recognition>`_
+reimplemented as a CPAN-compliant Perl library.
 
-.. image:: https://img.shields.io/pypi/status/SpeechRecognition.svg
-    :target: https://pypi.python.org/pypi/SpeechRecognition/
-    :alt: Development Status
+The Perl library lives in ``perl/`` and is the primary focus of this repository.
+The original Python source has been moved to ``python/`` for reference while
+remaining todos (offline backends) are completed; it will be removed once the
+port is feature-complete.
 
-.. image:: https://img.shields.io/pypi/pyversions/SpeechRecognition.svg
-    :target: https://pypi.python.org/pypi/SpeechRecognition/
-    :alt: Supported Python Versions
+Quick Start
+-----------
 
-.. image:: https://img.shields.io/pypi/l/SpeechRecognition.svg
-    :target: https://pypi.python.org/pypi/SpeechRecognition/
-    :alt: License
+.. code-block:: perl
 
-.. image:: https://api.travis-ci.org/Uberi/speech_recognition.svg?branch=master
-    :target: https://travis-ci.org/Uberi/speech_recognition
-    :alt: Continuous Integration Test Results
+    use Speech::Recognition;
 
-.. image:: https://deepwiki.com/badge.svg
-    :target: https://deepwiki.com/Uberi/speech_recognition
-    :alt: Ask DeepWiki
+    my $r = Speech::Recognition::Recognizer->new;
 
-.. image:: https://www.gstatic.com/_/boq-sdlc-agents-ui/_/r/Mvosg4klCA4.svg
-    :target: https://codewiki.google/github.com/Uberi/speech_recognition
-    :alt: Ask Code Wiki
+    my $audio;
+    Speech::Recognition::AudioFile->new(filename => 'speech.wav')->with(sub ($src) {
+        $audio = $r->record($src);
+    });
+
+    print $r->recognize_google($audio), "\n";
+
+Installation
+------------
+
+.. code-block:: bash
+
+    cd perl
+    perl Makefile.PL
+    make
+    make test
+    make install
+
+Supported Backends
+------------------
+
+- Google Speech API v2 (legacy, no key required for light use)
+- Wit.ai
+- Microsoft Azure Speech
+- Microsoft Bing Speech (legacy)
+- Houndify
+- IBM Watson Speech to Text
+- OpenAI Whisper API
+- Groq Whisper API
+
+Audio Sources
+-------------
+
+- WAV (PCM), AIFF/AIFF-C, FLAC files via ``Speech::Recognition::AudioFile``
+- Microphone via ``arecord`` or ``sox`` — ``Speech::Recognition::Microphone``
+
+Example Audio Files
+-------------------
+
+``examples/english.wav``, ``examples/french.aiff``, and ``examples/chinese.flac``
+are included for testing.  Run the demo script::
+
+    cd perl
+    perl try_transcribe.pl
+
+Original Python Library
+-----------------------
+
+The upstream Python ``SpeechRecognition`` library is preserved in ``python/``
+for reference.  See ``python/README.rst`` (renamed from the original root
+README) for its original documentation.
     :height: 20px
 
 .. image:: https://img.shields.io/badge/docs-Mintlify-0ea5e9?logo=mintlify&logoColor=white
