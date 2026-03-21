@@ -27,13 +27,15 @@ Python uses the `vosk` PyPI package, which wraps `libvosk`.
   the `vosk-transcriber` CLI (requires installing the Python `vosk` package
   separately).
 
-### 1.3 OpenAI Whisper (local model)
+### ~~1.3 OpenAI Whisper (local model)~~ ✅ DONE
 
-Python uses `openai-whisper` and `faster-whisper` (CTranslate2).  Both
-require heavy ML dependencies unlikely to have pure-Perl equivalents.
+~~Python uses `openai-whisper` and `faster-whisper` (CTranslate2).  Both
+require heavy ML dependencies unlikely to have pure-Perl equivalents.~~
 
-- **Path forward**: Shell out to a Python script that runs the model, or use
-  the OpenAI/Groq *API* backends (already implemented) instead.
+**Implemented** in `Speech::Recognition::Recognizer::Whisper`.  Shells out to
+the `whisper` CLI (openai-whisper) or `whisper-cpp` binary.  No Python
+dependency at runtime.  Throws `SetupError` with installation instructions if
+neither binary is found.  Use via `$r->recognize_whisper_local($audio, ...)`.
 
 ---
 
@@ -50,27 +52,28 @@ or `sox rec`.
 
 ---
 
-## 3. Snowboy Hotword Detection
+## 3. ~~Snowboy Hotword Detection~~ — DROPPED
 
-Python integrates with Snowboy, a C library with Python bindings.
+~~Python integrates with Snowboy, a C library with Python bindings.~~
 
-- No CPAN binding exists.
-- **Path forward**: Snowboy is largely unmaintained (the company closed).
-  Consider using `FFI::Platypus` against the Snowboy `.so`, or replace with
-  an alternative wake-word detector.
+Snowboy is **unmaintained** (the company dissolved ~2020) and the binaries are
+outdated.  This item is dropped.  Modern alternatives:
+
+- **openWakeWord** — https://github.com/dscripka/openWakeWord
+- **Porcupine** (Picovoice) — https://github.com/Picovoice/porcupine
 
 ---
 
-## 4. AssemblyAI Backend
+## ~~4. AssemblyAI Backend~~ ✅ DONE
 
-Python's `recognize_assemblyai` uploads a file, starts an async job, and
-polls for the result.
+**Implemented** in `Speech::Recognition::Recognizer::AssemblyAI`.  Matches the
+Python `recognize_assemblyai` behaviour: the first call uploads audio and
+throws `TranscriptionNotReady` (with `job_name` set to the transcription ID);
+subsequent calls with `audio_data => undef, job_name => $id` poll status,
+returning the transcript when complete, re-throwing `TranscriptionNotReady`
+while processing, or throwing `TranscriptionFailed` on error.
 
-- **Status**: Stubbed out; the HTTP mechanics are straightforward using LWP.
-- **Path forward**: Implement `Speech::Recognition::Recognizer::AssemblyAI`
-  following the same pattern as the other backends.  The polling loop should
-  `die` with `TranscriptionNotReady` until the job completes, matching the
-  Python behaviour.
+Use via `$r->recognize_assemblyai($audio, api_token => $token)`.
 
 ---
 
@@ -84,35 +87,40 @@ Python uses `boto3` (AWS SDK).
 
 ---
 
-## 6. IBM Watson – URL
+## ~~6. IBM Watson – URL~~ ✅ DONE
 
-The IBM Watson Speech-to-Text endpoint URL changed after the Python library
+~~The IBM Watson Speech-to-Text endpoint URL changed after the Python library
 was written.  The current Perl implementation uses the `us-south` service URL.
 A future improvement should accept the instance URL as an argument (it varies
-per IBM account).
+per IBM account).~~
+
+**Fixed.**  `Speech::Recognition::Recognizer::IBM` now accepts an `endpoint`
+argument (default: `https://api.us-south.speech-to-text.watson.cloud.ibm.com`).
+Pass your own instance URL to override.
 
 ---
 
-## 7. Google Cloud Speech API
+## ~~7. Google Cloud Speech API~~ ✅ DONE
 
-Python uses the `google-cloud-speech` SDK, which wraps gRPC.
+~~Python uses the `google-cloud-speech` SDK, which wraps gRPC.~~
 
-- CPAN has no maintained Google Cloud Speech binding.
-- **Path forward**: Use the REST API directly with LWP.  The REST endpoint is
-  documented at
-  https://cloud.google.com/speech-to-text/docs/reference/rest/v1/speech/recognize.
-  Authentication requires a service-account JSON key and the `googleapis` OAuth
-  flow (implement with LWP + JSON).
+**Implemented** in `Speech::Recognition::Recognizer::GoogleCloud`.  Uses the
+Speech-to-Text V1 REST API with OAuth2 service-account authentication (RS256
+JWT — requires `Crypt::OpenSSL::RSA`).  Supports `language`, `model`,
+`use_enhanced`, `preferred_phrases`, `show_all`.
+
+Use via `$r->recognize_google_cloud($audio, credentials_json => $path_or_json)`.
 
 ---
 
-## 8. High-Quality Sample-Rate Conversion
+## ~~8. High-Quality Sample-Rate Conversion~~ ✅ DONE
 
-The current pure-Perl `_ratecv` function uses linear interpolation.  For
-production use this may introduce audible artifacts.
+~~The current pure-Perl `_ratecv` function uses linear interpolation.  For
+production use this may introduce audible artifacts.~~
 
-- **Path forward**: Shell out to `sox` for resampling, or bind to
-  `libsamplerate` via `FFI::Platypus`.
+**Fixed.**  `AudioData::_ratecv` now checks for `sox` on `$PATH` and delegates
+resampling to it when available.  Falls back to pure-Perl linear interpolation
+when `sox` is absent.
 
 ---
 
@@ -124,11 +132,17 @@ production use this may introduce audible artifacts.
 
 ---
 
-## 10. Tests for Online Backends
+## ~~10. Tests for Online Backends~~ ✅ DONE
 
-The test suite (`t/`) does not include integration tests for online backends
+~~The test suite (`t/`) does not include integration tests for online backends
 (they require real API keys and network access).  Consider adding mock-based
-tests using `Test::LWP::UserAgent` or similar.
+tests using `Test::LWP::UserAgent` or similar.~~
+
+**Implemented** in `t/20-backends-mock.t`.  Uses `Test::LWP::UserAgent` to
+mock HTTP at the LWP level.  Covers Google, Wit.ai, IBM Watson (including
+custom endpoint), OpenAI Whisper, AssemblyAI (submit + poll + error paths),
+and Groq — testing success, `show_all`, request errors, and
+`UnknownValueError` paths without any real network traffic.
 
 ---
 

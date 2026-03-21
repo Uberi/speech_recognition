@@ -31,6 +31,10 @@ one at L<https://cloud.ibm.com/>.
 
 =item * C<language> - language model code, default C<en-US_BroadbandModel>
 
+=item * C<endpoint> - IBM Watson service URL (default is the C<us-south> URL
+C<https://api.us-south.speech-to-text.watson.cloud.ibm.com>).  Override this
+with the instance URL shown in your IBM Cloud service credentials.
+
 =item * C<show_all> - return the raw JSON response instead of the transcript
 
 =back
@@ -43,6 +47,7 @@ sub recognize ( $self, $audio_data, %args ) {
     my $key      = $args{key}      or Speech::Recognition::Recognizer::_Base::throw_setup('IBM API key is required (key => ...)');
     my $language = $args{language} // 'en-US';
     my $show_all = $args{show_all} // 0;
+    my $endpoint = $args{endpoint} // 'https://api.us-south.speech-to-text.watson.cloud.ibm.com';
 
     my $flac = $audio_data->get_flac_data(
         $audio_data->sample_rate < 16000 ? ( convert_rate  => 16000 ) : (),
@@ -52,8 +57,7 @@ sub recognize ( $self, $audio_data, %args ) {
     # IBM uses a <language>_BroadbandModel naming convention
     my $model = $language =~ /_/ ? $language : "${language}_BroadbandModel";
 
-    my $url = "https://api.us-south.speech-to-text.watson.cloud.ibm.com"
-        . "/v1/recognize?model=$model";
+    my $url = "$endpoint/v1/recognize?model=$model";
 
     my $auth = encode_base64( "apikey:$key", '' );    # no newline
 

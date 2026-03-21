@@ -36,6 +36,9 @@ for my $mod (qw(
     Speech::Recognition::Recognizer::IBM
     Speech::Recognition::Recognizer::OpenAI
     Speech::Recognition::Recognizer::Groq
+    Speech::Recognition::Recognizer::AssemblyAI
+    Speech::Recognition::Recognizer::GoogleCloud
+    Speech::Recognition::Recognizer::Whisper
 )) {
     require_ok($mod);
 }

@@ -514,6 +514,79 @@ sub recognize_groq ( $self, $audio_data, %args ) {
     );
 }
 
+=head2 recognize_assemblyai($audio_data, %args)
+
+Recognizes speech using the AssemblyAI API.
+
+Because transcription is asynchronous, the first call submits the job and
+immediately throws a C<TranscriptionNotReady> exception whose C<job_name>
+holds the transcription ID.  Poll for the result by calling again with
+C<audio_data =E<gt> undef> and C<job_name =E<gt> $id>.
+
+    # Submit
+    eval { $r->recognize_assemblyai($audio, api_token => $token) };
+    my $job_id = $@->job_name if ref $@ && $@->isa('..::TranscriptionNotReady');
+
+    # Poll
+    my $text = $r->recognize_assemblyai(undef,
+        api_token => $token,
+        job_name  => $job_id,
+    );
+
+See L<Speech::Recognition::Recognizer::AssemblyAI>.
+
+=cut
+
+sub recognize_assemblyai ( $self, $audio_data, %args ) {
+    require Speech::Recognition::Recognizer::AssemblyAI;
+    return Speech::Recognition::Recognizer::AssemblyAI::recognize(
+        $self, $audio_data, %args
+    );
+}
+
+=head2 recognize_google_cloud($audio_data, %args)
+
+Recognizes speech using the Google Cloud Speech-to-Text V1 REST API.
+
+    my $text = $r->recognize_google_cloud($audio,
+        credentials_json => '/path/to/service-account.json',
+        language         => 'en-US',
+    );
+
+See L<Speech::Recognition::Recognizer::GoogleCloud>.
+
+=cut
+
+sub recognize_google_cloud ( $self, $audio_data, %args ) {
+    require Speech::Recognition::Recognizer::GoogleCloud;
+    return Speech::Recognition::Recognizer::GoogleCloud::recognize(
+        $self, $audio_data, %args
+    );
+}
+
+=head2 recognize_whisper_local($audio_data, %args)
+
+Recognizes speech locally using the C<whisper> or C<whisper-cpp> binary.
+No API key or internet connection is required at inference time.  C<whisper-cpp>
+supports hardware acceleration via Metal (Apple Silicon), CUDA (NVIDIA), and
+other backends with no Python dependency.
+
+    my $text = $r->recognize_whisper_local($audio,
+        model    => 'base',
+        language => 'en',
+    );
+
+See L<Speech::Recognition::Recognizer::Whisper>.
+
+=cut
+
+sub recognize_whisper_local ( $self, $audio_data, %args ) {
+    require Speech::Recognition::Recognizer::Whisper;
+    return Speech::Recognition::Recognizer::Whisper::recognize(
+        $self, $audio_data, %args
+    );
+}
+
 # ---------------------------------------------------------------------------
 # Utility
 # ---------------------------------------------------------------------------

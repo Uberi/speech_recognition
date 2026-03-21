@@ -1,5 +1,31 @@
 Revision history for Speech-Recognition (Perl)
 
+0.02  2026-03-21
+    - NEW: Speech::Recognition::Recognizer::AssemblyAI — async upload/poll
+      backend matching Python's recognize_assemblyai.  Throws
+      TranscriptionNotReady on submission (with job_name) and on re-poll until
+      complete; throws TranscriptionFailed on error. (TODO #4)
+    - NEW: Speech::Recognition::Recognizer::GoogleCloud — Google Cloud
+      Speech-to-Text V1 REST backend.  Authenticates via a service-account
+      JSON key using a hand-rolled RS256 JWT (requires Crypt::OpenSSL::RSA).
+      Supports language, preferred_phrases, model, use_enhanced, show_all.
+      (TODO #7)
+    - NEW: Speech::Recognition::Recognizer::Whisper — local offline
+      transcription via the 'whisper' or 'whisper-cpp' CLI.  No Python
+      dependency at runtime; throws SetupError if neither binary is found.
+      Supports model, language, task, show_all. (TODO #1.3)
+    - FIX: IBM Watson backend now accepts an 'endpoint' argument so callers
+      can supply their own instance URL instead of being locked to the
+      us-south region. (TODO #6)
+    - IMPROVEMENT: AudioData::_ratecv now delegates to 'sox' for sample-rate
+      conversion when sox is available, falling back to pure-Perl linear
+      interpolation only when sox is absent. (TODO #8)
+    - NEW: t/20-backends-mock.t — mock HTTP tests for Google, Wit, IBM,
+      OpenAI, AssemblyAI, and Groq backends using Test::LWP::UserAgent.
+      Covers success, show_all, error, and UnknownValue paths. (TODO #10)
+    - DOCS: Snowboy section updated to note the project is unmaintained and
+      to point to openWakeWord and Porcupine as modern alternatives. (TODO #3)
+
 0.01  2026-03-20
     - Initial Perl port of the Python SpeechRecognition library.
     - Core classes: Recognizer, AudioData, AudioFile, Microphone.

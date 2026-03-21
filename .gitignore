@@ -18,6 +18,7 @@ downloads/
 eggs/
 .eggs/
 lib/
+!perl/lib/
 lib64/
 parts/
 sdist/

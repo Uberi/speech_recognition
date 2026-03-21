@@ -5,6 +5,7 @@ use Carp      qw(croak);
 use POSIX     qw(floor);
 use File::Temp qw(tempfile);
 use IPC::Open3 ();
+use Speech::Recognition::Recognizer::_Base ();
 
 our $VERSION = '0.01';
 
@@ -286,8 +287,16 @@ sub _rms ( $data, $width ) {
 
 # Linear-interpolation sample-rate conversion (like audioop.ratecv).
 # Returns resampled data as raw bytes.
+# NOTE: $data is expected in "signed" form at this point (8-bit has already
+# had its unsigned bias removed by the caller in get_raw_data).
 sub _ratecv ( $data, $width, $inrate, $outrate ) {
     return $data if $inrate == $outrate;
+
+    # Prefer sox for higher-quality resampling when it is available
+    my $sox = _find_sox();
+    if ( $sox ) {
+        return _ratecv_via_sox( $sox, $data, $width, $inrate, $outrate );
+    }
 
     my @in = $width == 3 ? _unpack24($data) : unpack( _pack_fmt($width), $data );
     my $n    = @in or return $data;
@@ -312,6 +321,56 @@ sub _ratecv ( $data, $width, $inrate, $outrate ) {
     # Back to unsigned
     @out = map { $_ < 0 ? $_ + $mod : $_ } @out;
     return $width == 3 ? _pack24(@out) : pack( _pack_fmt($width), @out );
+}
+
+# Resample using sox (higher quality than linear interpolation).
+# $data is signed raw PCM (8-bit data has already had its unsigned bias removed).
+# Returns signed raw PCM at the new rate.
+sub _ratecv_via_sox ( $sox, $data, $width, $inrate, $outrate ) {
+    # WAV requires 8-bit to be unsigned (add bias back for the WAV container)
+    my $wav_raw = $width == 1 ? _bias( $data, 1, 128 ) : $data;
+    my $wav = _make_wav( $wav_raw, $inrate, $width );
+
+    my ( $in_fh,  $in_file  ) = tempfile( SUFFIX => '.wav', UNLINK => 1 );
+    my ( $out_fh, $out_file ) = tempfile( SUFFIX => '.wav', UNLINK => 1 );
+    binmode $in_fh;
+    print {$in_fh} $wav;
+    close $in_fh;
+    close $out_fh;
+
+    system( $sox, $in_file, '-r', $outrate, $out_file ) == 0
+        or croak "sox resampling failed (exit code " . ( $? >> 8 ) . ")";
+
+    open my $fh, '<', $out_file or croak "Cannot read sox output '$out_file': $!";
+    binmode $fh;
+    my $out_wav = do { local $/; <$fh> };
+    close $fh;
+
+    my $out_raw = _extract_wav_pcm($out_wav);
+
+    # Convert 8-bit unsigned output back to signed
+    $out_raw = _bias( $out_raw, 1, -128 ) if $width == 1;
+    return $out_raw;
+}
+
+# Parse a WAV file and return the raw PCM bytes from its data chunk.
+sub _extract_wav_pcm ($wav) {
+    my $pos = 12;    # skip RIFF/WAVE header
+    my $len = length $wav;
+    while ( $pos + 8 <= $len ) {
+        my $tag  = substr( $wav, $pos, 4 );
+        my $size = unpack 'V', substr( $wav, $pos + 4, 4 );
+        $pos += 8;
+        return substr( $wav, $pos, $size ) if $tag eq 'data';
+        $pos += $size;
+        $pos++ if $size % 2;    # RIFF chunks are word-aligned
+    }
+    croak 'data chunk not found in WAV output from sox';
+}
+
+# Find sox on PATH; return the path or undef.
+sub _find_sox () {
+    return Speech::Recognition::Recognizer::_Base::which('sox');
 }
 
 # Convert between sample widths (like audioop.lin2lin).
@@ -508,8 +567,8 @@ convention).  Internally they are treated as signed for arithmetic.
 
 =item *
 
-Sample-rate conversion uses linear interpolation.  For high-quality
-resampling consider post-processing with C<sox>.
+Sample-rate conversion uses sox when it is available (C<apt-get install sox>)
+for high-quality resampling.  Without sox, linear interpolation is used.
 
 =item *
 

@@ -26,7 +26,8 @@ WriteMakefile(
     },
 
     TEST_REQUIRES => {
-        'Test::More' => '1.00',
+        'Test::More'            => '1.00',
+        'Test::LWP::UserAgent'  => '0',     # for t/20-backends-mock.t
     },
 
     META_MERGE => {
@@ -42,5 +43,12 @@ WriteMakefile(
             },
         },
         x_provides_scripts => {},
+        # Optional run-time dependencies (loaded only by specific backends)
+        optional_features => {
+            google_cloud => {
+                description => 'Google Cloud Speech-to-Text backend (GoogleCloud.pm)',
+                prereqs     => { runtime => { requires => { 'Crypt::OpenSSL::RSA' => 0 } } },
+            },
+        },
     },
 );
