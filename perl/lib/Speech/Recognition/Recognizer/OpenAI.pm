@@ -57,22 +57,23 @@ C<gpt-4o-transcribe> and C<gpt-4o-mini-transcribe>.
 
 =cut
 
-use constant VALID_MODELS => {
-    'whisper-1'              => 1,
-    'gpt-4o-transcribe'      => 1,
-    'gpt-4o-mini-transcribe' => 1,
-};
-
 sub recognize ( $self, $audio_data, %args ) {
+    state %valid_models = map { $_ => 1 } qw(
+        whisper-1
+        gpt-4o-transcribe
+        gpt-4o-mini-transcribe
+    );
+
     Speech::Recognition::Recognizer::_Base::assert_audio($audio_data);
 
     my $api_key  = $args{api_key} // $ENV{OPENAI_API_KEY}
-        or die 'OpenAI API key required (api_key arg or OPENAI_API_KEY env var)';
+        or Speech::Recognition::Recognizer::_Base::throw_setup(
+            'OpenAI API key required (api_key arg or OPENAI_API_KEY env var)');
     my $model    = $args{model}    // 'whisper-1';
     my $show_all = $args{show_all} // 0;
 
-    die "Unknown model '$model'"
-        unless exists VALID_MODELS->{$model};
+    Speech::Recognition::Recognizer::_Base::throw_setup("Unknown model '$model'")
+        unless exists $valid_models{$model};
 
     my $wav = $audio_data->get_wav_data;
 

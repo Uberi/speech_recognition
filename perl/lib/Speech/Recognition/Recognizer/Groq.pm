@@ -56,21 +56,22 @@ C<whisper-large-v3-turbo> (default), C<whisper-large-v3>.
 
 =cut
 
-use constant VALID_MODELS => {
-    'whisper-large-v3-turbo' => 1,
-    'whisper-large-v3'       => 1,
-};
-
 sub recognize ( $self, $audio_data, %args ) {
+    state %valid_models = map { $_ => 1 } qw(
+        whisper-large-v3-turbo
+        whisper-large-v3
+    );
+
     Speech::Recognition::Recognizer::_Base::assert_audio($audio_data);
 
     my $api_key  = $args{api_key} // $ENV{GROQ_API_KEY}
-        or die 'Groq API key required (api_key arg or GROQ_API_KEY env var)';
+        or Speech::Recognition::Recognizer::_Base::throw_setup(
+            'Groq API key required (api_key arg or GROQ_API_KEY env var)');
     my $model    = $args{model}    // 'whisper-large-v3-turbo';
     my $show_all = $args{show_all} // 0;
 
-    die "Unknown Groq model '$model'"
-        unless exists VALID_MODELS->{$model};
+    Speech::Recognition::Recognizer::_Base::throw_setup("Unknown Groq model '$model'")
+        unless exists $valid_models{$model};
 
     my $wav = $audio_data->get_wav_data;
 

@@ -40,7 +40,7 @@ one at L<https://cloud.ibm.com/>.
 sub recognize ( $self, $audio_data, %args ) {
     Speech::Recognition::Recognizer::_Base::assert_audio($audio_data);
 
-    my $key      = $args{key}      or die 'IBM API key is required (key => ...)';
+    my $key      = $args{key}      or Speech::Recognition::Recognizer::_Base::throw_setup('IBM API key is required (key => ...)');
     my $language = $args{language} // 'en-US';
     my $show_all = $args{show_all} // 0;
 

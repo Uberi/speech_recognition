@@ -67,6 +67,38 @@ sub throw_unknown {
     Speech::Recognition::Exception::UnknownValueError->throw();
 }
 
+sub throw_setup ($msg) {
+    require Speech::Recognition::Exception;
+    Speech::Recognition::Exception::SetupError->throw($msg);
+}
+
+# ---------------------------------------------------------------------------
+# URL encoding
+# ---------------------------------------------------------------------------
+
+sub urlencode (%params) {
+    join '&', map {
+        _pct_encode($_) . '=' . _pct_encode( $params{$_} )
+    } sort keys %params;
+}
+
+sub _pct_encode ($s) {
+    $s =~ s/([^A-Za-z0-9\-_.~])/sprintf('%%%02X', ord($1))/ge;
+    return $s;
+}
+
+# ---------------------------------------------------------------------------
+# Find an executable on PATH
+# ---------------------------------------------------------------------------
+
+sub which ($name) {
+    for my $dir ( split /:/, ( $ENV{PATH} // '/usr/local/bin:/usr/bin:/bin' ) ) {
+        my $p = "$dir/$name";
+        return $p if -f $p && -x $p;
+    }
+    return undef;
+}
+
 # ---------------------------------------------------------------------------
 # Check and return audio_data
 # ---------------------------------------------------------------------------

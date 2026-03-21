@@ -44,8 +44,8 @@ Only English is supported.
 sub recognize ( $self, $audio_data, %args ) {
     Speech::Recognition::Recognizer::_Base::assert_audio($audio_data);
 
-    my $client_id  = $args{client_id}  or die 'Houndify client_id is required';
-    my $client_key = $args{client_key} or die 'Houndify client_key is required';
+    my $client_id  = $args{client_id}  or Speech::Recognition::Recognizer::_Base::throw_setup('Houndify client_id is required');
+    my $client_key = $args{client_key} or Speech::Recognition::Recognizer::_Base::throw_setup('Houndify client_key is required');
     my $show_all   = $args{show_all}  // 0;
 
     my $sr  = $audio_data->sample_rate;

@@ -2,6 +2,7 @@ package Speech::Recognition::Microphone;
 
 use v5.36;
 use Carp qw(croak);
+use Speech::Recognition::Recognizer::_Base ();
 
 our $VERSION = '0.01';
 
@@ -123,7 +124,7 @@ list if C<arecord -l> is available.  Returns an empty list otherwise.
 
 sub list_microphone_names ($class) {
     my @names;
-    if ( my $arecord = _which('arecord') ) {
+    if ( my $arecord = Speech::Recognition::Recognizer::_Base::which('arecord') ) {
         my @lines = `$arecord -l 2>/dev/null`;
         for my $line (@lines) {
             if ( $line =~ /card\s+\d+:.*?(\[.+?\])/ ) {
@@ -175,7 +176,7 @@ sub open ($self) {
     croak 'Microphone is already open' if defined $self->{stream};
 
     my $cmd   = $self->{_backend}{cmd};
-    my $exe   = _which($cmd) or croak "Cannot find '$cmd' on PATH";
+    my $exe   = Speech::Recognition::Recognizer::_Base::which($cmd) or croak "Cannot find '$cmd' on PATH";
     my @args  = $self->{_backend}{args}->( $self->{SAMPLE_RATE}, $self->{SAMPLE_WIDTH} );
 
     my $pid   = open my $fh, '-|', $exe, @args
@@ -254,15 +255,7 @@ use v5.36;
 
 sub _find_backend {
     for my $b (@BACKENDS) {
-        return $b if _which( $b->{cmd} );
-    }
-    return undef;
-}
-
-sub _which ($name) {
-    for my $dir ( split /:/, ( $ENV{PATH} // '/usr/local/bin:/usr/bin:/bin' ) ) {
-        my $p = "$dir/$name";
-        return $p if -f $p && -x $p;
+        return $b if Speech::Recognition::Recognizer::_Base::which( $b->{cmd} );
     }
     return undef;
 }

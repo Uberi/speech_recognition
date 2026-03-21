@@ -87,19 +87,19 @@ use overload '""' => sub ($self, @) { ref($self) . ': ' . $self->{message} };
 # ---------------------------------------------------------------------------
 
 package Speech::Recognition::Exception::SetupError;
-our @ISA     = ('Speech::Recognition::Exception');
+use parent -norequire, 'Speech::Recognition::Exception';
 our $VERSION = '0.01';
 
 package Speech::Recognition::Exception::WaitTimeoutError;
-our @ISA     = ('Speech::Recognition::Exception');
+use parent -norequire, 'Speech::Recognition::Exception';
 our $VERSION = '0.01';
 
 package Speech::Recognition::Exception::RequestError;
-our @ISA     = ('Speech::Recognition::Exception');
+use parent -norequire, 'Speech::Recognition::Exception';
 our $VERSION = '0.01';
 
 package Speech::Recognition::Exception::UnknownValueError;
-our @ISA     = ('Speech::Recognition::Exception');
+use parent -norequire, 'Speech::Recognition::Exception';
 our $VERSION = '0.01';
 
 sub new ( $class, $message = 'Could not understand audio' ) {
@@ -107,7 +107,7 @@ sub new ( $class, $message = 'Could not understand audio' ) {
 }
 
 package Speech::Recognition::Exception::TranscriptionNotReady;
-our @ISA     = ('Speech::Recognition::Exception');
+use parent -norequire, 'Speech::Recognition::Exception';
 our $VERSION = '0.01';
 
 =head2 new($message, job_name => $name, file_key => $key)
@@ -128,7 +128,7 @@ sub job_name ($self) { return $self->{job_name} }
 sub file_key ($self) { return $self->{file_key} }
 
 package Speech::Recognition::Exception::TranscriptionFailed;
-our @ISA     = ('Speech::Recognition::Exception');
+use parent -norequire, 'Speech::Recognition::Exception';
 our $VERSION = '0.01';
 
 sub new ( $class, $message = 'Transcription failed', %args ) {

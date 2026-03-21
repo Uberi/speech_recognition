@@ -46,7 +46,7 @@ L<https://portal.azure.com/>.
 sub recognize ( $self, $audio_data, %args ) {
     Speech::Recognition::Recognizer::_Base::assert_audio($audio_data);
 
-    my $key       = $args{key}       or die 'Azure subscription key is required (key => ...)';
+    my $key       = $args{key}       or Speech::Recognition::Recognizer::_Base::throw_setup('Azure subscription key is required (key => ...)');
     my $language  = $args{language}  // 'en-US';
     my $location  = $args{location}  // 'westus';
     my $profanity = $args{profanity} // 'masked';
@@ -57,9 +57,9 @@ sub recognize ( $self, $audio_data, %args ) {
 
     my $wav = $audio_data->get_wav_data( convert_rate => 16000, convert_width => 2 );
 
-    my $query = _urlencode(
-        language => $language,
-        format   => 'detailed',
+    my $query = Speech::Recognition::Recognizer::_Base::urlencode(
+        language  => $language,
+        format    => 'detailed',
         profanity => $profanity,
     );
     my $url = "https://$location.stt.speech.microsoft.com"
@@ -136,17 +136,6 @@ sub _get_access_token ( $self, $key, $location ) {
     my $token = $res->content;
     $cache->{$key} = { token => $token, expires => $now + 540 };  # 10 min - 1 min buffer
     return $token;
-}
-
-sub _urlencode (%params) {
-    join '&', map {
-        _enc($_) . '=' . _enc( $params{$_} )
-    } sort keys %params;
-}
-
-sub _enc ($s) {
-    $s =~ s/([^A-Za-z0-9\-_.~])/sprintf('%%%02X', ord($1))/ge;
-    return $s;
 }
 
 1;

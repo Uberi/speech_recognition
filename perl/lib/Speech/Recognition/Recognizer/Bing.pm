@@ -41,7 +41,7 @@ A Microsoft Cognitive Services subscription key is required.
 sub recognize ( $self, $audio_data, %args ) {
     Speech::Recognition::Recognizer::_Base::assert_audio($audio_data);
 
-    my $key      = $args{key}      or die 'Bing API key is required (key => ...)';
+    my $key      = $args{key}      or Speech::Recognition::Recognizer::_Base::throw_setup('Bing API key is required (key => ...)');
     my $language = $args{language} // 'en-US';
     my $show_all = $args{show_all} // 0;
 
@@ -52,7 +52,7 @@ sub recognize ( $self, $audio_data, %args ) {
     require POSIX;
     my $req_id = _uuid4();
 
-    my $query = _urlencode(
+    my $query = Speech::Recognition::Recognizer::_Base::urlencode(
         language  => $language,
         locale    => $language,
         requestid => $req_id,
@@ -128,17 +128,6 @@ sub _get_access_token ( $self, $key ) {
 sub _uuid4 {
     return sprintf '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
         map { int( rand(0x10000) ) } 1 .. 8;
-}
-
-sub _urlencode (%params) {
-    join '&', map {
-        _enc($_) . '=' . _enc( $params{$_} )
-    } sort keys %params;
-}
-
-sub _enc ($s) {
-    $s =~ s/([^A-Za-z0-9\-_.~])/sprintf('%%%02X', ord($1))/ge;
-    return $s;
 }
 
 1;

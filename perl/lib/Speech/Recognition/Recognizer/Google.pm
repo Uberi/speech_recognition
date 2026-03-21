@@ -74,9 +74,8 @@ sub recognize ( $self, $audio_data, %args ) {
         output   => 'json',
     );
 
-    require URI;
     my $url = 'https://www.google.com/speech-api/v2/recognize?'
-        . _urlencode(%params);
+        . Speech::Recognition::Recognizer::_Base::urlencode(%params);
 
     my $ua  = Speech::Recognition::Recognizer::_Base::make_ua(
         $self->{operation_timeout} // 30
@@ -118,17 +117,6 @@ sub recognize ( $self, $audio_data, %args ) {
     }
 
     Speech::Recognition::Recognizer::_Base::throw_unknown();
-}
-
-sub _urlencode (%params) {
-    join '&', map {
-        _encode_uri_component($_) . '=' . _encode_uri_component( $params{$_} )
-    } sort keys %params;
-}
-
-sub _encode_uri_component ($str) {
-    $str =~ s/([^A-Za-z0-9\-_.~])/sprintf('%%%02X', ord($1))/ge;
-    return $str;
 }
 
 1;

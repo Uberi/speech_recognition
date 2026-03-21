@@ -35,7 +35,7 @@ of just the transcript string
 sub recognize ( $self, $audio_data, %args ) {
     Speech::Recognition::Recognizer::_Base::assert_audio($audio_data);
 
-    my $key      = $args{key}      or die "Wit.ai API key is required (key => ...)";
+    my $key      = $args{key}      or Speech::Recognition::Recognizer::_Base::throw_setup('Wit.ai API key is required (key => ...)');
     my $show_all = $args{show_all} // 0;
 
     my $wav = $audio_data->get_wav_data(

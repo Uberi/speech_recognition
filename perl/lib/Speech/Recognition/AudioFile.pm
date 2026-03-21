@@ -316,7 +316,8 @@ sub _try_open_flac ( $self, $filename ) {
     CORE::close $fh;
     return 0 unless $magic eq 'fLaC';
 
-    my $flac = eval { _find_flac() } or return 0;
+    require Speech::Recognition::Recognizer::_Base;
+    my $flac = Speech::Recognition::Recognizer::_Base::which('flac') or return 0;
 
     my ( $tmp_fh, $tmp_wav ) = tempfile( SUFFIX => '.wav', UNLINK => 0 );
     CORE::close $tmp_fh;
@@ -366,14 +367,6 @@ sub _stereo_to_mono ( $data, $sw ) {
         push @mono, $m < 0 ? $m + $mod : $m;
     }
     return pack( $fmt, @mono );
-}
-
-sub _find_flac {
-    for my $dir ( split /:/, ( $ENV{PATH} // '/usr/local/bin:/usr/bin:/bin' ) ) {
-        my $exe = "$dir/flac";
-        return $exe if -f $exe && -x $exe;
-    }
-    croak "FLAC tool not found on PATH";
 }
 
 1;
