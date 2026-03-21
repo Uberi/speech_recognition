@@ -222,73 +222,82 @@ sub listen ( $self, $source, %args ) {
 
     my $elapsed = 0;
     my $buf     = '';
-
-    # Ring buffer of recent silence frames
+    my ( $pause_count, $phrase_count ) = ( 0, 0 );
     my @frames;
 
-    # Wait for speech to start
+    # Outer retry loop: keep trying until we get a phrase that is long enough
+    # (matches Python's _listen outer while loop).
     while (1) {
-        $elapsed += $spb;
-        if ( defined $timeout && $elapsed > $timeout ) {
-            Speech::Recognition::Exception::WaitTimeoutError->throw(
-                'listening timed out while waiting for phrase to start'
-            );
+        @frames = ();
+
+        # Wait for speech to start
+        while (1) {
+            $elapsed += $spb;
+            if ( defined $timeout && $elapsed > $timeout ) {
+                Speech::Recognition::Exception::WaitTimeoutError->throw(
+                    'listening timed out while waiting for phrase to start'
+                );
+            }
+
+            $buf = $source->{stream}->read( $source->{CHUNK} );
+            last unless length $buf;
+
+            push @frames, $buf;
+            shift @frames if @frames > $non_speaking_buf_count;
+
+            my $energy =
+                Speech::Recognition::AudioData::_rms( $buf, $source->{SAMPLE_WIDTH} );
+            last if $energy > $self->{energy_threshold};
+
+            if ( $self->{dynamic_energy_threshold} ) {
+                my $damping = $self->{dynamic_energy_adjustment_damping}**$spb;
+                my $target  = $energy * $self->{dynamic_energy_ratio};
+                $self->{energy_threshold} =
+                    $self->{energy_threshold} * $damping + $target * ( 1 - $damping );
+            }
         }
 
-        $buf = $source->{stream}->read( $source->{CHUNK} );
-        last unless length $buf;
+        # Record until silence
+        ( $pause_count, $phrase_count ) = ( 0, 0 );
+        my $phrase_start = $elapsed;
 
-        push @frames, $buf;
-        shift @frames if @frames > $non_speaking_buf_count;
+        while (1) {
+            $elapsed += $spb;
+            if ( defined $phrase_time_limit && $elapsed - $phrase_start > $phrase_time_limit ) {
+                last;
+            }
 
-        my $energy =
-            Speech::Recognition::AudioData::_rms( $buf, $source->{SAMPLE_WIDTH} );
-        last if $energy > $self->{energy_threshold};
+            $buf = $source->{stream}->read( $source->{CHUNK} );
+            last unless length $buf;
 
-        if ( $self->{dynamic_energy_threshold} ) {
-            my $damping = $self->{dynamic_energy_adjustment_damping}**$spb;
-            my $target  = $energy * $self->{dynamic_energy_ratio};
-            $self->{energy_threshold} =
-                $self->{energy_threshold} * $damping + $target * ( 1 - $damping );
+            push @frames, $buf;
+            $phrase_count++;
+
+            my $energy =
+                Speech::Recognition::AudioData::_rms( $buf, $source->{SAMPLE_WIDTH} );
+            if ( $energy > $self->{energy_threshold} ) {
+                $pause_count = 0;
+            }
+            else {
+                $pause_count++;
+            }
+            last if $pause_count > $pause_buf_count;
+
+            if ( $self->{dynamic_energy_threshold} ) {
+                my $damping = $self->{dynamic_energy_adjustment_damping}**$spb;
+                my $target  = $energy * $self->{dynamic_energy_ratio};
+                $self->{energy_threshold} =
+                    $self->{energy_threshold} * $damping + $target * ( 1 - $damping );
+            }
         }
+
+        # Check if the phrase is long enough; if so, stop retrying
+        # (matches Python: `if phrase_count >= phrase_buffer_count or len(buffer) == 0: break`)
+        $phrase_count -= $pause_count;
+        last if $phrase_count >= $phrase_buf_count || !length($buf);
     }
 
-    # Record until silence
-    my ( $pause_count, $phrase_count ) = ( 0, 0 );
-    my $phrase_start = $elapsed;
-
-    while (1) {
-        $elapsed += $spb;
-        if ( defined $phrase_time_limit && $elapsed - $phrase_start > $phrase_time_limit ) {
-            last;
-        }
-
-        $buf = $source->{stream}->read( $source->{CHUNK} );
-        last unless length $buf;
-
-        push @frames, $buf;
-        $phrase_count++;
-
-        my $energy =
-            Speech::Recognition::AudioData::_rms( $buf, $source->{SAMPLE_WIDTH} );
-        if ( $energy > $self->{energy_threshold} ) {
-            $pause_count = 0;
-        }
-        else {
-            $pause_count++;
-        }
-        last if $pause_count > $pause_buf_count;
-
-        if ( $self->{dynamic_energy_threshold} ) {
-            my $damping = $self->{dynamic_energy_adjustment_damping}**$spb;
-            my $target  = $energy * $self->{dynamic_energy_ratio};
-            $self->{energy_threshold} =
-                $self->{energy_threshold} * $damping + $target * ( 1 - $damping );
-        }
-    }
-
-    # Drop trailing silence
-    $phrase_count -= $pause_count;
+    # Drop trailing silence beyond non_speaking_duration
     my $excess = $pause_count - $non_speaking_buf_count;
     if ( $excess > 0 ) {
         splice @frames, -$excess;

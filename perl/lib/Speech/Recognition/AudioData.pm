@@ -261,19 +261,17 @@ sub get_flac_data ( $self, %args ) {
 # ---------------------------------------------------------------------------
 
 # Add a signed bias to every sample (like audioop.bias).
-# $width must be 1, 2, or 4.
+# $width must be 1, 2, 3, or 4.
 sub _bias ( $data, $width, $delta ) {
-    my $fmt = _pack_fmt($width);
-    my $mod  = 2**( $width * 8 );
-    my @s    = unpack( $fmt, $data );
+    my $mod = 2**( $width * 8 );
+    my @s = $width == 3 ? _unpack24($data) : unpack( _pack_fmt($width), $data );
     @s = map { ( $_ + $delta ) % $mod } @s;
-    return pack( $fmt, @s );
+    return $width == 3 ? _pack24(@s) : pack( _pack_fmt($width), @s );
 }
 
 # Compute RMS energy (like audioop.rms).
 sub _rms ( $data, $width ) {
-    my $fmt  = _pack_fmt($width);
-    my @s    = unpack( $fmt, $data );
+    my @s = $width == 3 ? _unpack24($data) : unpack( _pack_fmt($width), $data );
     my $n    = @s or return 0;
     my $half = 2**( $width * 8 - 1 );
     my $mod  = 2**( $width * 8 );
@@ -291,8 +289,7 @@ sub _rms ( $data, $width ) {
 sub _ratecv ( $data, $width, $inrate, $outrate ) {
     return $data if $inrate == $outrate;
 
-    my $fmt  = _pack_fmt($width);
-    my @in   = unpack( $fmt, $data );
+    my @in = $width == 3 ? _unpack24($data) : unpack( _pack_fmt($width), $data );
     my $n    = @in or return $data;
 
     my $half = 2**( $width * 8 - 1 );
@@ -314,11 +311,11 @@ sub _ratecv ( $data, $width, $inrate, $outrate ) {
 
     # Back to unsigned
     @out = map { $_ < 0 ? $_ + $mod : $_ } @out;
-    return pack( $fmt, @out );
+    return $width == 3 ? _pack24(@out) : pack( _pack_fmt($width), @out );
 }
 
 # Convert between sample widths (like audioop.lin2lin).
-# Both widths must be 1, 2, or 4.
+# Supports widths 1, 2, 3, and 4.
 sub _lin2lin ( $data, $from_w, $to_w ) {
     return $data if $from_w == $to_w;
 
@@ -328,7 +325,7 @@ sub _lin2lin ( $data, $from_w, $to_w ) {
     my $to_max    = $to_mod / 2 - 1;
     my $to_min    = -$to_mod / 2;
 
-    my @s = unpack( _pack_fmt($from_w), $data );
+    my @s = $from_w == 3 ? _unpack24($data) : unpack( _pack_fmt($from_w), $data );
 
     # To signed
     @s = map { $_ >= $from_half ? $_ - $from_mod : $_ } @s;
@@ -349,7 +346,7 @@ sub _lin2lin ( $data, $from_w, $to_w ) {
         $v < 0 ? $v + $to_mod : $v;
     } @s;
 
-    return pack( _pack_fmt($to_w), @s );
+    return $to_w == 3 ? _pack24(@s) : pack( _pack_fmt($to_w), @s );
 }
 
 # Byte-swap all samples (for little-endian -> big-endian conversion).
@@ -364,10 +361,31 @@ sub _byteswap ( $data, $width ) {
 }
 
 # pack format string for the given sample width (unsigned LE)
+# NOTE: width=3 (24-bit) is NOT handled by this function; use _unpack24 / _pack24.
 sub _pack_fmt ($width) {
     my %f = ( 1 => 'C*', 2 => 'v*', 4 => 'V*' );
-    # 3-byte samples are handled by expanding to 4 bytes temporarily
     return $f{$width} // croak "Unsupported sample width: $width";
+}
+
+# Unpack little-endian unsigned 24-bit samples into an array of integers.
+sub _unpack24 ($data) {
+    my @out;
+    my $len = length($data);
+    for ( my $i = 0; $i + 2 < $len; $i += 3 ) {
+        my ( $b0, $b1, $b2 ) = unpack( 'C C C', substr( $data, $i, 3 ) );
+        push @out, $b0 | ( $b1 << 8 ) | ( $b2 << 16 );
+    }
+    return @out;
+}
+
+# Pack an array of unsigned 24-bit integers into little-endian bytes.
+sub _pack24 (@vals) {
+    my $out = '';
+    for my $v (@vals) {
+        $v &= 0xFFFFFF;
+        $out .= pack( 'C C C', $v & 0xFF, ( $v >> 8 ) & 0xFF, ( $v >> 16 ) & 0xFF );
+    }
+    return $out;
 }
 
 # ---------------------------------------------------------------------------

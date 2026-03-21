@@ -14,7 +14,7 @@ WriteMakefile(
         # Core modules (always available since the minimum Perl version)
         'Carp'         => 0,
         'POSIX'        => 0,
-        'MIME::Base64' => 0,    # core since Perl 5.6
+        'MIME::Base64' => '3.11',  # 3.11+ for encode/decode_base64url; core since Perl 5.6
         'Digest::SHA'  => 0,    # core since Perl 5.10
         'File::Temp'   => 0,    # core since Perl 5.6
         'IPC::Open3'   => 0,    # core since Perl 5.0

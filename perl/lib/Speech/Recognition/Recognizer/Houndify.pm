@@ -2,7 +2,7 @@ package Speech::Recognition::Recognizer::Houndify;
 
 use v5.36;
 use HTTP::Request ();
-use MIME::Base64  qw(encode_base64 decode_base64);
+use MIME::Base64  qw(encode_base64 decode_base64 encode_base64url decode_base64url);
 use Digest::SHA   qw(hmac_sha256);
 use Speech::Recognition::Recognizer::_Base qw();
 
@@ -60,10 +60,14 @@ sub recognize ( $self, $audio_data, %args ) {
     my $req_time   = time;
 
     my $message = $user_id . ';' . $request_id . $req_time;
-    my $sig = encode_base64(
-        hmac_sha256( $message, decode_base64($client_key) ),
-        ''    # no newline
-    );
+
+    # client_key is URL-safe base64; decode it properly before use as HMAC key
+    my $key_bytes = do {
+        my $k = $client_key;
+        $k =~ tr|-_|+/|;
+        decode_base64($k);
+    };
+    my $sig = encode_base64( hmac_sha256( $message, $key_bytes ), '' );
     # urlsafe base64
     $sig =~ tr|+/|-_|;
 
