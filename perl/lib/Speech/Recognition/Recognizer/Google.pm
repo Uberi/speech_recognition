@@ -53,10 +53,17 @@ sub recognize ( $self, $audio_data, %args ) {
     my $pfilter  = $args{pfilter}  // 0;
     my $show_all = $args{show_all} // 0;
 
+    # The Google Speech API v2 requires at least 8 kHz and works best at 16 kHz.
+    # Always normalise to 16-bit width (same as the Python library) and cap the
+    # sample rate at 16000 Hz — sending 44100 Hz causes the API to truncate
+    # results (Python has the same issue; this is an intentional improvement).
+    my $send_rate = $audio_data->sample_rate;
+    $send_rate = 8000  if $send_rate < 8000;
+    $send_rate = 16000 if $send_rate > 16000;
+
     my $flac_data = $audio_data->get_flac_data(
-        $audio_data->sample_rate < 8000
-            ? ( convert_rate => 8000 )
-            : ()
+        convert_rate  => $send_rate,
+        convert_width => 2,
     );
 
     my %params = (
@@ -77,7 +84,7 @@ sub recognize ( $self, $audio_data, %args ) {
     my $req = HTTP::Request->new(
         POST => $url,
         [
-            'Content-Type'   => 'audio/x-flac; rate=' . $audio_data->sample_rate,
+            'Content-Type'   => "audio/x-flac; rate=$send_rate",
             'User-Agent'     => 'Mozilla/5.0',
         ],
         $flac_data,
