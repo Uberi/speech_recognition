@@ -2,9 +2,10 @@ package Speech::Recognition::Recognizer::_Base;
 
 use v5.36;
 use Carp            qw(croak);
-use LWP::UserAgent  ();
-use HTTP::Request   ();
-use URI::Escape     qw(uri_escape);
+use LWP::UserAgent        ();
+use HTTP::Request         ();
+use HTTP::Request::Common qw(POST);
+use URI::Escape           qw(uri_escape);
 
 our $VERSION = '0.01';
 
@@ -107,35 +108,25 @@ sub assert_audio ($audio_data) {
 }
 
 # ---------------------------------------------------------------------------
-# Multipart form-data builder (for Whisper-style APIs)
+# Multipart POST builder (for Whisper-style APIs)
 # ---------------------------------------------------------------------------
 
-# Returns (content_type_header, body_bytes) for a multipart/form-data POST.
+# Returns a complete HTTP::Request for a multipart/form-data POST.
+# Uses HTTP::Request::Common (ships with LWP) for correct encoding.
 #
-# $fields is a list of [name, value] pairs.
-# $files  is a list of [name, filename, mime_type, data] tuples.
+# $fields   - arrayref of [name => value] pairs
+# $file     - [field_name, filename, mime_type, data_bytes]
+# $bearer   - API key string for Authorization header
 #
-sub build_multipart ( $fields, $files ) {
-    my $boundary = sprintf 'Boundary%016x', int( rand(2**64) );
-    my $body     = '';
-
-    for my $f (@$fields) {
-        my ( $name, $value ) = @$f;
-        $body .= "--$boundary\r\n"
-            . "Content-Disposition: form-data; name=\"$name\"\r\n\r\n"
-            . "$value\r\n";
-    }
-
-    for my $f (@$files) {
-        my ( $name, $filename, $mime, $data ) = @$f;
-        $body .= "--$boundary\r\n"
-            . "Content-Disposition: form-data; name=\"$name\"; filename=\"$filename\"\r\n"
-            . "Content-Type: $mime\r\n\r\n"
-            . $data . "\r\n";
-    }
-
-    $body .= "--$boundary--\r\n";
-    return ( "multipart/form-data; boundary=$boundary", $body );
+sub multipart_request ( $url, $bearer, $fields, $file ) {
+    my ( $fname, $ffilename, $fmime, $fdata ) = @$file;
+    return POST $url,
+        Authorization => "Bearer $bearer",
+        Content_Type  => 'form-data',
+        Content       => [
+            ( map { $_->[0] => $_->[1] } @$fields ),
+            $fname => [ undef, $ffilename, 'Content-Type' => $fmime, Content => $fdata ],
+        ];
 }
 
 1;

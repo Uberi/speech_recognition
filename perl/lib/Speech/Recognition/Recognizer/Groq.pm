@@ -1,7 +1,6 @@
 package Speech::Recognition::Recognizer::Groq;
 
 use v5.36;
-use HTTP::Request ();
 use Speech::Recognition::Recognizer::_Base qw();
 
 our $VERSION = '0.01';
@@ -82,22 +81,12 @@ sub recognize ( $self, $audio_data, %args ) {
     my $fmt = $args{response_format} // 'json';
     push @fields, [ 'response_format', $fmt ];
 
-    my ( $ct, $body ) = Speech::Recognition::Recognizer::_Base::build_multipart(
-        \@fields,
-        [ [ 'file', 'audio.wav', 'audio/wav', $wav ] ],
-    );
-
     my $url = 'https://api.groq.com/openai/v1/audio/transcriptions';
     my $ua  = Speech::Recognition::Recognizer::_Base::make_ua(
         $self->{operation_timeout} // 60
     );
-    my $req = HTTP::Request->new(
-        POST => $url,
-        [
-            'Authorization' => "Bearer $api_key",
-            'Content-Type'  => $ct,
-        ],
-        $body,
+    my $req = Speech::Recognition::Recognizer::_Base::multipart_request(
+        $url, $api_key, \@fields, [ 'file', 'audio.wav', 'audio/wav', $wav ],
     );
 
     my $res = $ua->request($req);
