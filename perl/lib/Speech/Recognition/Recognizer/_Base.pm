@@ -1,9 +1,10 @@
 package Speech::Recognition::Recognizer::_Base;
 
 use v5.36;
-use Carp qw(croak);
-use LWP::UserAgent ();
-use HTTP::Request  ();
+use Carp            qw(croak);
+use LWP::UserAgent  ();
+use HTTP::Request   ();
+use URI::Escape     qw(uri_escape);
 
 our $VERSION = '0.01';
 
@@ -77,14 +78,8 @@ sub throw_setup ($msg) {
 # ---------------------------------------------------------------------------
 
 sub urlencode (%params) {
-    join '&', map {
-        _pct_encode($_) . '=' . _pct_encode( $params{$_} )
-    } sort keys %params;
-}
-
-sub _pct_encode ($s) {
-    $s =~ s/([^A-Za-z0-9\-_.~])/sprintf('%%%02X', ord($1))/ge;
-    return $s;
+    join '&', map { uri_escape($_) . '=' . uri_escape( $params{$_} ) }
+        sort keys %params;
 }
 
 # ---------------------------------------------------------------------------
