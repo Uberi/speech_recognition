@@ -394,6 +394,13 @@ The built FLAC executables should be bit-for-bit reproducible. To rebuild them, 
 
 The included ``flac-mac`` executable is extracted from `xACT 2.39 <http://xact.scottcbrown.org/>`__, which is a frontend for FLAC 1.3.2 that conveniently includes binaries for all of its encoders. Specifically, it is a copy of ``xACT 2.39/xACT.app/Contents/Resources/flac`` in ``xACT2.39.zip``.
 
+Note on AI-generated contributions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Using AI as a learning aid or development tool is fine.
+However, you are expected to understand and be able to explain any code you submit.
+Submissions showing signs of unreviewed AI generation — such as unnecessary code, inconsistent style, or nonexistent API usage — will be rejected without further review.
+
 Authors
 -------
 
