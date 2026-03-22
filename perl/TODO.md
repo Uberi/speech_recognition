@@ -146,5 +146,44 @@ and Groq — testing success, `show_all`, request errors, and
 
 ---
 
+## 11. Transcription Output Formats (SRT, VTT, Text)
+
+### ~~11.1 OpenAI Whisper API~~ ✅ DONE
+
+The OpenAI and Groq API backends already accepted `response_format` but the
+supported values (C<srt>, C<vtt>, C<verbose_json>) were not documented.
+Documentation now explicitly lists all supported values.
+
+### ~~11.2 Local Whisper (openai-whisper / whisper-cpp)~~ ✅ DONE
+
+**Implemented.** `Speech::Recognition::Recognizer::Whisper` now accepts a
+`response_format` argument with values `json` (default, backward compatible),
+`verbose_json`, `text`, `srt`, and `vtt`.  Both the openai-whisper and
+whisper-cpp binaries are fully supported for all formats.
+
+### ~~11.3 Yap (macOS on-device)~~ ✅ DONE
+
+**Implemented.** See section 12 below.
+
+---
+
+## ~~12. Yap — macOS On-Device Transcription~~ ✅ DONE
+
+**Implemented** in `Speech::Recognition::Recognizer::Yap`.  Uses the
+[Yap CLI tool](https://github.com/finnvoor/yap) (`brew install yap`) to
+transcribe audio entirely on-device via Apple's Speech framework — no API key
+or internet connection required.
+
+Supports `response_format` (C<text>, C<srt>, C<vtt>, C<json>, C<verbose_json>)
+and `language` (BCP-47 locale string such as C<en-US>).
+
+SRT and VTT output include timestamps, satisfying the downstream consumer that
+needs timestamps for paragraph formatting.
+
+Use via `$r->recognize_yap($audio, response_format => 'srt')`.
+
+---
+
+
 _If you pick this up, please update this file and the `Changes` file as you
 complete items._

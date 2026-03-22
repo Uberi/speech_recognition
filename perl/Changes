@@ -1,5 +1,27 @@
 Revision history for Speech-Recognition (Perl)
 
+0.03  2026-03-22
+    - NEW: Speech::Recognition::Recognizer::Yap — macOS on-device transcription
+      backend using Apple's Speech framework via the Yap CLI tool
+      (brew install yap).  Supports response_format (text, srt, vtt, json,
+      verbose_json) and language (BCP-47 locale).  No API key or network
+      required.  SRT/VTT output provides timestamps for paragraph formatting
+      workflows.
+    - FEATURE: Speech::Recognition::Recognizer::Whisper now supports the
+      response_format parameter with values json (default), verbose_json, text,
+      srt, and vtt.  Both openai-whisper and whisper-cpp backends are supported
+      for all formats.  This makes the local Whisper backend's format API
+      consistent with the OpenAI and Groq API backends.
+    - IMPROVEMENT: Speech::Recognition::Recognizer::_Base gains a run_cmd()
+      helper that runs an external command via IPC::Open3 / IO::Select and
+      throws RequestError on non-zero exit.  Used by both Whisper and Yap
+      backends to avoid code duplication (DRY).
+    - DOCS: OpenAI and Groq backends now explicitly document the full set of
+      response_format values: json, verbose_json, text, srt, vtt.
+    - TESTS: t/20-backends-mock.t extended with Yap backend tests (SetupError,
+      plain text, SRT, JSON, show_all, UnknownValueError, invalid format) and
+      Whisper format tests (srt, text, invalid format).  MANIFEST updated.
+
 0.02  2026-03-21
     - NEW: Speech::Recognition::Recognizer::AssemblyAI — async upload/poll
       backend matching Python's recognize_assemblyai.  Throws

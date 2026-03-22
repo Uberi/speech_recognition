@@ -2,7 +2,6 @@ package Speech::Recognition::Recognizer::Whisper;
 
 use v5.36;
 use File::Temp qw(tempfile tempdir);
-use IPC::Open3 ();
 use Speech::Recognition::Recognizer::_Base qw();
 
 our $VERSION = '0.01';
@@ -14,8 +13,9 @@ Speech::Recognition::Recognizer::Whisper - Local OpenAI Whisper recognition back
 =head1 SYNOPSIS
 
     my $text = $r->recognize_whisper_local($audio,
-        model    => 'base',
-        language => 'en',
+        model           => 'base',
+        language        => 'en',
+        response_format => 'srt',
     );
 
 =head1 DESCRIPTION
@@ -51,8 +51,14 @@ When omitted Whisper auto-detects the language.
 
 =item * C<task> - C<transcribe> (default) or C<translate>.
 
-=item * C<show_all> - Return the full JSON result hash instead of just the
-transcript string.
+=item * C<response_format> - Output format: C<json> (default), C<verbose_json>,
+C<text>, C<srt>, C<vtt>.  C<json> and C<verbose_json> both produce JSON output;
+C<srt> and C<vtt> produce subtitle files with timestamps; C<text> produces
+plain text.
+
+=item * C<show_all> - When C<response_format> is C<json> or C<verbose_json>,
+return the full decoded JSON hash instead of just the transcript string.
+Ignored for other formats.
 
 =back
 
@@ -73,12 +79,25 @@ sub _find_whisper_bin () {
 }
 
 # ---------------------------------------------------------------------------
-# Internal: run the located whisper binary and parse its JSON output
+# Format map: response_format → [ openai-whisper fmt, whisper-cpp flag, ext ]
 # ---------------------------------------------------------------------------
 
-# whisper (openai-whisper) and whisper-mps share the same CLI surface;
+my %_FORMAT_MAP = (
+    json         => [ 'json', '--output-json', 'json' ],
+    verbose_json => [ 'json', '--output-json', 'json' ],
+    text         => [ 'txt',  '--output-txt',  'txt'  ],
+    srt          => [ 'srt',  '--output-srt',  'srt'  ],
+    vtt          => [ 'vtt',  '--output-vtt',  'vtt'  ],
+);
+
+# ---------------------------------------------------------------------------
+# Internal: run the located whisper binary and return output file content
+# ---------------------------------------------------------------------------
+
+# whisper (openai-whisper) uses a Python-style CLI interface;
 # whisper-cpp uses slightly different flags.
-sub _run_whisper ( $bin, $name, $wav_file, $model, $language, $task, $out_dir ) {
+sub _run_whisper ( $bin, $name, $wav_file, $model, $language, $task, $out_dir, $fmt ) {
+    my $fmap = $_FORMAT_MAP{$fmt};
     my @cmd;
 
     if ( $name eq 'whisper-cpp' ) {
@@ -86,7 +105,7 @@ sub _run_whisper ( $bin, $name, $wav_file, $model, $language, $task, $out_dir ) 
         @cmd = (
             $bin,
             '--model'       => $model,
-            '--output-json',
+            $fmap->[1],                         # e.g. --output-srt
             '--output-file' => "$out_dir/output",
         );
         push @cmd, '--language', $language if defined $language;
@@ -94,11 +113,11 @@ sub _run_whisper ( $bin, $name, $wav_file, $model, $language, $task, $out_dir ) 
         push @cmd, $wav_file;
     }
     else {
-        # openai-whisper and whisper-mps share the same CLI interface
+        # openai-whisper CLI interface
         @cmd = (
             $bin,
             '--model'         => $model,
-            '--output_format' => 'json',
+            '--output_format' => $fmap->[0],    # e.g. srt
             '--output_dir'    => $out_dir,
             '--task'          => ( $task // 'transcribe' ),
         );
@@ -106,45 +125,31 @@ sub _run_whisper ( $bin, $name, $wav_file, $model, $language, $task, $out_dir ) 
         push @cmd, $wav_file;
     }
 
-    # Run and drain stderr (whisper prints verbose progress there) to prevent
-    # the child process from blocking on a full pipe buffer.
-    my ( $child_in, $child_out, $child_err );
-    my $pid = IPC::Open3::open3( $child_in, $child_err, $child_err, @cmd );
-    close $child_in;
+    # whisper writes results to output files in $out_dir, not to stdout.
+    # run_cmd captures stdout/stderr and throws RequestError on failure.
+    Speech::Recognition::Recognizer::_Base::run_cmd(@cmd);
 
-    my $err_text = '';
-    while ( defined( my $line = <$child_err> ) ) {
-        $err_text .= $line;
-    }
-    waitpid $pid, 0;
-    my $exit = $? >> 8;
-
-    if ( $exit != 0 ) {
-        Speech::Recognition::Recognizer::_Base::throw_request(
-            "whisper failed (exit $exit): $err_text"
-        );
-    }
-
-    # Locate the output JSON file whisper wrote into $out_dir
-    my $json_file;
+    # Locate the output file whisper wrote
+    my $ext      = $fmap->[2];
+    my $out_file;
     if ( $name eq 'whisper-cpp' ) {
-        $json_file = "$out_dir/output.json";
+        $out_file = "$out_dir/output.$ext";
     }
     else {
         ( my $basename = $wav_file ) =~ s{.*/}{};
         $basename =~ s/\.[^.]+$//;
-        $json_file = "$out_dir/$basename.json";
+        $out_file = "$out_dir/$basename.$ext";
     }
 
-    open my $fh, '<', $json_file
+    open my $fh, '<', $out_file
         or Speech::Recognition::Recognizer::_Base::throw_request(
-            "whisper did not write expected output file '$json_file'"
+            "whisper did not write expected output file '$out_file'"
         );
     local $/;
-    my $json = <$fh>;
+    my $content = <$fh>;
     close $fh;
 
-    return Speech::Recognition::Recognizer::_Base::decode_json($json);
+    return $content;
 }
 
 # ---------------------------------------------------------------------------
@@ -154,10 +159,15 @@ sub _run_whisper ( $bin, $name, $wav_file, $model, $language, $task, $out_dir ) 
 sub recognize ( $self, $audio_data, %args ) {
     Speech::Recognition::Recognizer::_Base::assert_audio($audio_data);
 
-    my $model    = $args{model}    // 'base';
+    my $model    = $args{model}           // 'base';
     my $language = $args{language};
-    my $task     = $args{task}     // 'transcribe';
-    my $show_all = $args{show_all} // 0;
+    my $task     = $args{task}            // 'transcribe';
+    my $fmt      = $args{response_format} // 'json';
+    my $show_all = $args{show_all}        // 0;
+
+    Speech::Recognition::Recognizer::_Base::throw_setup(
+        "Unknown response_format '$fmt'; valid: json verbose_json text srt vtt"
+    ) unless exists $_FORMAT_MAP{$fmt};
 
     my ( $bin, $name ) = _find_whisper_bin();
     unless ( defined $bin ) {
@@ -177,14 +187,27 @@ sub recognize ( $self, $audio_data, %args ) {
     close $in_fh;
 
     my $out_dir = tempdir( CLEANUP => 1 );
-    my $result  = _run_whisper( $bin, $name, $in_file, $model, $language, $task, $out_dir );
+    my $content = _run_whisper( $bin, $name, $in_file, $model, $language, $task, $out_dir, $fmt );
 
-    return $result if $show_all;
+    # JSON formats: decode and return hash or text field
+    if ( $fmt eq 'json' || $fmt eq 'verbose_json' ) {
+        my $result = Speech::Recognition::Recognizer::_Base::decode_json($content);
+        return $result if $show_all;
+        my $text = $result->{text} // '';
+        $text =~ s/^\s+|\s+$//g;
+        Speech::Recognition::Recognizer::_Base::throw_unknown() unless length $text;
+        return $text;
+    }
 
-    my $text = $result->{text} // '';
-    $text =~ s/^\s+|\s+$//g;
-    Speech::Recognition::Recognizer::_Base::throw_unknown() unless length $text;
-    return $text;
+    # text format: return trimmed plain text
+    if ( $fmt eq 'text' ) {
+        ( my $text = $content ) =~ s/^\s+|\s+$//g;
+        Speech::Recognition::Recognizer::_Base::throw_unknown() unless length $text;
+        return $text;
+    }
+
+    # srt / vtt: return the subtitle content as-is
+    return $content;
 }
 
 1;

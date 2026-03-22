@@ -48,7 +48,24 @@ C<gpt-4o-transcribe> and C<gpt-4o-mini-transcribe>.
 
 =item * C<temperature> - sampling temperature, default 0
 
-=item * C<response_format> - response format (C<json>, C<text>, etc.), default C<json>
+=item * C<response_format> - response format.  Default: C<json>.
+
+Supported values (matching the OpenAI API):
+
+=over 8
+
+=item C<json> - JSON object with a C<text> field (default)
+
+=item C<verbose_json> - JSON object with per-segment metadata and timestamps
+
+=item C<text> - plain transcript string
+
+=item C<srt> - SubRip subtitle file with timestamps (useful for paragraph
+formatting and caption workflows)
+
+=item C<vtt> - WebVTT subtitle file with timestamps
+
+=back
 
 =item * C<show_all> - return the full JSON response hash ref instead of the transcript
 

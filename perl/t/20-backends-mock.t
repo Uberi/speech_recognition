@@ -22,6 +22,9 @@ require Speech::Recognition::Recognizer::IBM;
 require Speech::Recognition::Recognizer::OpenAI;
 require Speech::Recognition::Recognizer::Groq;
 require Speech::Recognition::Recognizer::AssemblyAI;
+require Speech::Recognition::Recognizer::GoogleCloud;
+require Speech::Recognition::Recognizer::Whisper;
+require Speech::Recognition::Recognizer::Yap;
 
 # ---------------------------------------------------------------------------
 # Helper: generate a short PCM sine wave for testing
@@ -355,6 +358,308 @@ subtest 'Groq backend - successful transcription' => sub {
         $ua
     );
     is $text, 'groq result', 'Groq returns text field';
+};
+
+# ===========================================================================
+# 7. Google Cloud Speech-to-Text backend
+# ===========================================================================
+
+# Fake service-account credentials JSON (inline, so no file I/O needed).
+my $FAKE_CREDS = '{"client_email":"test@project.iam.gserviceaccount.com","private_key":"fake-key"}';
+
+subtest 'GoogleCloud backend - successful transcription' => sub {
+    # Mock _make_jwt to bypass Crypt::OpenSSL::RSA
+    local *Speech::Recognition::Recognizer::GoogleCloud::_make_jwt
+        = sub { 'fake.jwt.signature' };
+
+    my @responses = (
+        HTTP::Response->new( 200, 'OK',
+            HTTP::Headers->new( 'Content-Type' => 'application/json' ),
+            '{"access_token":"fake_token","token_type":"Bearer","expires_in":3600}' ),
+        HTTP::Response->new( 200, 'OK',
+            HTTP::Headers->new( 'Content-Type' => 'application/json' ),
+            '{"results":[{"alternatives":[{"transcript":"hello cloud"}]}]}' ),
+    );
+    my $call_num = 0;
+    my $ua = Test::LWP::UserAgent->new( network_fallback => 0 );
+    $ua->map_response( sub {1}, sub { $responses[ $call_num++ ] } );
+
+    my $audio = make_audio();
+    my $text;
+    with_mock_ua(
+        sub {
+            $text = $r->recognize_google_cloud( $audio,
+                credentials_json => $FAKE_CREDS,
+            );
+        },
+        $ua
+    );
+    is $text, 'hello cloud', 'GoogleCloud returns transcript';
+};
+
+subtest 'GoogleCloud backend - OAuth token failure becomes RequestError' => sub {
+    local *Speech::Recognition::Recognizer::GoogleCloud::_make_jwt
+        = sub { 'fake.jwt.signature' };
+
+    my $ua = make_mock_ua( 401, '{"error":"invalid_grant"}' );
+
+    my $audio = make_audio();
+    eval {
+        with_mock_ua(
+            sub {
+                $r->recognize_google_cloud( $audio,
+                    credentials_json => $FAKE_CREDS,
+                );
+            },
+            $ua
+        );
+    };
+    my $e = $@;
+    ok ref $e && $e->isa('Speech::Recognition::Exception::RequestError'),
+        'OAuth token failure becomes RequestError';
+};
+
+subtest 'GoogleCloud backend - empty results become UnknownValueError' => sub {
+    local *Speech::Recognition::Recognizer::GoogleCloud::_make_jwt
+        = sub { 'fake.jwt.signature' };
+
+    my @responses = (
+        HTTP::Response->new( 200, 'OK',
+            HTTP::Headers->new( 'Content-Type' => 'application/json' ),
+            '{"access_token":"fake_token","token_type":"Bearer","expires_in":3600}' ),
+        HTTP::Response->new( 200, 'OK',
+            HTTP::Headers->new( 'Content-Type' => 'application/json' ),
+            '{"results":[]}' ),
+    );
+    my $call_num = 0;
+    my $ua = Test::LWP::UserAgent->new( network_fallback => 0 );
+    $ua->map_response( sub {1}, sub { $responses[ $call_num++ ] } );
+
+    my $audio = make_audio();
+    eval {
+        with_mock_ua(
+            sub {
+                $r->recognize_google_cloud( $audio,
+                    credentials_json => $FAKE_CREDS,
+                );
+            },
+            $ua
+        );
+    };
+    my $e = $@;
+    ok ref $e && $e->isa('Speech::Recognition::Exception::UnknownValueError'),
+        'empty results become UnknownValueError';
+};
+
+subtest 'GoogleCloud backend - show_all returns full hash' => sub {
+    local *Speech::Recognition::Recognizer::GoogleCloud::_make_jwt
+        = sub { 'fake.jwt.signature' };
+
+    my @responses = (
+        HTTP::Response->new( 200, 'OK',
+            HTTP::Headers->new( 'Content-Type' => 'application/json' ),
+            '{"access_token":"fake_token","token_type":"Bearer","expires_in":3600}' ),
+        HTTP::Response->new( 200, 'OK',
+            HTTP::Headers->new( 'Content-Type' => 'application/json' ),
+            '{"results":[{"alternatives":[{"transcript":"raw text"}]}]}' ),
+    );
+    my $call_num = 0;
+    my $ua = Test::LWP::UserAgent->new( network_fallback => 0 );
+    $ua->map_response( sub {1}, sub { $responses[ $call_num++ ] } );
+
+    my $audio = make_audio();
+    my $all;
+    with_mock_ua(
+        sub {
+            $all = $r->recognize_google_cloud( $audio,
+                credentials_json => $FAKE_CREDS,
+                show_all         => 1,
+            );
+        },
+        $ua
+    );
+    is ref $all, 'HASH', 'show_all returns hashref';
+    is $all->{results}[0]{alternatives}[0]{transcript}, 'raw text',
+        'transcript accessible in show_all result';
+};
+
+# ===========================================================================
+# 8. Local Whisper backend
+# ===========================================================================
+
+subtest 'Whisper backend - SetupError when no binary found' => sub {
+    no warnings 'once';
+    local *Speech::Recognition::Recognizer::_Base::which = sub { undef };
+    my $audio = make_audio();
+    eval { $r->recognize_whisper_local($audio) };
+    my $e = $@;
+    ok ref $e && $e->isa('Speech::Recognition::Exception::SetupError'),
+        'missing whisper binary throws SetupError';
+    like $e->message, qr/whisper/i, 'error message mentions whisper';
+};
+
+subtest 'Whisper backend - successful JSON parsing' => sub {
+    local *Speech::Recognition::Recognizer::Whisper::_find_whisper_bin
+        = sub { ( '/usr/bin/whisper', 'whisper' ) };
+    local *Speech::Recognition::Recognizer::Whisper::_run_whisper
+        = sub { return '{"text":"  hello whisper  "}' };
+
+    my $audio = make_audio();
+    my $text  = $r->recognize_whisper_local($audio);
+    is $text, 'hello whisper', 'Whisper trims whitespace and returns transcript';
+};
+
+subtest 'Whisper backend - empty transcript becomes UnknownValueError' => sub {
+    local *Speech::Recognition::Recognizer::Whisper::_find_whisper_bin
+        = sub { ( '/usr/bin/whisper', 'whisper' ) };
+    local *Speech::Recognition::Recognizer::Whisper::_run_whisper
+        = sub { return '{"text":""}' };
+
+    my $audio = make_audio();
+    eval { $r->recognize_whisper_local($audio) };
+    my $e = $@;
+    ok ref $e && $e->isa('Speech::Recognition::Exception::UnknownValueError'),
+        'empty transcript throws UnknownValueError';
+};
+
+subtest 'Whisper backend - show_all returns full result hash' => sub {
+    local *Speech::Recognition::Recognizer::Whisper::_find_whisper_bin
+        = sub { ( '/usr/bin/whisper', 'whisper' ) };
+    local *Speech::Recognition::Recognizer::Whisper::_run_whisper
+        = sub { return '{"text":"hello","segments":[]}' };
+
+    my $audio  = make_audio();
+    my $result = $r->recognize_whisper_local( $audio, show_all => 1 );
+    is ref $result, 'HASH',    'show_all returns hashref';
+    is $result->{text}, 'hello', 'text field accessible in show_all result';
+};
+
+subtest 'Whisper backend - srt response_format returns raw SRT' => sub {
+    my $fake_srt = "1\n00:00:00,000 --> 00:00:02,000\nhello whisper\n";
+    local *Speech::Recognition::Recognizer::Whisper::_find_whisper_bin
+        = sub { ( '/usr/bin/whisper', 'whisper' ) };
+    local *Speech::Recognition::Recognizer::Whisper::_run_whisper
+        = sub { return $fake_srt };
+
+    my $audio = make_audio();
+    my $srt   = $r->recognize_whisper_local( $audio, response_format => 'srt' );
+    is $srt, $fake_srt, 'srt format returns raw SRT content';
+};
+
+subtest 'Whisper backend - text response_format returns trimmed text' => sub {
+    local *Speech::Recognition::Recognizer::Whisper::_find_whisper_bin
+        = sub { ( '/usr/bin/whisper', 'whisper' ) };
+    local *Speech::Recognition::Recognizer::Whisper::_run_whisper
+        = sub { return "  hello whisper\n" };
+
+    my $audio = make_audio();
+    my $text  = $r->recognize_whisper_local( $audio, response_format => 'text' );
+    is $text, 'hello whisper', 'text format trims whitespace';
+};
+
+subtest 'Whisper backend - invalid response_format throws SetupError' => sub {
+    local *Speech::Recognition::Recognizer::Whisper::_find_whisper_bin
+        = sub { ( '/usr/bin/whisper', 'whisper' ) };
+
+    my $audio = make_audio();
+    eval { $r->recognize_whisper_local( $audio, response_format => 'no-such-fmt' ) };
+    my $e = $@;
+    ok ref $e && $e->isa('Speech::Recognition::Exception::SetupError'),
+        'unknown response_format throws SetupError';
+};
+
+# ===========================================================================
+# 9. Yap (macOS on-device) backend
+# ===========================================================================
+
+subtest 'Yap backend - SetupError when yap not found' => sub {
+    no warnings 'once';
+    local *Speech::Recognition::Recognizer::Yap::_find_yap_bin = sub { undef };
+    my $audio = make_audio();
+    eval { $r->recognize_yap($audio) };
+    my $e = $@;
+    ok ref $e && $e->isa('Speech::Recognition::Exception::SetupError'),
+        'missing yap binary throws SetupError';
+    like $e->message, qr/yap/i, 'error message mentions yap';
+};
+
+subtest 'Yap backend - successful plain text transcription' => sub {
+    local *Speech::Recognition::Recognizer::Yap::_find_yap_bin
+        = sub { '/usr/local/bin/yap' };
+    local *Speech::Recognition::Recognizer::_Base::run_cmd
+        = sub { return ( "hello yap\n", '' ) };
+
+    my $audio = make_audio();
+    my $text  = $r->recognize_yap($audio);
+    is $text, 'hello yap', 'Yap returns trimmed plain text';
+};
+
+subtest 'Yap backend - srt response_format returns raw SRT' => sub {
+    my $fake_srt = "1\n00:00:00,000 --> 00:00:02,000\nhello yap\n";
+    local *Speech::Recognition::Recognizer::Yap::_find_yap_bin
+        = sub { '/usr/local/bin/yap' };
+    local *Speech::Recognition::Recognizer::_Base::run_cmd
+        = sub { return ( $fake_srt, '' ) };
+
+    my $audio = make_audio();
+    my $srt   = $r->recognize_yap( $audio, response_format => 'srt' );
+    is $srt, $fake_srt, 'Yap srt format returns raw SRT content';
+};
+
+# Real yap --json shape: { metadata => {...}, segments => [{id,start,end,text,...}] }
+my $YAP_JSON = '{"metadata":{"created":"2026-03-22T00:00:00Z","language":"en-US","duration":2.0},'
+             . '"segments":[{"id":1,"start":0.0,"end":1.0,"text":"hello"},'
+             .              '{"id":2,"start":1.0,"end":2.0,"text":"world"}]}';
+
+subtest 'Yap backend - json response_format extracts transcript' => sub {
+    local *Speech::Recognition::Recognizer::Yap::_find_yap_bin
+        = sub { '/usr/local/bin/yap' };
+    local *Speech::Recognition::Recognizer::_Base::run_cmd
+        = sub { return ( $YAP_JSON, '' ) };
+
+    my $audio = make_audio();
+    my $text  = $r->recognize_yap( $audio, response_format => 'json' );
+    is $text, 'hello world', 'Yap json format joins segment texts';
+};
+
+subtest 'Yap backend - json show_all returns full hash' => sub {
+    local *Speech::Recognition::Recognizer::Yap::_find_yap_bin
+        = sub { '/usr/local/bin/yap' };
+    local *Speech::Recognition::Recognizer::_Base::run_cmd
+        = sub { return ( $YAP_JSON, '' ) };
+
+    my $audio  = make_audio();
+    my $result = $r->recognize_yap( $audio,
+        response_format => 'json',
+        show_all        => 1,
+    );
+    is ref $result, 'HASH',                          'show_all returns hashref';
+    is $result->{segments}[0]{text}, 'hello',        'first segment text accessible';
+    is $result->{metadata}{language}, 'en-US',       'metadata accessible';
+};
+
+subtest 'Yap backend - empty text becomes UnknownValueError' => sub {
+    local *Speech::Recognition::Recognizer::Yap::_find_yap_bin
+        = sub { '/usr/local/bin/yap' };
+    local *Speech::Recognition::Recognizer::_Base::run_cmd
+        = sub { return ( '', '' ) };
+
+    my $audio = make_audio();
+    eval { $r->recognize_yap($audio) };
+    my $e = $@;
+    ok ref $e && $e->isa('Speech::Recognition::Exception::UnknownValueError'),
+        'empty Yap output throws UnknownValueError';
+};
+
+subtest 'Yap backend - invalid response_format throws SetupError' => sub {
+    local *Speech::Recognition::Recognizer::Yap::_find_yap_bin
+        = sub { '/usr/local/bin/yap' };
+
+    my $audio = make_audio();
+    eval { $r->recognize_yap( $audio, response_format => 'no-such-fmt' ) };
+    my $e = $@;
+    ok ref $e && $e->isa('Speech::Recognition::Exception::SetupError'),
+        'unknown response_format throws SetupError';
 };
 
 done_testing();

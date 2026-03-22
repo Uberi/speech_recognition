@@ -2,6 +2,8 @@ package Speech::Recognition::Recognizer::_Base;
 
 use v5.36;
 use Carp            qw(croak);
+use IPC::Open3            ();
+use IO::Select            ();
 use LWP::UserAgent        ();
 use HTTP::Request         ();
 use HTTP::Request::Common qw(POST);
@@ -81,6 +83,41 @@ sub throw_setup ($msg) {
 sub urlencode (%params) {
     join '&', map { uri_escape($_) . '=' . uri_escape( $params{$_} ) }
         sort keys %params;
+}
+
+# ---------------------------------------------------------------------------
+# Run an external command; return (stdout, stderr).
+# Throws RequestError on non-zero exit.
+# ---------------------------------------------------------------------------
+
+sub run_cmd (@cmd) {
+    my ( $child_in, $child_out, $child_err );
+    my $pid = IPC::Open3::open3( $child_in, $child_out, $child_err, @cmd );
+    close $child_in;
+
+    my $sel = IO::Select->new( $child_out, $child_err );
+    my ( $out_text, $err_text ) = ( '', '' );
+    while ( my @ready = $sel->can_read() ) {
+        for my $fh (@ready) {
+            if ( defined( my $line = <$fh> ) ) {
+                if ( $fh == $child_out ) { $out_text .= $line }
+                else                     { $err_text .= $line }
+            }
+            else {
+                $sel->remove($fh);
+            }
+        }
+    }
+    waitpid $pid, 0;
+    my $exit = $? >> 8;
+
+    if ( $exit != 0 ) {
+        ( my $prog = $cmd[0] ) =~ s{.*/}{};
+        my $detail = length $err_text ? ": $err_text" : '';
+        throw_request("$prog failed (exit $exit)$detail");
+    }
+
+    return ( $out_text, $err_text );
 }
 
 # ---------------------------------------------------------------------------
