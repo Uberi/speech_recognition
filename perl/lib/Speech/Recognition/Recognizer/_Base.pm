@@ -92,19 +92,42 @@ sub urlencode (%params) {
 
 sub run_cmd (@cmd) {
     my ( $child_in, $child_out, $child_err );
-    my $pid = IPC::Open3::open3( $child_in, $child_out, $child_err, @cmd );
+    my $pid;
+
+    {
+        local $@;
+        my $ok = eval {
+            $pid = IPC::Open3::open3( $child_in, $child_out, $child_err, @cmd );
+            1;
+        };
+        if ( !$ok ) {
+            my $err = $@ || $!;
+            $err //= 'unknown error';
+            throw_request("Failed to run '$cmd[0]': $err");
+        }
+    }
     close $child_in;
 
     my $sel = IO::Select->new( $child_out, $child_err );
     my ( $out_text, $err_text ) = ( '', '' );
     while ( my @ready = $sel->can_read() ) {
         for my $fh (@ready) {
-            if ( defined( my $line = <$fh> ) ) {
-                if ( $fh == $child_out ) { $out_text .= $line }
-                else                     { $err_text .= $line }
+            my $buf   = '';
+            my $bytes = sysread $fh, $buf, 4096;
+            if ( defined $bytes ) {
+                if ( $bytes == 0 ) {
+                    $sel->remove($fh);
+                    close $fh;
+                }
+                else {
+                    if ( $fh == $child_out ) { $out_text .= $buf }
+                    else                     { $err_text .= $buf }
+                }
             }
             else {
+                next if $!{EAGAIN} || $!{EWOULDBLOCK};
                 $sel->remove($fh);
+                close $fh;
             }
         }
     }
