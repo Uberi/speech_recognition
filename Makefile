@@ -6,7 +6,7 @@ lint:
 
 rstcheck:
 # PyPI does not support Sphinx directives and roles
-	@pipx run rstcheck README.rst 
+	@pipx run rstcheck README.rst CONTRIBUTING.rst
 	@pipx run rstcheck[sphinx] --ignore-directives autofunction reference/*.rst
 
 typecheck:
