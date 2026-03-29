@@ -1293,7 +1293,7 @@ else:
     Recognizer.recognize_faster_whisper = faster_whisper.recognize  # type: ignore[attr-defined]
     Recognizer.recognize_openai = openai.recognize  # type: ignore[attr-defined]
     Recognizer.recognize_groq = groq.recognize  # type: ignore[attr-defined]
-    Recognizer.recognize_cohere_api = cohere_api.recognize_cohere_api  # type: ignore[attr-defined]
+    Recognizer.recognize_cohere_api = cohere_api.recognize  # type: ignore[attr-defined]
     Recognizer.recognize_sphinx = pocketsphinx.recognize  # type: ignore[attr-defined]
     Recognizer.recognize_vosk = vosk.recognize  # type: ignore[attr-defined]
 

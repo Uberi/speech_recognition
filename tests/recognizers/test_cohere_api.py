@@ -15,7 +15,7 @@ def test_transcribe_default_model(mock_client_cls):
     audio_data = MagicMock(spec=AudioData)
     audio_data.get_wav_data.return_value = b"fake_wav"
 
-    actual = cohere_api.recognize_cohere_api(
+    actual = cohere_api.recognize(
         MagicMock(spec=Recognizer), audio_data, language="en"
     )
 
@@ -40,7 +40,7 @@ def test_transcribe_with_language(mock_client_cls):
     audio_data = MagicMock(spec=AudioData)
     audio_data.get_wav_data.return_value = b"fake_wav"
 
-    actual = cohere_api.recognize_cohere_api(
+    actual = cohere_api.recognize(
         MagicMock(spec=Recognizer), audio_data, language="ja"
     )
 

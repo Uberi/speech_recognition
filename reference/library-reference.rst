@@ -294,7 +294,7 @@ Raises a ``speech_recognition.UnknownValueError`` exception if the speech is uni
 ``recognizer_instance.recognize_cohere_api(audio_data: AudioData, *, language: str, model = "cohere-transcribe-03-2026")``
 --------------------------------------------------------------------------------------------------------------------------
 
-.. autofunction:: speech_recognition.recognizers.cohere_api.recognize_cohere_api
+.. autofunction:: speech_recognition.recognizers.cohere_api.recognize
 
 ``AudioSource``
 ---------------

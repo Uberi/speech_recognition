@@ -9,7 +9,7 @@ from speech_recognition.exceptions import SetupError
 logger = logging.getLogger(__name__)
 
 
-def recognize_cohere_api(
+def recognize(
     recognizer,
     audio_data: AudioData,
     *,
