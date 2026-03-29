@@ -75,6 +75,9 @@ groq = [
   "groq",
   "httpx < 0.28",
 ]
+cohere-api = [
+  "cohere>=5.21.0",
+]
 assemblyai = ["requests"]
 vosk = ["vosk"]
 

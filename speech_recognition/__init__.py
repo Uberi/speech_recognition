@@ -1281,7 +1281,7 @@ class PortableNamedTemporaryFile(object):
 # At this time, the dependencies are not yet installed, resulting in a ModuleNotFoundError.
 # This is a workaround to resolve this issue
 try:
-    from .recognizers import google, google_cloud, pocketsphinx, vosk
+    from .recognizers import cohere_api, google, google_cloud, pocketsphinx, vosk
     from .recognizers.whisper_api import groq, openai
     from .recognizers.whisper_local import faster_whisper, whisper
 except (ModuleNotFoundError, ImportError):
@@ -1293,6 +1293,7 @@ else:
     Recognizer.recognize_faster_whisper = faster_whisper.recognize  # type: ignore[attr-defined]
     Recognizer.recognize_openai = openai.recognize  # type: ignore[attr-defined]
     Recognizer.recognize_groq = groq.recognize  # type: ignore[attr-defined]
+    Recognizer.recognize_cohere_api = cohere_api.recognize_cohere_api  # type: ignore[attr-defined]
     Recognizer.recognize_sphinx = pocketsphinx.recognize  # type: ignore[attr-defined]
     Recognizer.recognize_vosk = vosk.recognize  # type: ignore[attr-defined]
 

@@ -65,6 +65,7 @@ Speech recognition engine/API support:
 * `OpenAI Whisper API <https://platform.openai.com/docs/guides/speech-to-text>`__
     * OpenAI compatible self-hosted endpoints (e.g. vLLM, Ollama)
 * `Groq Whisper API <https://console.groq.com/docs/speech-to-text>`__
+* `Cohere Transcribe API <https://docs.cohere.com/docs/transcribe>`__
 
 **Quickstart:** ``pip install SpeechRecognition``. See the "Installing" section for more details.
 
@@ -123,6 +124,7 @@ To use all of the functionality of the library, you should have:
 * **openai** (required only if you need to use OpenAI Whisper API speech recognition ``recognizer_instance.recognize_openai``)
     * includes OpenAI compatible self-hosted endpoints (e.g. vLLM, Ollama)
 * **groq** (required only if you need to use Groq Whisper API speech recognition ``recognizer_instance.recognize_groq``)
+* **cohere** (required only if you need to use Cohere Transcribe API speech recognition ``recognizer_instance.recognize_cohere_api``; install with ``pip install SpeechRecognition[cohere-api]``. Set ``CO_API_KEY`` as documented by the Cohere SDK.)
 
 The following requirements are optional, but can improve or extend functionality in some situations:
 

@@ -291,6 +291,11 @@ Raises a ``speech_recognition.UnknownValueError`` exception if the speech is uni
 
 .. autofunction:: speech_recognition.recognizers.whisper_api.groq.recognize
 
+``recognizer_instance.recognize_cohere_api(audio_data: AudioData, *, language: str, model = "cohere-transcribe-03-2026")``
+--------------------------------------------------------------------------------------------------------------------------
+
+.. autofunction:: speech_recognition.recognizers.cohere_api.recognize_cohere_api
+
 ``AudioSource``
 ---------------
 
