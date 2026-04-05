@@ -45,12 +45,12 @@ jobs:
           sudo apt-get install --no-install-recommends -y portaudio19-dev
       - name: Install ffmpeg (for Whisper)
         uses: FedericoCarboni/setup-ffmpeg@37062fbf7149fc5578d6c57e08aed62458b375d6 # v3.1
-      - name: Install Python dependencies (Ubuntu, <=3.12)
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version != '3.13' && matrix.python-version != '3.14'
+      - name: Install Python dependencies (Ubuntu, <=3.13)
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version != '3.14'
         run: |
           python -m pip install .[dev,audio,pocketsphinx,google-cloud,whisper-local,faster-whisper,openai,groq,vosk,cohere-api]
-      - name: Install Python dependencies (Ubuntu, >=3.13)
-        if: matrix.os == 'ubuntu-latest' && (matrix.python-version == '3.13' || matrix.python-version == '3.14')
+      - name: Install Python dependencies (Ubuntu, 3.14)
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.14'
         run: |
           python -m pip install .[dev,audio,pocketsphinx,google-cloud,openai,groq,vosk,cohere-api]
       - name: Install Python dependencies (Windows)

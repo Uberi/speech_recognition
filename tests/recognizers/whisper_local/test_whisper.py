@@ -8,7 +8,7 @@ from speech_recognition import AudioData, Recognizer
 from speech_recognition.recognizers.whisper_local.whisper import recognize
 
 
-@skipIf(sys.version_info >= (3, 13), "skip on Python 3.13")
+@skipIf(sys.version_info >= (3, 14), "skip on Python 3.14")
 @patch("soundfile.read")
 @patch("torch.cuda.is_available")
 @patch("whisper.load_model")
