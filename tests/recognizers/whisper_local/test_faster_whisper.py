@@ -52,7 +52,7 @@ def soundfile_read() -> Generator[tuple[MagicMock, np.ndarray], None, None]:
 
 
 @pytest.mark.skipif(
-    sys.version_info >= (3, 13), reason="skip on Python 3.13 or later"
+    sys.version_info >= (3, 14), reason="skip on Python 3.14 or later"
 )
 @patch("faster_whisper.WhisperModel")
 class TestTranscribe:
