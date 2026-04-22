@@ -1,5 +1,9 @@
 from unittest.mock import MagicMock
 
+import pytest
+
+pytest.importorskip("openai")
+
 from speech_recognition import AudioData, Recognizer
 
 

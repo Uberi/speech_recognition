@@ -1,7 +1,11 @@
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from speech_recognition import AudioData, Recognizer
 from speech_recognition.recognizers import cohere_api
+
+pytest.importorskip("cohere")
 
 
 @patch("cohere.ClientV2")

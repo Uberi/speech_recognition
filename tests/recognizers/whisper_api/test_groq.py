@@ -1,7 +1,10 @@
 from unittest.mock import MagicMock
 
 import httpx
+import pytest
 import respx
+
+pytest.importorskip("groq")
 
 from speech_recognition import AudioData, Recognizer
 from speech_recognition.recognizers.whisper_api import groq

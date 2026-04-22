@@ -5,7 +5,10 @@ import os
 import sys
 import unittest
 
+import pytest
 import speech_recognition as sr
+
+pytest.importorskip("pocketsphinx")
 
 
 class TestSpecialFeatures(unittest.TestCase):

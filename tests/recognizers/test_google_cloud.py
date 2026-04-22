@@ -1,5 +1,9 @@
 from unittest.mock import MagicMock, patch
 
+import pytest
+
+pytest.importorskip("google.cloud.speech")
+
 from google.cloud.speech import (
     RecognitionAudio,
     RecognitionConfig,

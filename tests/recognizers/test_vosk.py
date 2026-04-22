@@ -2,6 +2,8 @@ from pathlib import Path
 
 import pytest
 
+pytest.importorskip("vosk")
+
 from speech_recognition import AudioData, Recognizer
 
 
