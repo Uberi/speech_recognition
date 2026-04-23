@@ -2,21 +2,19 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-pytest.importorskip("google.cloud.speech")
-
-from google.cloud.speech import (
-    RecognitionAudio,
-    RecognitionConfig,
-    RecognizeResponse,
-    SpeechContext,
-    SpeechRecognitionAlternative,
-    SpeechRecognitionResult,
-    WordInfo,
-)
-
 from speech_recognition import Recognizer
 from speech_recognition.audio import AudioData
 from speech_recognition.recognizers.google_cloud import recognize
+
+speech = pytest.importorskip("google.cloud.speech")
+
+RecognitionAudio = speech.RecognitionAudio
+RecognitionConfig = speech.RecognitionConfig
+RecognizeResponse = speech.RecognizeResponse
+SpeechContext = speech.SpeechContext
+SpeechRecognitionAlternative = speech.SpeechRecognitionAlternative
+SpeechRecognitionResult = speech.SpeechRecognitionResult
+WordInfo = speech.WordInfo
 
 
 @patch("google.cloud.speech.SpeechClient")

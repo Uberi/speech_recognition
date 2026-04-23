@@ -8,14 +8,14 @@ from unittest.mock import ANY, MagicMock, patch
 import numpy as np
 import pytest
 
-pytest.importorskip("faster_whisper")
-pytest.importorskip("soundfile")
-
 from speech_recognition import Recognizer
 from speech_recognition.audio import AudioData
 from speech_recognition.recognizers.whisper_local.faster_whisper import (
     recognize,
 )
+
+pytest.importorskip("faster_whisper")
+pytest.importorskip("soundfile")
 
 if TYPE_CHECKING:
     from faster_whisper.transcribe import Segment, TranscriptionInfo

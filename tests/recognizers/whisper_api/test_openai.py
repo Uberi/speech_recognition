@@ -4,10 +4,10 @@ import httpx
 import pytest
 import respx
 
-pytest.importorskip("openai")
-
 from speech_recognition import AudioData, Recognizer
 from speech_recognition.recognizers.whisper_api import openai
+
+pytest.importorskip("openai")
 
 
 @pytest.fixture

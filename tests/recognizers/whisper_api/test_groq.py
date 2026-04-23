@@ -4,10 +4,10 @@ import httpx
 import pytest
 import respx
 
-pytest.importorskip("groq")
-
 from speech_recognition import AudioData, Recognizer
 from speech_recognition.recognizers.whisper_api import groq
+
+pytest.importorskip("groq")
 
 
 @respx.mock(assert_all_called=True, assert_all_mocked=True)

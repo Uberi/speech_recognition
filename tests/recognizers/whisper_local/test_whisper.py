@@ -5,11 +5,11 @@ from unittest.mock import ANY, MagicMock, patch
 import numpy as np
 import pytest
 
-pytest.importorskip("soundfile")
-pytest.importorskip("whisper")
-
 from speech_recognition import AudioData, Recognizer
 from speech_recognition.recognizers.whisper_local.whisper import recognize
+
+pytest.importorskip("soundfile")
+pytest.importorskip("whisper")
 
 
 @skipIf(sys.version_info >= (3, 14), "skip on Python 3.14")
