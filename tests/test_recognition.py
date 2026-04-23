@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import importlib.util
 import os
 import sys
 import unittest
 
 import speech_recognition as sr
+
+HAS_POCKETSPHINX = importlib.util.find_spec("pocketsphinx") is not None
 
 
 class TestRecognition(unittest.TestCase):
@@ -29,6 +32,7 @@ class TestRecognition(unittest.TestCase):
         # https://github.com/Uberi/speech_recognition/issues/743
         self.assertTrue("recognize_google" in attributes)
 
+    @unittest.skipUnless(HAS_POCKETSPHINX, "requires pocketsphinx extra")
     @unittest.skipIf(sys.platform.startswith("win"), "skip on Windows")
     def test_sphinx_english(self):
         audio = sr.AudioData.from_file(self.AUDIO_FILE_EN)

@@ -14,6 +14,9 @@ from speech_recognition.recognizers.whisper_local.faster_whisper import (
     recognize,
 )
 
+pytest.importorskip("faster_whisper")
+pytest.importorskip("soundfile")
+
 if TYPE_CHECKING:
     from faster_whisper.transcribe import Segment, TranscriptionInfo
 

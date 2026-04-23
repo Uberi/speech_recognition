@@ -1,6 +1,10 @@
 from unittest.mock import MagicMock
 
+import pytest
+
 from speech_recognition import AudioData, Recognizer
+
+pytest.importorskip("openai")
 
 
 def test_transcribe_with_openai_compatible_api(httpserver, monkeypatch):

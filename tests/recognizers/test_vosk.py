@@ -4,6 +4,8 @@ import pytest
 
 from speech_recognition import AudioData, Recognizer
 
+pytest.importorskip("vosk")
+
 
 @pytest.fixture
 def audio_data() -> AudioData:

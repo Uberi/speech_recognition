@@ -9,7 +9,27 @@ on:
       - master
 
 jobs:
-  build:
+  base:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Set up Python 3.11
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.11"
+      - name: Create virtual environment
+        run: python -m venv .venv
+      - name: Install base test dependencies
+        run: |
+          . .venv/bin/activate
+          python -m pip install --upgrade pip
+          python -m pip install .[dev]
+      - name: Test base installation
+        run: |
+          . .venv/bin/activate
+          pytest -s -v tests/
+
+  all-extras:
     strategy:
       fail-fast: true
       matrix:
@@ -59,6 +79,73 @@ jobs:
           python -m pip install .[dev,whisper-local,faster-whisper,google-cloud,openai,groq,vosk,cohere-api]
       - name: Set up vosk model
         run: python -m speech_recognition.cli download vosk
-      - name: Test with unittest
+      - name: Test with pytest
         run: |
           pytest --doctest-modules -s -v speech_recognition/recognizers/ tests/
+
+  extra-contracts:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - extra: audio
+            install-spec: .[dev,audio]
+            verify-command: python -c "from speech_recognition import Microphone; Microphone.get_pyaudio()"
+          - extra: pocketsphinx
+            install-spec: .[dev,pocketsphinx]
+            verify-command: pytest -s -v tests/test_recognition.py tests/test_special_features.py
+          - extra: google-cloud
+            install-spec: .[dev,google-cloud]
+            verify-command: pytest -s -v tests/recognizers/test_google_cloud.py
+          - extra: whisper-local
+            install-spec: .[dev,whisper-local]
+            verify-command: pytest -s -v tests/recognizers/whisper_local/test_whisper.py
+          - extra: faster-whisper
+            install-spec: .[dev,faster-whisper]
+            verify-command: pytest -s -v tests/recognizers/whisper_local/test_faster_whisper.py
+          - extra: openai
+            install-spec: .[dev,openai]
+            verify-command: pytest -s -v tests/recognizers/whisper_api/test_openai.py tests/recognizers/whisper_api/test_openai_compatible.py
+          - extra: groq
+            install-spec: .[dev,groq]
+            verify-command: pytest -s -v tests/recognizers/whisper_api/test_groq.py
+          - extra: cohere-api
+            install-spec: .[dev,cohere-api]
+            verify-command: pytest -s -v tests/recognizers/test_cohere_api.py
+          - extra: assemblyai
+            install-spec: .[dev,assemblyai]
+            verify-command: python -c "from speech_recognition import Recognizer; assert hasattr(Recognizer(), 'recognize_assemblyai')"
+          - extra: vosk
+            install-spec: .[dev,vosk]
+            setup-vosk-model: true
+            verify-command: pytest -s -v tests/recognizers/test_vosk.py
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Set up Python 3.11
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.11"
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          # For pocketsphinx (already installed: swig)
+          sudo apt-get install --no-install-recommends -y libpulse-dev libasound2-dev
+          # For PyAudio
+          sudo apt-get install --no-install-recommends -y portaudio19-dev
+      - name: Create virtual environment
+        run: python -m venv .venv
+      - name: Install extra dependencies
+        run: |
+          . .venv/bin/activate
+          python -m pip install --upgrade pip
+          python -m pip install ${{ matrix.install-spec }}
+      - name: Set up vosk model
+        if: matrix.setup-vosk-model == true
+        run: |
+          . .venv/bin/activate
+          python -m speech_recognition.cli download vosk
+      - name: Verify ${{ matrix.extra }} extra
+        run: |
+          . .venv/bin/activate
+          ${{ matrix.verify-command }}

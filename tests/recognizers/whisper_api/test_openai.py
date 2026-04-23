@@ -7,6 +7,8 @@ import respx
 from speech_recognition import AudioData, Recognizer
 from speech_recognition.recognizers.whisper_api import openai
 
+pytest.importorskip("openai")
+
 
 @pytest.fixture
 def setenv_openai_api_key(monkeypatch):
