@@ -25,7 +25,7 @@ import wave
 from collections.abc import Iterable
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
-from urllib.request import Request, urlopen
+from urllib.request import Request
 
 from .audio import AudioData, get_flac_converter
 from .exceptions import (
@@ -34,6 +34,11 @@ from .exceptions import (
     TranscriptionNotReady,
     UnknownValueError,
     WaitTimeoutError,
+)
+from .proxy import (
+    build_boto3_proxy_config,
+    build_requests_proxies,
+    urlopen_with_proxy,
 )
 
 __author__ = "Anthony Zhang (Uberi)"
@@ -328,6 +333,7 @@ class Recognizer(AudioSource):
         self.dynamic_energy_ratio = 1.5
         self.pause_threshold = 0.8  # seconds of non-speaking audio before a phrase is considered complete
         self.operation_timeout = None  # seconds after an internal operation (e.g., an API request) starts before it times out, or ``None`` for no timeout
+        self.proxy_url = None  # proxy URL for API requests: ``None`` uses system/env defaults, ``""`` disables proxies, or a URL like ``"http://host:port"`` or ``"socks5://host:port"``
 
         self.phrase_threshold = 0.3  # minimum seconds of speaking audio before we consider the speaking audio a phrase - values below this are ignored (for filtering out clicks and pops)
         self.non_speaking_duration = 0.5  # seconds of non-speaking audio to keep on both sides of the recording
@@ -626,7 +632,7 @@ class Recognizer(AudioSource):
         url = "https://api.wit.ai/speech?v=20170307"
         request = Request(url, data=wav_data, headers={"Authorization": "Bearer {}".format(key), "Content-Type": "audio/wav"})
         try:
-            response = urlopen(request, timeout=self.operation_timeout)
+            response = urlopen_with_proxy(request, timeout=self.operation_timeout, proxy_url=self.proxy_url)
         except HTTPError as e:
             raise RequestError("recognition request failed: {}".format(e.reason))
         except URLError as e:
@@ -681,7 +687,7 @@ class Recognizer(AudioSource):
                 start_time = monotonic()
 
             try:
-                credential_response = urlopen(credential_request, timeout=60)  # credential response can take longer, use longer timeout instead of default one
+                credential_response = urlopen_with_proxy(credential_request, timeout=60, proxy_url=self.proxy_url)  # credential response can take longer, use longer timeout instead of default one
             except HTTPError as e:
                 raise RequestError("credential request failed: {}".format(e.reason))
             except URLError as e:
@@ -720,7 +726,7 @@ class Recognizer(AudioSource):
             })
 
         try:
-            response = urlopen(request, timeout=self.operation_timeout)
+            response = urlopen_with_proxy(request, timeout=self.operation_timeout, proxy_url=self.proxy_url)
         except HTTPError as e:
             raise RequestError("recognition request failed: {}".format(e.reason))
         except URLError as e:
@@ -775,7 +781,7 @@ class Recognizer(AudioSource):
                 start_time = monotonic()
 
             try:
-                credential_response = urlopen(credential_request, timeout=60)  # credential response can take longer, use longer timeout instead of default one
+                credential_response = urlopen_with_proxy(credential_request, timeout=60, proxy_url=self.proxy_url)  # credential response can take longer, use longer timeout instead of default one
             except HTTPError as e:
                 raise RequestError("credential request failed: {}".format(e.reason))
             except URLError as e:
@@ -814,7 +820,7 @@ class Recognizer(AudioSource):
             })
 
         try:
-            response = urlopen(request, timeout=self.operation_timeout)
+            response = urlopen_with_proxy(request, timeout=self.operation_timeout, proxy_url=self.proxy_url)
         except HTTPError as e:
             raise RequestError("recognition request failed: {}".format(e.reason))
         except URLError as e:
@@ -850,7 +856,8 @@ class Recognizer(AudioSource):
 
         client = boto3.client('lex-runtime', aws_access_key_id=access_key_id,
                               aws_secret_access_key=secret_access_key,
-                              region_name=region)
+                              region_name=region,
+                              config=build_boto3_proxy_config(self.proxy_url))
 
         raw_data = audio_data.get_raw_data(
             convert_rate=16000, convert_width=2
@@ -900,7 +907,7 @@ class Recognizer(AudioSource):
             "Hound-Client-Authentication": "{};{};{}".format(client_id, request_time, request_signature)
         })
         try:
-            response = urlopen(request, timeout=self.operation_timeout)
+            response = urlopen_with_proxy(request, timeout=self.operation_timeout, proxy_url=self.proxy_url)
         except HTTPError as e:
             raise RequestError("recognition request failed: {}".format(e.reason))
         except URLError as e:
@@ -945,13 +952,15 @@ class Recognizer(AudioSource):
             'transcribe',
             aws_access_key_id=access_key_id,
             aws_secret_access_key=secret_access_key,
-            region_name=region)
+            region_name=region,
+            config=build_boto3_proxy_config(self.proxy_url))
 
         s3 = boto3.client(
             's3',
             aws_access_key_id=access_key_id,
             aws_secret_access_key=secret_access_key,
-            region_name=region)
+            region_name=region,
+            config=build_boto3_proxy_config(self.proxy_url))
 
         session = boto3.Session(
             aws_access_key_id=access_key_id,
@@ -1005,7 +1014,8 @@ class Recognizer(AudioSource):
                 transcript_uri = job['Transcript']['TranscriptFileUri']
                 import json
                 import urllib.request
-                with urllib.request.urlopen(transcript_uri) as json_data:
+                transcript_request = urllib.request.Request(transcript_uri)
+                with urlopen_with_proxy(transcript_request, timeout=self.operation_timeout, proxy_url=self.proxy_url) as json_data:
                     d = json.load(json_data)
                     confidences = []
                     for item in d['results']['items']:
@@ -1094,6 +1104,8 @@ class Recognizer(AudioSource):
 
         import requests
 
+        proxies = build_requests_proxies(self.proxy_url)
+
         check_existing = audio_data is None and job_name
         if check_existing:
             # Query status.
@@ -1102,7 +1114,7 @@ class Recognizer(AudioSource):
             headers = {
                 "authorization": api_token,
             }
-            response = requests.get(endpoint, headers=headers)
+            response = requests.get(endpoint, headers=headers, proxies=proxies)
             data = response.json()
             status = data['status']
 
@@ -1129,7 +1141,8 @@ class Recognizer(AudioSource):
             headers = {'authorization': api_token}
             response = requests.post('https://api.assemblyai.com/v2/upload',
                                      headers=headers,
-                                     data=read_file(audio_data))
+                                     data=read_file(audio_data),
+                                     proxies=proxies)
             upload_url = response.json()['upload_url']
 
             # Queue file for transcription.
@@ -1139,7 +1152,7 @@ class Recognizer(AudioSource):
                 "authorization": api_token,
                 "content-type": "application/json"
             }
-            response = requests.post(endpoint, json=json, headers=headers)
+            response = requests.post(endpoint, json=json, headers=headers, proxies=proxies)
             data = response.json()
             transciption_id = data['id']
             exc = TranscriptionNotReady()
@@ -1176,7 +1189,7 @@ class Recognizer(AudioSource):
         authorization_value = base64.standard_b64encode("{}:{}".format(username, password).encode("utf-8")).decode("utf-8")
         request.add_header("Authorization", "Basic {}".format(authorization_value))
         try:
-            response = urlopen(request, timeout=self.operation_timeout)
+            response = urlopen_with_proxy(request, timeout=self.operation_timeout, proxy_url=self.proxy_url)
         except HTTPError as e:
             raise RequestError("recognition request failed: {}".format(e.reason))
         except URLError as e:
@@ -1314,7 +1327,7 @@ def recognize_api(self, audio_data, client_access_token, language="en", session_
     if session_id is None: session_id = uuid.uuid4().hex
     data = b"--" + boundary.encode("utf-8") + b"\r\n" + b"Content-Disposition: form-data; name=\"request\"\r\n" + b"Content-Type: application/json\r\n" + b"\r\n" + b"{\"v\": \"20150910\", \"sessionId\": \"" + session_id.encode("utf-8") + b"\", \"lang\": \"" + language.encode("utf-8") + b"\"}\r\n" + b"--" + boundary.encode("utf-8") + b"\r\n" + b"Content-Disposition: form-data; name=\"voiceData\"; filename=\"audio.wav\"\r\n" + b"Content-Type: audio/wav\r\n" + b"\r\n" + wav_data + b"\r\n" + b"--" + boundary.encode("utf-8") + b"--\r\n"
     request = Request(url, data=data, headers={"Authorization": "Bearer {}".format(client_access_token), "Content-Length": str(len(data)), "Expect": "100-continue", "Content-Type": "multipart/form-data; boundary={}".format(boundary)})
-    try: response = urlopen(request, timeout=10)
+    try: response = urlopen_with_proxy(request, timeout=10, proxy_url=getattr(self, 'proxy_url', None))
     except HTTPError as e: raise RequestError("recognition request failed: {}".format(e.reason))
     except URLError as e: raise RequestError("recognition connection failed: {}".format(e.reason))
     response_text = response.read().decode("utf-8")

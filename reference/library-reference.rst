@@ -153,6 +153,24 @@ Represents the timeout (in seconds) for internal operations, such as API request
 
 Setting this to a reasonable value ensures that these operations will never block indefinitely, though good values depend on your network speed and the expected length of the audio to recognize.
 
+``recognizer_instance.proxy_url = None  # type: Union[str, None]``
+------------------------------------------------------------------
+
+Configures an HTTP or SOCKS proxy for all cloud-based API requests. Can be changed.
+
+* ``None`` (default) -- use system/environment proxy settings (backward compatible).
+* ``""`` (empty string) -- explicitly disable all proxies.
+* ``"http://host:port"`` -- use an HTTP proxy.
+* ``"socks5://host:port"`` -- use a SOCKS5 proxy (requires the ``PySocks`` package: ``pip install PySocks``).
+
+Example:
+
+.. code:: python
+
+    import speech_recognition as sr
+    r = sr.Recognizer()
+    r.proxy_url = "http://proxy.example.com:8080"
+
 ``recognizer_instance.record(source: AudioSource, duration: Union[float, None] = None, offset: Union[float, None] = None) -> AudioData``
 ----------------------------------------------------------------------------------------------------------------------------------------
 
