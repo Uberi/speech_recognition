@@ -24,6 +24,8 @@ class AudioData(object):
     Usually, instances of this class are obtained from ``recognizer_instance.record`` or ``recognizer_instance.listen``, or in the callback for ``recognizer_instance.listen_in_background``, rather than instantiating them directly.
     """
 
+    _WAV_HEADER_OVERHEAD = 44
+
     def __init__(self, frame_data, sample_rate, sample_width):
         assert sample_rate > 0, "Sample rate must be a positive integer"
         assert (
@@ -71,6 +73,214 @@ class AudioData(object):
             self.sample_rate,
             self.sample_width,
         )
+
+    def split(
+        self, max_bytes: int, *, silence_aware: bool = False
+    ) -> list[AudioData]:
+        """
+        Splits this audio into a list of ``AudioData`` chunks targeting ``max_bytes`` per chunk when serialized as WAV (via ``get_wav_data()``).
+
+        When ``silence_aware=False`` (the default), splits the audio mechanically on sample boundaries; each returned chunk's WAV-serialized size is guaranteed to be at most ``max_bytes``. No optional dependency is required.
+
+        When ``silence_aware=True``, chooses chunk boundaries near silences via ``librosa.effects.split`` while keeping every chunk within ``max_bytes`` (the boundary search looks only before the target, never past it). When no suitable silence boundary is found in the look-back window, the chunk is cut at the size-derived target the same way as the fixed-time mode. Requires ``librosa`` and ``numpy``; raises ``SetupError`` if they are not installed or fail to initialize at runtime.
+
+        Raises ``ValueError`` if ``len(frame_data)`` is not a multiple of ``sample_width`` (which ``AudioData`` would otherwise accept), since enforcing the ``max_bytes`` cap requires sample-aligned input.
+
+        Returns ``[self]`` unchanged when the audio already fits within ``max_bytes`` (even when ``silence_aware=True``, in which case the librosa import is skipped).
+
+        Example:
+            >>> chunks = audio.split(max_bytes=24 * 1024 * 1024)
+            >>> texts = [r.recognize_openai(c) for c in chunks]
+        """
+        min_required = self._WAV_HEADER_OVERHEAD + self.sample_width
+        if max_bytes < min_required:
+            raise ValueError(
+                "``max_bytes`` must be at least "
+                f"{min_required} bytes (WAV header + one sample) for "
+                f"sample_width={self.sample_width}; got {max_bytes}"
+            )
+        if len(self.frame_data) % self.sample_width != 0:
+            raise ValueError(
+                "``split`` requires ``frame_data`` length to be a multiple "
+                f"of sample_width ({self.sample_width}); got "
+                f"{len(self.frame_data)} bytes. Trim the audio to a sample "
+                "boundary before calling ``split``."
+            )
+
+        if (
+            len(self.frame_data) + self._WAV_HEADER_OVERHEAD
+            <= max_bytes
+        ):
+            return [self]
+
+        if silence_aware:
+            return self._split_silence_aware(max_bytes)
+        return self._split_fixed(max_bytes)
+
+    def _split_fixed(self, max_bytes: int) -> list[AudioData]:
+        max_payload = max_bytes - self._WAV_HEADER_OVERHEAD
+        chunk_size = (max_payload // self.sample_width) * self.sample_width
+
+        chunks: list[AudioData] = []
+        for start in range(0, len(self.frame_data), chunk_size):
+            chunks.append(
+                AudioData(
+                    self.frame_data[start : start + chunk_size],
+                    self.sample_rate,
+                    self.sample_width,
+                )
+            )
+        return chunks
+
+    def _split_silence_aware(self, max_bytes: int) -> list[AudioData]:
+        # Force-load the exact dependencies we use so that lazy import or
+        # numba-style runtime errors from librosa surface here as a single
+        # ``SetupError`` rather than escaping later mid-loop.
+        try:
+            import numpy as np
+            from librosa.effects import split as librosa_split
+        except Exception as exc:
+            from speech_recognition.exceptions import SetupError
+
+            if isinstance(exc, ImportError):
+                hint = (
+                    "install them with `pip install "
+                    "SpeechRecognition[audio-split]`"
+                )
+            else:
+                hint = (
+                    "the package(s) appear installed but failed to "
+                    "initialize; check environment-specific issues such "
+                    "as a non-writable numba cache directory"
+                )
+            raise SetupError(
+                "silence-aware splitting could not initialize librosa/numpy: "
+                f"{type(exc).__name__}: {exc}. {hint}."
+            ) from exc
+
+        target_payload = max_bytes - self._WAV_HEADER_OVERHEAD
+        chunk_samples = target_payload // self.sample_width
+
+        sw = self.sample_width
+        total_samples = len(self.frame_data) // sw
+        silence_top_db = 40.0
+        min_progress_samples = self.sample_rate // 2
+        # Search window stays entirely before ``target`` so ``max_bytes`` is
+        # a hard ceiling on chunk size. Quality is recovered by snapping to
+        # silence within the look-back window instead of overshooting.
+        search_before = min(chunk_samples // 2, 10 * self.sample_rate)
+
+        boundaries = [0]
+        start = 0
+        while start < total_samples:
+            target = min(start + chunk_samples, total_samples)
+            if target >= total_samples:
+                boundaries.append(total_samples)
+                break
+
+            search_start = max(start, target - search_before)
+            search_end = target
+
+            proposed_end = target
+            if search_end > search_start:
+                # Materialize only the search window as float to keep peak
+                # memory bounded by the window size (≈ seconds of audio),
+                # not the entire recording (potentially hours).
+                segment = self._to_float_ndarray(
+                    np,
+                    raw=self.frame_data[
+                        search_start * sw : search_end * sw
+                    ],
+                )
+                # Call-time numba JIT/cache failures inside librosa can
+                # raise long after our import probe; translate them into
+                # the same SetupError surface.
+                try:
+                    nonsilent_ranges = librosa_split(
+                        segment,
+                        top_db=silence_top_db,
+                        frame_length=2048,
+                        hop_length=512,
+                    )
+                except Exception as exc:
+                    from speech_recognition.exceptions import SetupError
+
+                    raise SetupError(
+                        "librosa.effects.split failed during invocation: "
+                        f"{type(exc).__name__}: {exc}. The package is "
+                        "installed but its runtime backend (numba/llvmlite) "
+                        "could not initialize in this environment."
+                    ) from exc
+                segment_len = len(segment)
+                candidates = []
+                for nonsilent_range in nonsilent_ranges:
+                    start_idx = int(nonsilent_range[0])
+                    end_idx = int(nonsilent_range[1])
+                    if start_idx > 0:
+                        candidates.append(search_start + start_idx)
+                    if end_idx < segment_len:
+                        candidates.append(search_start + end_idx)
+
+                min_allowed = start + min_progress_samples
+                valid = [
+                    c for c in candidates if min_allowed < c <= search_end
+                ]
+                if valid:
+                    proposed_end = min(valid, key=lambda c: abs(c - target))
+
+            if proposed_end <= start:
+                proposed_end = min(start + chunk_samples, total_samples)
+                if proposed_end <= start:
+                    break
+
+            boundaries.append(proposed_end)
+            start = proposed_end
+
+        chunks: list[AudioData] = []
+        for i in range(len(boundaries) - 1):
+            sample_start = boundaries[i]
+            sample_end = boundaries[i + 1]
+            byte_start = sample_start * self.sample_width
+            byte_end = sample_end * self.sample_width
+            chunks.append(
+                AudioData(
+                    self.frame_data[byte_start:byte_end],
+                    self.sample_rate,
+                    self.sample_width,
+                )
+            )
+        return chunks
+
+    def _to_float_ndarray(self, np, raw=None):
+        # WAV PCM frame data is little-endian; use explicit byte-order
+        # dtypes so the conversion is correct on big-endian hosts.
+        if raw is None:
+            raw = self.frame_data
+        sw = self.sample_width
+        if sw == 1:
+            raw = audioop.bias(raw, 1, -128)
+            return np.frombuffer(raw, dtype=np.int8).astype(np.float32) / 128.0
+        if sw == 2:
+            return (
+                np.frombuffer(raw, dtype="<i2").astype(np.float32) / 32768.0
+            )
+        if sw == 3:
+            packed = np.frombuffer(raw, dtype=np.uint8).reshape(-1, 3)
+            pad = np.where(packed[:, 2:3] & 0x80, 0xFF, 0x00).astype(np.uint8)
+            # ``packed`` is already in little-endian byte order (low byte
+            # first); append the sign-extension byte at the high end so
+            # the resulting 4-byte rows are little-endian int32.
+            extended = np.concatenate([packed, pad], axis=1)
+            return (
+                extended.view(dtype="<i4").flatten().astype(np.float32)
+                / float(1 << 23)
+            )
+        if sw == 4:
+            return (
+                np.frombuffer(raw, dtype="<i4").astype(np.float32)
+                / float(1 << 31)
+            )
+        raise ValueError(f"Unsupported sample_width: {sw}")
 
     def get_raw_data(self, convert_rate=None, convert_width=None):
         """

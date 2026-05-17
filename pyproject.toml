@@ -83,6 +83,10 @@ cohere-api = [
 ]
 assemblyai = ["requests"]
 vosk = ["vosk"]
+audio-split = [
+  "librosa>=0.10.2,<1.0",
+  "numpy>=1.26.0",
+]
 
 [tool.setuptools]
 include-package-data = false
