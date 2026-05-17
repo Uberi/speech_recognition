@@ -68,7 +68,7 @@ jobs:
       - name: Install Python dependencies (Ubuntu, <=3.13)
         if: matrix.os == 'ubuntu-latest' && matrix.python-version != '3.14'
         run: |
-          python -m pip install .[dev,audio,pocketsphinx,google-cloud,whisper-local,faster-whisper,openai,groq,vosk,cohere-api]
+          python -m pip install .[dev,audio,pocketsphinx,google-cloud,whisper-local,faster-whisper,openai,groq,vosk,cohere-api,audio-split]
       - name: Install Python dependencies (Ubuntu, 3.14)
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.14'
         run: |
@@ -76,7 +76,7 @@ jobs:
       - name: Install Python dependencies (Windows)
         if: matrix.os == 'windows-latest'
         run: |
-          python -m pip install .[dev,whisper-local,faster-whisper,google-cloud,openai,groq,vosk,cohere-api]
+          python -m pip install .[dev,whisper-local,faster-whisper,google-cloud,openai,groq,vosk,cohere-api,audio-split]
       - name: Set up vosk model
         run: python -m speech_recognition.cli download vosk
       - name: Test with pytest
@@ -120,6 +120,9 @@ jobs:
             install-spec: .[dev,vosk]
             setup-vosk-model: true
             verify-command: pytest -s -v tests/recognizers/test_vosk.py
+          - extra: audio-split
+            install-spec: .[dev,audio-split]
+            verify-command: pytest -s -v tests/test_audio.py
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Set up Python 3.11
