@@ -407,11 +407,13 @@ class TestAudioDataSplitSilenceAware(unittest.TestCase):
         )
         combined = np.concatenate([tone_a, silence, tone_b])
         pcm = (combined * 32767).astype(np.int16).tobytes()
-        audio = sr.AudioData(pcm, sample_rate=sample_rate, sample_width=2)
+        audio = sr.AudioData(
+            pcm, sample_rate=sample_rate, sample_width=sample_width
+        )
 
         target_seconds = 2.5
         max_bytes = (
-            int(target_seconds * sample_rate * 2)
+            int(target_seconds * sample_rate * sample_width)
             + sr.AudioData._WAV_HEADER_OVERHEAD
         )
         chunks = audio.split(max_bytes=max_bytes, silence_aware=True)
@@ -458,7 +460,6 @@ class TestAudioDataSplitSilenceAware(unittest.TestCase):
 
         joined = b"".join(c.frame_data for c in chunks)
         self.assertEqual(joined, pcm)
-
 
     def test_silence_aware_splits_at_silence_boundary(self):
         import numpy as np

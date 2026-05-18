@@ -88,9 +88,10 @@ class AudioData(object):
 
         Returns ``[self]`` unchanged when the audio already fits within ``max_bytes`` (even when ``silence_aware=True``, in which case the librosa import is skipped).
 
-        Example:
-            >>> chunks = audio.split(max_bytes=24 * 1024 * 1024)
-            >>> texts = [r.recognize_openai(c) for c in chunks]
+        Example::
+
+            chunks = audio.split(max_bytes=24 * 1024 * 1024)
+            texts = [r.recognize_openai(c) for c in chunks]
         """
         min_required = self._WAV_HEADER_OVERHEAD + self.sample_width
         if max_bytes < min_required:
@@ -125,7 +126,7 @@ class AudioData(object):
         for start in range(0, len(self.frame_data), chunk_size):
             chunks.append(
                 AudioData(
-                    self.frame_data[start : start + chunk_size],
+                    self.frame_data[start:start + chunk_size],
                     self.sample_rate,
                     self.sample_width,
                 )
@@ -189,7 +190,7 @@ class AudioData(object):
                 segment = self._to_float_ndarray(
                     np,
                     raw=self.frame_data[
-                        search_start * sw : search_end * sw
+                        search_start * sw:search_end * sw
                     ],
                 )
                 # Call-time numba JIT/cache failures inside librosa can
