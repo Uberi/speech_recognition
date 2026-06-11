@@ -45,24 +45,6 @@ class TestRecognition(unittest.TestCase):
         r = sr.Recognizer()
         self.assertEqual(r.recognize_wit(audio, key=os.environ["WIT_AI_KEY"]), "one two three")
 
-    @unittest.skipUnless("BING_KEY" in os.environ, "requires Microsoft Bing Voice Recognition key to be specified in BING_KEY environment variable")
-    def test_bing_english(self):
-        audio = sr.AudioData.from_file(self.AUDIO_FILE_EN)
-        r = sr.Recognizer()
-        self.assertEqual(r.recognize_bing(audio, key=os.environ["BING_KEY"]), "123.")
-
-    @unittest.skipUnless("BING_KEY" in os.environ, "requires Microsoft Bing Voice Recognition key to be specified in BING_KEY environment variable")
-    def test_bing_french(self):
-        audio = sr.AudioData.from_file(self.AUDIO_FILE_FR)
-        r = sr.Recognizer()
-        self.assertEqual(r.recognize_bing(audio, key=os.environ["BING_KEY"], language="fr-FR"), u"Essaye la dictée numéro un.")
-
-    @unittest.skipUnless("BING_KEY" in os.environ, "requires Microsoft Bing Voice Recognition key to be specified in BING_KEY environment variable")
-    def test_bing_chinese(self):
-        audio = sr.AudioData.from_file(self.AUDIO_FILE_ZH)
-        r = sr.Recognizer()
-        self.assertEqual(r.recognize_bing(audio, key=os.environ["BING_KEY"], language="zh-CN"), u"砸自己的脚。")
-
     @unittest.skipUnless("HOUNDIFY_CLIENT_ID" in os.environ and "HOUNDIFY_CLIENT_KEY" in os.environ, "requires Houndify client ID and client key to be specified in HOUNDIFY_CLIENT_ID and HOUNDIFY_CLIENT_KEY environment variables")
     def test_houndify_english(self):
         audio = sr.AudioData.from_file(self.AUDIO_FILE_EN)

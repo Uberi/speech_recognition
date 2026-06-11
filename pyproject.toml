@@ -16,7 +16,7 @@ authors = [
 maintainers = [
   { name = "nikkie", email = "takuyafjp+develop@gmail.com" },
 ]
-keywords = ["speech", "recognition", "voice", "sphinx", "google", "wit", "bing", "api", "houndify", "ibm", "snowboy"]
+keywords = ["speech", "recognition", "voice", "sphinx", "google", "wit", "api", "houndify", "ibm", "snowboy"]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Developers",
