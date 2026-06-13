@@ -57,15 +57,6 @@ except sr.UnknownValueError:
 except sr.RequestError as e:
     print("Could not request results from Microsoft Azure Speech service; {0}".format(e))
 
-# recognize speech using Microsoft Bing Voice Recognition
-BING_KEY = "INSERT BING API KEY HERE"  # Microsoft Bing Voice Recognition API keys 32-character lowercase hexadecimal strings
-try:
-    print("Microsoft Bing Voice Recognition thinks you said " + r.recognize_bing(audio, key=BING_KEY))
-except sr.UnknownValueError:
-    print("Microsoft Bing Voice Recognition could not understand audio")
-except sr.RequestError as e:
-    print("Could not request results from Microsoft Bing Voice Recognition service; {0}".format(e))
-
 # recognize speech using Houndify
 HOUNDIFY_CLIENT_ID = "INSERT HOUNDIFY CLIENT ID HERE"  # Houndify client IDs are Base64-encoded strings
 HOUNDIFY_CLIENT_KEY = "INSERT HOUNDIFY CLIENT KEY HERE"  # Houndify client keys are Base64-encoded strings
