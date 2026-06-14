@@ -63,7 +63,10 @@ jobs:
           sudo apt-get install --no-install-recommends -y libpulse-dev libasound2-dev
           # For PyAudio
           sudo apt-get install --no-install-recommends -y portaudio19-dev
+          # For Whisper
+          sudo apt-get install --no-install-recommends -y ffmpeg
       - name: Install ffmpeg (for Whisper)
+        if: matrix.os == 'windows-latest'
         uses: FedericoCarboni/setup-ffmpeg@37062fbf7149fc5578d6c57e08aed62458b375d6 # v3.1
       - name: Install Python dependencies (Ubuntu, <=3.13)
         if: matrix.os == 'ubuntu-latest' && matrix.python-version != '3.14'
