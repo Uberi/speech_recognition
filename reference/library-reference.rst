@@ -310,6 +310,30 @@ Returns a new ``AudioData`` instance, trimmed to a given time interval. In other
 
 If not specified, ``start_ms`` defaults to the beginning of the audio, and ``end_ms`` defaults to the end.
 
+``audiodata_instance.split(max_bytes: int, *, silence_aware: bool = False) -> list[AudioData]``
+-----------------------------------------------------------------------------------------------
+
+Returns a list of ``AudioData`` chunks whose WAV-serialized size (the output of ``get_wav_data()``) is at most ``max_bytes`` bytes each. This is intended for feeding oversized recordings to APIs that enforce strict upload limits, such as OpenAI's Whisper transcription endpoint (25 MB per request).
+
+If the audio already fits within ``max_bytes``, ``[self]`` is returned unchanged.
+
+When ``silence_aware`` is ``False`` (the default), the audio is split mechanically on sample boundaries. No optional dependency is required.
+
+When ``silence_aware`` is ``True``, chunk boundaries are snapped to nearby silences via ``librosa.effects.split``. The boundary search stays before the size-derived target so the ``max_bytes`` ceiling is preserved; if no silence is found within the look-back window, the chunk is cut at the same boundary the fixed-time mode would use. This mode requires the ``audio-split`` optional extra (``pip install SpeechRecognition[audio-split]``); ``SetupError`` is raised if ``librosa`` and ``numpy`` are not importable or fail to initialize at runtime.
+
+Raises ``ValueError`` if ``max_bytes`` is smaller than the WAV header overhead (44 bytes) plus one sample, or if ``len(frame_data)`` is not a multiple of ``sample_width`` (sample-aligned input is required so the byte budget is a hard ceiling).
+
+Example usage with the OpenAI Whisper API::
+
+    import speech_recognition as sr
+
+    audio = sr.AudioData.from_file("large.wav")
+    r = sr.Recognizer()
+
+    # 24 MB target leaves a small buffer under Whisper's 25 MB request limit.
+    chunks = audio.split(max_bytes=24 * 1024 * 1024, silence_aware=True)
+    text = " ".join(r.recognize_openai(c, model="whisper-1") for c in chunks)
+
 ``audiodata_instance.get_raw_data(convert_rate: Union[int, None] = None, convert_width: Union[int, None] = None) -> bytes``
 ---------------------------------------------------------------------------------------------------------------------------
 

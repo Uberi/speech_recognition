@@ -174,3 +174,8 @@ pocketsphinx-python/
 examples/TEST.py
 *.geany
 *.out
+
+# Local AI tooling state (Claude Code, Cursor): worktree pointers, caches,
+# session memory. Should never be committed.
+.claude/
+.cursor/
