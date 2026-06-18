@@ -11,6 +11,25 @@ audio = sr.AudioData.from_file(AUDIO_FILE)
 
 r = sr.Recognizer()
 
+# recognize speech using Whisper
+try:
+    print("Whisper thinks you said " + r.recognize_whisper(audio, language="english"))
+except sr.UnknownValueError:
+    print("Whisper could not understand audio")
+except sr.RequestError as e:
+    print("Could not request results from Whisper; {0}".format(e))
+
+# recognize speech using Whisper API
+import os
+OPENAI_API_KEY = "INSERT OPENAI API KEY HERE"
+os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
+try:
+    print("Whisper API thinks you said " + r.recognize_openai(audio))
+except sr.UnknownValueError:
+    print("Whisper API could not understand audio")
+except sr.RequestError as e:
+    print("Could not request results from Whisper API; {0}".format(e))
+
 # recognize speech using Sphinx
 try:
     print("Sphinx thinks you said " + r.recognize_sphinx(audio))
