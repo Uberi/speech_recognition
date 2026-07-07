@@ -65,6 +65,7 @@ Speech recognition engine/API support:
     * OpenAI compatible self-hosted endpoints (e.g. vLLM, Ollama)
 * `Groq Whisper API <https://console.groq.com/docs/speech-to-text>`__
 * `Cohere Transcribe API <https://docs.cohere.com/docs/transcribe>`__
+* `FunASR <https://github.com/modelscope/FunASR>`__ (works offline)
 
 **Quickstart:** ``pip install SpeechRecognition``. See the "Installing" section for more details.
 
@@ -124,6 +125,7 @@ To use all of the functionality of the library, you should have:
     * includes OpenAI compatible self-hosted endpoints (e.g. vLLM, Ollama)
 * **groq** (required only if you need to use Groq Whisper API speech recognition ``recognizer_instance.recognize_groq``)
 * **cohere** (required only if you need to use Cohere Transcribe API speech recognition ``recognizer_instance.recognize_cohere_api``; install with ``pip install SpeechRecognition[cohere-api]``. Set ``CO_API_KEY`` as documented by the Cohere SDK.)
+* **funasr** (required only if you need to use FunASR speech recognition ``recognizer_instance.recognize_funasr``)
 
 The following requirements are optional, but can improve or extend functionality in some situations:
 
@@ -207,6 +209,15 @@ Faster Whisper (for Faster Whisper users)
 The library `faster-whisper <https://pypi.org/project/faster-whisper/>`__ is **required if and only if you want to use Faster Whisper** (``recognizer_instance.recognize_faster_whisper``).
 
 You can install it with ``python3 -m pip install SpeechRecognition[faster-whisper]``.
+
+FunASR (for FunASR users)
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The library `funasr <https://pypi.org/project/funasr/>`__ is **required if and only if you want to use FunASR** (``recognizer_instance.recognize_funasr``).
+
+You can install it with ``python3 -m pip install SpeechRecognition[funasr]``.
+
+FunASR runs locally and supports models such as SenseVoice and Paraformer. The default model is ``iic/SenseVoiceSmall``; set ``model`` and ``device`` when calling ``recognizer_instance.recognize_funasr`` to choose another FunASR model or a CUDA device.
 
 OpenAI Whisper API (for OpenAI Whisper API users) 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
