@@ -9,7 +9,7 @@ from urllib.request import Request, urlopen
 from typing_extensions import NotRequired
 
 from speech_recognition.audio import AudioData
-from speech_recognition.exceptions import RequestError, UnknownValueError
+from speech_recognition.exceptions import RateLimitError, RequestError, UnknownValueError
 
 
 class Alternative(TypedDict):
@@ -215,6 +215,17 @@ def obtain_transcription(request: Request, timeout: int) -> str:
     try:
         response = urlopen(request, timeout=timeout)
     except HTTPError as e:
+        if e.code == 429:
+            retry_after_header = e.headers.get("Retry-After") if e.headers else None
+            retry_after: float | None
+            try:
+                retry_after = float(retry_after_header) if retry_after_header is not None else None
+            except ValueError:
+                retry_after = None
+            raise RateLimitError(
+                "recognition request failed: rate limited (HTTP 429): {}".format(e.reason),
+                retry_after=retry_after,
+            )
         raise RequestError("recognition request failed: {}".format(e.reason))
     except URLError as e:
         raise RequestError(
