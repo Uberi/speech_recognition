@@ -323,7 +323,7 @@ When ``silence_aware`` is ``True``, chunk boundaries are snapped to nearby silen
 
 Raises ``ValueError`` if ``max_bytes`` is smaller than the WAV header overhead (44 bytes) plus one sample, or if ``len(frame_data)`` is not a multiple of ``sample_width`` (sample-aligned input is required so the byte budget is a hard ceiling).
 
-Example usage with the OpenAI Whisper API::
+Example usage with the OpenAI Transcription API::
 
     import speech_recognition as sr
 
