@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from typing import Dict, Literal, Optional, TypedDict
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
@@ -211,17 +212,40 @@ class OutputParser:
         return best_hypothesis
 
 
+def _parse_retry_after(value: str | None) -> float | None:
+    """
+    Parse an HTTP ``Retry-After`` header value into a number of seconds.
+
+    Per RFC 9110 section 10.2.3, the value is either a non-negative
+    integer number of seconds, or an HTTP-date. Returns ``None`` if
+    ``value`` is missing or doesn't match either form.
+    """
+    if value is None:
+        return None
+    value = value.strip()
+    try:
+        return float(value)
+    except ValueError:
+        pass
+    try:
+        from email.utils import parsedate_to_datetime
+        retry_date = parsedate_to_datetime(value)
+    except (TypeError, ValueError, IndexError):
+        return None
+    if retry_date.tzinfo is None:
+        # HTTP-dates are always GMT; treat a naive result as UTC.
+        retry_date = retry_date.replace(tzinfo=timezone.utc)
+    delta = (retry_date - datetime.now(timezone.utc)).total_seconds()
+    return max(delta, 0.0)
+
+
 def obtain_transcription(request: Request, timeout: int) -> str:
     try:
         response = urlopen(request, timeout=timeout)
     except HTTPError as e:
         if e.code == 429:
             retry_after_header = e.headers.get("Retry-After") if e.headers else None
-            retry_after: float | None
-            try:
-                retry_after = float(retry_after_header) if retry_after_header is not None else None
-            except ValueError:
-                retry_after = None
+            retry_after = _parse_retry_after(retry_after_header)
             raise RateLimitError(
                 "recognition request failed: rate limited (HTTP 429): {}".format(e.reason),
                 retry_after=retry_after,
