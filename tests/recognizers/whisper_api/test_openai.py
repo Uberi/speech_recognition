@@ -38,6 +38,30 @@ def test_transcribe_with_openai_whisper(respx_mock, setenv_openai_api_key):
 
 
 @respx.mock(assert_all_called=True, assert_all_mocked=True)
+def test_transcribe_with_gpt_transcribe(respx_mock, setenv_openai_api_key):
+    respx_mock.post(
+        "https://api.openai.com/v1/audio/transcriptions",
+        data__contains={"model": "gpt-transcribe"},
+    ).respond(
+        200,
+        json={
+            "text": "Transcription by GPT Transcribe",
+            "languages": [{"code": "en"}],
+        },
+    )
+
+    audio_data = MagicMock(spec=AudioData)
+    audio_data.get_wav_data.return_value = b"audio_data"
+
+    actual = openai.recognize(
+        MagicMock(spec=Recognizer), audio_data, model="gpt-transcribe"
+    )
+
+    assert actual == "Transcription by GPT Transcribe"
+    audio_data.get_wav_data.assert_called_once()
+
+
+@respx.mock(assert_all_called=True, assert_all_mocked=True)
 def test_transcribe_with_specified_language(respx_mock, setenv_openai_api_key):
     # https://github.com/Uberi/speech_recognition/issues/681
     respx_mock.post(

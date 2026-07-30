@@ -86,10 +86,13 @@ except sr.UnknownValueError:
 except sr.RequestError as e:
     print(f"Could not request results from Whisper; {e}")
 
-# recognize speech using Whisper API
+# recognize speech using the OpenAI Transcription API
 OPENAI_API_KEY = "INSERT OPENAI API KEY HERE"
 os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
 try:
-    print(f"OpenAI Whisper API thinks you said {r.recognize_openai(audio)}")
+    print(
+        "OpenAI Transcription API thinks you said "
+        f"{r.recognize_openai(audio)}"
+    )
 except sr.RequestError as e:
-    print(f"Could not request results from OpenAI Whisper API; {e}")
+    print(f"Could not request results from OpenAI Transcription API; {e}")
