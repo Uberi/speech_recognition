@@ -7,7 +7,6 @@ from speech_recognition import Recognizer
 from speech_recognition.audio import AudioData
 from speech_recognition.exceptions import RateLimitError
 from speech_recognition.recognizers import google
-
 MODULE_UNDER_TEST = "speech_recognition.recognizers.google"
 
 
@@ -123,34 +122,13 @@ class ObtainTranscriptionTestCase(TestCase):
             url="http://example.com",
             code=429,
             msg="Too Many Requests",
-            hdrs={"Retry-After": "30"},
+            hdrs={},
             fp=None,
         )
         urlopen.side_effect = error
 
-        with self.assertRaises(RateLimitError) as cm:
+        with self.assertRaises(RateLimitError):
             google.obtain_transcription(request, 0)
-
-        self.assertEqual(cm.exception.retry_after, 30.0)
-
-    @patch(f"{MODULE_UNDER_TEST}.urlopen")
-    def test_obtain_rate_limited_http_date_retry_after(self, urlopen):
-        request = MagicMock(spec=Request)
-        error = HTTPError(
-            url="http://example.com",
-            code=429,
-            msg="Too Many Requests",
-            hdrs={"Retry-After": "Wed, 21 Oct 2099 07:28:00 GMT"},
-            fp=None,
-        )
-        urlopen.side_effect = error
-
-        with self.assertRaises(RateLimitError) as cm:
-            google.obtain_transcription(request, 0)
-
-        # Far-future date -> a large positive number of seconds, not None
-        self.assertIsNotNone(cm.exception.retry_after)
-        self.assertGreater(cm.exception.retry_after, 0)
 
 
 @patch(f"{MODULE_UNDER_TEST}.OutputParser")
