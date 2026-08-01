@@ -20,3 +20,11 @@ class TranscriptionNotReady(Exception):
 
 class TranscriptionFailed(Exception):
     pass
+
+
+class RateLimitError(RequestError):
+    """Raised when the speech recognition service returns an HTTP 429
+    (Too Many Requests) response, indicating the caller has been rate
+    limited.
+    """
+    pass
