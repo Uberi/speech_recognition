@@ -1,0 +1,75 @@
+issues for long transcriptions on google:
+- issue: files longer than minute need to be in uri and LINEAR 16 raw PCM format
+  example:
+    ```
+    python transcribe_async.py gs://steadfast-mason-145112.appspot.com/short_interview_example_16.L16
+Traceback (most recent call last):
+  File "transcribe_async.py", line 121, in <module>
+    main(args.input_uri, args.encoding, args.sample_rate)
+  File "transcribe_async.py", line 74, in main
+    ), DEADLINE_SECS)
+  File "/Users/timeccleston/.virtualenvs/gapis/lib/python2.7/site-packages/grpc/beta/_client_adaptations.py", line 305, in __call__
+    self._request_serializer, self._response_deserializer)
+  File "/Users/timeccleston/.virtualenvs/gapis/lib/python2.7/site-packages/grpc/beta/_client_adaptations.py", line 203, in _blocking_unary_unary
+    raise _abortion_error(rpc_error_call)
+grpc.framework.interfaces.face.face.AbortionError: AbortionError(code=StatusCode.INVALID_ARGUMENT, details="For audio inputs longer than 1 min, please use LINEAR16 encoding.")
+    ```
+  ideas:
+  - idea: chop files down to 15 seconds each
+    packages:
+    - name: sac
+      version: 0.6.1
+      description: Semantic Audio Companion
+      notes: - based on SoX
+    - name: SoX
+      notes: - CLI utility
+    - name: letmehear
+      version: 1.0.0
+      description: SoX based audio file merge-n-splitter appropriate to resplit audio books.
+    - name: cutaudio
+      version: 0.0.1
+      description: Cut an audio file into small pieces with nice names.
+  - idea: convert files to LINEAR 16
+    packages:
+    - name: audioread
+      version: 2.1.4
+      description: multi-library, cross-platform audio decoding
+    issue: everything runs (gprc) but it doesn't give results
+  - idea: use another service
+    packages:
+    - name: audiogrep
+      version: 0.1.2
+      description: Creates audio supercuts
+- issue: aiff works in speech_recognition, but aif does not
+  example:
+    cli:
+    ```
+    python audio_transcribe.py
+Sphinx thinks you said this is just that test track of what interview might be like although i am a male voices in the interviews and using our own blood by female them and is why this is just to prove that a short interview basically works and misses the wrongs or as long one does not
+Google Speech Recognition thinks you said this is just a test track of what an interview might be like although I am a male voice and the other interviews I'm using are led by a female the biggest point of this is just to prove that a short interview basically works in the sense that it runs or as a long one does not
+Could not request results from Wit.ai service; recognition request failed: Bad Request
+Could not request results from Microsoft Bing Voice Recognition service; recognition request failed: Access Denied
+Could not request results from api.ai service; recognition connection failed: [Errno 32] Broken pipe
+Traceback (most recent call last):
+  File "audio_transcribe.py", line 67, in <module>
+    print("Houndify thinks you said " + r.recognize_houndify(audio, client_id=HOUNDIFY_CLIENT_ID, client_key=HOUNDIFY_CLIENT_KEY))
+AttributeError: 'Recognizer' object has no attribute 'recognize_houndify'
+    ```
+    ```
+    (speech)[493] examples% git diff audio_transcribe.py
+diff --git a/examples/audio_transcribe.py b/examples/audio_transcribe.py
+index 1400e9d..09943f4 100644
+--- a/examples/audio_transcribe.py
++++ b/examples/audio_transcribe.py
+@@ -4,7 +4,8 @@ import speech_recognition as sr
+
+ # obtain path to "english.wav" in the same folder as this script
+ from os import path
+-AUDIO_FILE = path.join(path.dirname(path.realpath(__file__)), "english.wav")
++AUDIO_FILE = path.join(path.dirname(path.realpath(__file__)), "short_interview_example.aiff")
++#AUDIO_FILE = path.join(path.dirname(path.realpath(__file__)), "english.wav")
+ #AUDIO_FILE = path.join(path.dirname(path.realpath(__file__)), "french.aiff")
+ #AUDIO_FILE = path.join(path.dirname(path.realpath(__file__)), "chinese.flac")
+
+(speech)[494] examples%
+```
