@@ -61,7 +61,7 @@ Speech recognition engine/API support:
 * `Tensorflow <https://www.tensorflow.org/>`__
 * `Vosk API <https://github.com/alphacep/vosk-api/>`__ (works offline)
 * `OpenAI whisper <https://github.com/openai/whisper>`__ (works offline)
-* `OpenAI Whisper API <https://platform.openai.com/docs/guides/speech-to-text>`__
+* `OpenAI Transcription API <https://platform.openai.com/docs/guides/speech-to-text>`__
     * OpenAI compatible self-hosted endpoints (e.g. vLLM, Ollama)
 * `Groq Whisper API <https://console.groq.com/docs/speech-to-text>`__
 * `Cohere Transcribe API <https://docs.cohere.com/docs/transcribe>`__
@@ -113,7 +113,7 @@ Requirements
 
 To use all of the functionality of the library, you should have:
 
-* **Python** 3.9+ (required)
+* **Python** 3.10+ (required)
 * **PyAudio** 0.2.11+ (required only if you need to use microphone input, ``Microphone``)
 * **PocketSphinx** (required only if you need to use the Sphinx recognizer, ``recognizer_instance.recognize_sphinx``)
 * **Google API Client Library for Python** (required only if you need to use the Google Cloud Speech API, ``recognizer_instance.recognize_google_cloud``)
@@ -121,7 +121,7 @@ To use all of the functionality of the library, you should have:
 * **Vosk** (required only if you need to use Vosk API speech recognition ``recognizer_instance.recognize_vosk``)
 * **Whisper** (required only if you need to use Whisper ``recognizer_instance.recognize_whisper``)
 * **Faster Whisper** (required only if you need to use Faster Whisper ``recognizer_instance.recognize_faster_whisper``)
-* **openai** (required only if you need to use OpenAI Whisper API speech recognition ``recognizer_instance.recognize_openai``)
+* **openai** (required only if you need to use OpenAI Transcription API speech recognition ``recognizer_instance.recognize_openai``)
     * includes OpenAI compatible self-hosted endpoints (e.g. vLLM, Ollama)
 * **groq** (required only if you need to use Groq Whisper API speech recognition ``recognizer_instance.recognize_groq``)
 * **cohere** (required only if you need to use Cohere Transcribe API speech recognition ``recognizer_instance.recognize_cohere_api``; install with ``pip install SpeechRecognition[cohere-api]``. Set ``CO_API_KEY`` as documented by the Cohere SDK.)
@@ -136,7 +136,7 @@ The following sections go over the details of each requirement.
 Python
 ~~~~~~
 
-The first software requirement is `Python 3.9+ <https://www.python.org/downloads/>`__. This is required to use the library.
+The first software requirement is `Python 3.10+ <https://www.python.org/downloads/>`__. This is required to use the library.
 
 PyAudio (for microphone users)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -219,10 +219,10 @@ You can install it with ``python3 -m pip install SpeechRecognition[funasr]``.
 
 FunASR runs locally and supports models such as SenseVoice and Paraformer. The default model is ``iic/SenseVoiceSmall``; set ``model`` and ``device`` when calling ``recognizer_instance.recognize_funasr`` to choose another FunASR model or a CUDA device.
 
-OpenAI Whisper API (for OpenAI Whisper API users) 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+OpenAI Transcription API (for OpenAI Transcription API users)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The library `openai <https://pypi.org/project/openai/>`__ is **required if and only if you want to use OpenAI Whisper API** (``recognizer_instance.recognize_openai``).
+The library `openai <https://pypi.org/project/openai/>`__ is **required if and only if you want to use OpenAI Transcription API** (``recognizer_instance.recognize_openai``).
 
 You can install it with ``python3 -m pip install SpeechRecognition[openai]``.
 

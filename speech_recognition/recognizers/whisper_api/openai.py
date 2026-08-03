@@ -13,7 +13,10 @@ from speech_recognition.recognizers.whisper_api.base import (
 
 # https://platform.openai.com/docs/api-reference/audio/createTranscription#audio-createtranscription-model
 WhisperModel = Literal[
-    "whisper-1", "gpt-4o-transcribe", "gpt-4o-mini-transcribe"
+    "whisper-1",
+    "gpt-4o-transcribe",
+    "gpt-4o-mini-transcribe",
+    "gpt-transcribe",
 ]
 
 
@@ -38,7 +41,7 @@ def recognize(
     model: WhisperModel = "whisper-1",
     **kwargs: Unpack[OpenAIOptionalParameters],
 ) -> str:
-    """Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the OpenAI Whisper API (and OpenAI-compatible self-hosted endpoints).
+    """Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the OpenAI Transcription API (and OpenAI-compatible self-hosted endpoints).
 
     OpenAI hosted service: requires an OpenAI account; visit https://platform.openai.com/signup, then generate API Key in `API keys <https://platform.openai.com/api-keys>`__ in your project.
     Set environment variable ``OPENAI_API_KEY``; otherwise openai library will raise a ``openai.OpenAIError``.
