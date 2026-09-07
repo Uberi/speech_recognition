@@ -337,29 +337,27 @@ class Recognizer(AudioSource):
         Records up to ``duration`` seconds of audio from ``source`` (an ``AudioSource`` instance) starting at ``offset`` (or at the beginning if not specified) into an ``AudioData`` instance, which it returns.
 
         If ``duration`` is not specified, then it will record until there is no more audio input.
+
+        ``offset`` and ``duration`` are rounded down to whole samples. A zero ``duration`` returns empty audio.
         """
         assert isinstance(source, AudioSource), "Source must be an audio source"
         assert source.stream is not None, "Audio source must be entered before recording, see documentation for ``AudioSource``; are you using ``source`` outside of a ``with`` statement?"
 
         frames = io.BytesIO()
-        seconds_per_buffer = (source.CHUNK + 0.0) / source.SAMPLE_RATE
-        elapsed_time = 0
-        offset_time = 0
-        offset_reached = False
-        while True:  # loop for the total number of chunks needed
-            if offset and not offset_reached:
-                offset_time += seconds_per_buffer
-                if offset_time > offset:
-                    offset_reached = True
-
-            buffer = source.stream.read(source.CHUNK)
+        offset_frames = int(offset * source.SAMPLE_RATE) if offset else 0
+        remaining_frames = int(duration * source.SAMPLE_RATE) if duration is not None else None
+        while offset_frames > 0:
+            buffer = source.stream.read(min(source.CHUNK, offset_frames))
             if len(buffer) == 0: break
+            offset_frames -= len(buffer) // source.SAMPLE_WIDTH
 
-            if offset_reached or not offset:
-                elapsed_time += seconds_per_buffer
-                if duration and elapsed_time > duration: break
-
-                frames.write(buffer)
+        while remaining_frames is None or remaining_frames > 0:
+            frames_to_read = source.CHUNK if remaining_frames is None else min(source.CHUNK, remaining_frames)
+            buffer = source.stream.read(frames_to_read)
+            if len(buffer) == 0: break
+            frames.write(buffer)
+            if remaining_frames is not None:
+                remaining_frames -= len(buffer) // source.SAMPLE_WIDTH
 
         frame_data = frames.getvalue()
         frames.close()
