@@ -28,7 +28,8 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from .audio import AudioData, get_flac_converter
-from .exceptions import (
+from .exceptions import (  # noqa: F401
+    RateLimitError,
     RequestError,
     TranscriptionFailed,
     TranscriptionNotReady,
