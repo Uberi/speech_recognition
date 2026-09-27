@@ -56,18 +56,24 @@ class AudioData(object):
         assert end_ms is None or end_ms >= (
             0 if start_ms is None else start_ms
         ), "``end_ms`` must be a non-negative number greater or equal to ``start_ms``"
+        width = self.sample_width
+
+        def byte_offset(ms):
+            # Floor division by 1000 can stop in the middle of a sample.
+            # A cut there shifts every later sample by a leftover byte.
+            raw = int((ms * self.sample_rate * width) // 1000)
+            if width > 1:
+                raw -= raw % width
+            return raw
+
         if start_ms is None:
             start_byte = 0
         else:
-            start_byte = int(
-                (start_ms * self.sample_rate * self.sample_width) // 1000
-            )
+            start_byte = byte_offset(start_ms)
         if end_ms is None:
             end_byte = len(self.frame_data)
         else:
-            end_byte = int(
-                (end_ms * self.sample_rate * self.sample_width) // 1000
-            )
+            end_byte = byte_offset(end_ms)
         return AudioData(
             self.frame_data[start_byte:end_byte],
             self.sample_rate,
