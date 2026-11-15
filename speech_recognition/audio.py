@@ -340,7 +340,7 @@ class AudioData(object):
                     )  # since we're in little endian, we discard the first byte from each 32-bit sample to get a 24-bit sample
                 else:  # 24-bit audio fully supported, we don't need to shim anything
                     raw_data = audioop.lin2lin(
-                        raw_data, self.sample_width, convert_width
+                        raw_data, 4, convert_width
                     )
             else:
                 raw_data = audioop.lin2lin(
