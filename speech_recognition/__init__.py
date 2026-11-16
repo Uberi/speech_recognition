@@ -369,7 +369,7 @@ class Recognizer(AudioSource):
         """
         Adjusts the energy threshold dynamically using audio from ``source`` (an ``AudioSource`` instance) to account for ambient noise.
 
-        Intended to calibrate the energy threshold with the ambient energy level. Should be used on periods of audio without speech - will stop early if any speech is detected.
+        Intended to calibrate the energy threshold with the ambient energy level. Should be used on periods of audio without speech: it always reads audio for the full ``duration``, so any speech in that period raises the threshold as well.
 
         The ``duration`` parameter is the maximum number of seconds that it will dynamically adjust the threshold for before returning. This value should be at least 0.5 in order to get a representative sample of the ambient noise.
         """
