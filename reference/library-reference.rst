@@ -132,8 +132,8 @@ If the dynamic energy threshold setting is enabled (see ``recognizer_instance.dy
 
 Lower values allow for faster adjustment, but also make it more likely to miss certain phrases (especially those with slowly changing volume). This value should be between 0 and 1. As this value approaches 1, dynamic adjustment has less of an effect over time. When this value is 1, dynamic adjustment has no effect.
 
-``recognizer_instance.dynamic_energy_adjustment_ratio = 1.5  # type: float``
-----------------------------------------------------------------------------
+``recognizer_instance.dynamic_energy_ratio = 1.5  # type: float``
+-----------------------------------------------------------------
 
 If the dynamic energy threshold setting is enabled (see ``recognizer_instance.dynamic_energy_threshold``), represents the minimum factor by which speech is louder than ambient noise. Can be changed (not recommended).
 
@@ -238,8 +238,8 @@ Returns the most likely transcription if ``show_all`` is false (the default). Ot
 
 Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
 
-``recognizer_instance.recognize_ibm(audio_data: AudioData, username: str, password: str, language: str = "en-US", show_all: bool = False) -> Union[str, Dict[str, Any]]``
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+``recognizer_instance.recognize_ibm(audio_data: AudioData, key: str, language: str = "en-US", show_all: bool = False) -> Union[Tuple[str, float], Dict[str, Any]]``
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the IBM Speech to Text API.
 
