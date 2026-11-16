@@ -365,13 +365,13 @@ class AudioData(object):
 
         Writing these bytes directly to a file results in a valid `WAV file <https://en.wikipedia.org/wiki/WAV>`__.
         """
-        raw_data = self.get_raw_data(convert_rate, convert_width)
         sample_rate = (
             self.sample_rate if convert_rate is None else convert_rate
         )
         sample_width = (
             self.sample_width if convert_width is None else convert_width
         )
+        raw_data = self.get_raw_data(convert_rate, sample_width)
 
         # generate the WAV file contents
         with io.BytesIO() as wav_file:
