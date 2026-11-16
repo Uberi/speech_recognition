@@ -369,7 +369,7 @@ class Recognizer(AudioSource):
         """
         Adjusts the energy threshold dynamically using audio from ``source`` (an ``AudioSource`` instance) to account for ambient noise.
 
-        Intended to calibrate the energy threshold with the ambient energy level. Should be used on periods of audio without speech - will stop early if any speech is detected.
+        Intended to calibrate the energy threshold with the ambient energy level. Should be used on periods of audio without speech: it reads audio for up to ``duration`` seconds and does not stop early when speech is detected, so any speech in that period raises the threshold as well.
 
         The ``duration`` parameter is the maximum number of seconds that it will dynamically adjust the threshold for before returning. This value should be at least 0.5 in order to get a representative sample of the ambient noise.
         """
@@ -649,7 +649,7 @@ class Recognizer(AudioSource):
 
         The recognition language is determined by ``language``, a BCP-47 language tag like ``"en-US"`` (US English) or ``"fr-FR"`` (International French), defaulting to US English. A list of supported language values can be found in the `Azure Speech service language support documentation <https://learn.microsoft.com/en-us/azure/ai-services/speech-service/language-support>`__ under "Speech to text".
 
-        Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <https://learn.microsoft.com/en-us/azure/ai-services/speech-service/rest-speech-to-text-short>`__ as a JSON dictionary.
+        Returns a tuple of the most likely transcription and its confidence if ``show_all`` is false (the default). Otherwise, returns the `raw API response <https://learn.microsoft.com/en-us/azure/ai-services/speech-service/rest-speech-to-text-short>`__ as a JSON dictionary.
 
         Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
         """
@@ -779,7 +779,7 @@ class Recognizer(AudioSource):
 
         Currently, only English is supported as a recognition language.
 
-        Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the raw API response as a JSON dictionary.
+        Returns a tuple of the most likely transcription and its confidence if ``show_all`` is false (the default). Otherwise, returns the raw API response as a JSON dictionary.
 
         Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
         """
@@ -1059,11 +1059,11 @@ class Recognizer(AudioSource):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the IBM Speech to Text API.
 
-        The IBM Speech to Text username and password are specified by ``username`` and ``password``, respectively. Unfortunately, these are not available without `signing up for an account <https://console.ng.bluemix.net/registration/>`__. Once logged into the Bluemix console, follow the instructions for `creating an IBM Watson service instance <https://www.ibm.com/watson/developercloud/doc/getting_started/gs-credentials.shtml>`__, where the Watson service is "Speech To Text". IBM Speech to Text usernames are strings of the form XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX, while passwords are mixed-case alphanumeric strings.
+        The IBM Speech to Text API key is specified by ``key`` (it is sent with the username ``apikey``). Unfortunately, it is not available without `signing up for an account <https://console.ng.bluemix.net/registration/>`__. Once logged into the Bluemix console, follow the instructions for `creating an IBM Watson service instance <https://www.ibm.com/watson/developercloud/doc/getting_started/gs-credentials.shtml>`__, where the Watson service is "Speech To Text", and use the API key from its credentials.
 
         The recognition language is determined by ``language``, an RFC5646 language tag with a dialect like ``"en-US"`` (US English) or ``"zh-CN"`` (Mandarin Chinese), defaulting to US English. The supported language values are listed under the ``model`` parameter of the `audio recognition API documentation <https://www.ibm.com/watson/developercloud/speech-to-text/api/v1/#sessionless_methods>`__, in the form ``LANGUAGE_BroadbandModel``, where ``LANGUAGE`` is the language value.
 
-        Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <https://www.ibm.com/watson/developercloud/speech-to-text/api/v1/#sessionless_methods>`__ as a JSON dictionary.
+        Returns a tuple of the most likely transcription and its confidence if ``show_all`` is false (the default). Otherwise, returns the `raw API response <https://www.ibm.com/watson/developercloud/speech-to-text/api/v1/#sessionless_methods>`__ as a JSON dictionary.
 
         Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
         """

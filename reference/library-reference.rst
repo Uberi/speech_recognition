@@ -132,8 +132,8 @@ If the dynamic energy threshold setting is enabled (see ``recognizer_instance.dy
 
 Lower values allow for faster adjustment, but also make it more likely to miss certain phrases (especially those with slowly changing volume). This value should be between 0 and 1. As this value approaches 1, dynamic adjustment has less of an effect over time. When this value is 1, dynamic adjustment has no effect.
 
-``recognizer_instance.dynamic_energy_adjustment_ratio = 1.5  # type: float``
-----------------------------------------------------------------------------
+``recognizer_instance.dynamic_energy_ratio = 1.5  # type: float``
+-----------------------------------------------------------------
 
 If the dynamic energy threshold setting is enabled (see ``recognizer_instance.dynamic_energy_threshold``), represents the minimum factor by which speech is louder than ambient noise. Can be changed (not recommended).
 
@@ -223,8 +223,8 @@ Returns the most likely transcription if ``show_all`` is false (the default). Ot
 
 Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
 
-``recognizer_instance.recognize_houndify(audio_data: AudioData, client_id: str, client_key: str, show_all: bool = False) -> Union[str, Dict[str, Any]]``
---------------------------------------------------------------------------------------------------------------------------------------------------------
+``recognizer_instance.recognize_houndify(audio_data: AudioData, client_id: str, client_key: str, show_all: bool = False) -> Union[Tuple[str, float], Dict[str, Any]]``
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the Houndify API.
 
@@ -234,20 +234,20 @@ To get the client ID and client key for a Houndify client, go to the `dashboard 
 
 Currently, only English is supported as a recognition language.
 
-Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the raw API response as a JSON dictionary.
+Returns a tuple of the most likely transcription and its confidence if ``show_all`` is false (the default). Otherwise, returns the raw API response as a JSON dictionary.
 
 Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
 
-``recognizer_instance.recognize_ibm(audio_data: AudioData, username: str, password: str, language: str = "en-US", show_all: bool = False) -> Union[str, Dict[str, Any]]``
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+``recognizer_instance.recognize_ibm(audio_data: AudioData, key: str, language: str = "en-US", show_all: bool = False) -> Union[Tuple[str, float], Dict[str, Any]]``
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using the IBM Speech to Text API.
 
-The IBM Speech to Text username and password are specified by ``username`` and ``password``, respectively. Unfortunately, these are not available without `signing up for an account <https://console.ng.bluemix.net/registration/>`__. Once logged into the Bluemix console, follow the instructions for `creating an IBM Watson service instance <https://www.ibm.com/watson/developercloud/doc/getting_started/gs-credentials.shtml>`__, where the Watson service is "Speech To Text". IBM Speech to Text usernames are strings of the form XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX, while passwords are mixed-case alphanumeric strings.
+The IBM Speech to Text API key is specified by ``key`` (it is sent with the username ``apikey``). Unfortunately, it is not available without `signing up for an account <https://console.ng.bluemix.net/registration/>`__. Once logged into the Bluemix console, follow the instructions for `creating an IBM Watson service instance <https://www.ibm.com/watson/developercloud/doc/getting_started/gs-credentials.shtml>`__, where the Watson service is "Speech To Text", and use the API key from its credentials.
 
 The recognition language is determined by ``language``, an RFC5646 language tag with a dialect like ``"en-US"`` (US English) or ``"zh-CN"`` (Mandarin Chinese), defaulting to US English. The supported language values are listed under the ``model`` parameter of the `audio recognition API documentation <https://www.ibm.com/watson/developercloud/speech-to-text/api/v1/#sessionless_methods>`__, in the form ``LANGUAGE_BroadbandModel``, where ``LANGUAGE`` is the language value.
 
-Returns the most likely transcription if ``show_all`` is false (the default). Otherwise, returns the `raw API response <https://www.ibm.com/watson/developercloud/speech-to-text/api/v1/#sessionless_methods>`__ as a JSON dictionary.
+Returns a tuple of the most likely transcription and its confidence if ``show_all`` is false (the default). Otherwise, returns the `raw API response <https://www.ibm.com/watson/developercloud/speech-to-text/api/v1/#sessionless_methods>`__ as a JSON dictionary.
 
 Raises a ``speech_recognition.UnknownValueError`` exception if the speech is unintelligible. Raises a ``speech_recognition.RequestError`` exception if the speech recognition operation failed, if the key isn't valid, or if there is no internet connection.
 
