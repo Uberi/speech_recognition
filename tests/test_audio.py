@@ -22,6 +22,17 @@ class TestAudioFile(unittest.TestCase):
         self.assertEqual(audio.get_raw_data()[:16], audio.get_segment(None, 0.022675738 * 4).get_raw_data())
         self.assertEqual(audio.get_raw_data()[8:16], audio.get_segment(0.022675738 * 2, 0.022675738 * 4).get_raw_data())
 
+    def test_get_segment_stays_on_a_sample(self):
+        frame = bytes([0, 1]) * 400
+        audio = sr.AudioData(frame, 44100, 2)
+        segment = audio.get_segment(5)
+        self.assertEqual(segment.get_raw_data()[:2], b"\x00\x01")
+        self.assertEqual(len(segment.get_raw_data()) % 2, 0)
+        ended = audio.get_segment(None, 5)
+        self.assertEqual(len(ended.get_raw_data()) % 2, 0)
+        aligned = sr.AudioData(frame, 16000, 2).get_segment(10)
+        self.assertEqual(aligned.get_raw_data()[:2], b"\x00\x01")
+
     def test_wav_mono_8_bit(self):
         audio = sr.AudioData.from_file(path.join(path.dirname(path.realpath(__file__)), "audio-mono-8-bit-44100Hz.wav"))
         self.assertIsInstance(audio, sr.AudioData)
