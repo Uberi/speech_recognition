@@ -522,7 +522,7 @@ class Recognizer(AudioSource):
             if stream:
                 # yield the first buffer of the phrase
                 yield AudioData(b"".join(frames), source.SAMPLE_RATE, source.SAMPLE_WIDTH)
-                buffer_yielded = True
+                buffer_yielded = bool(frames)
                 frames.clear()
 
             while True:

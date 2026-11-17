@@ -73,3 +73,13 @@ def test_stream_hotword_eof_still_yields_empty_buffer(tmp_path, monkeypatch):
     with AudioFile(wav_audio(b"\x0a\x00" * CHUNK, 2)) as source:
         chunks = list(listener.listen(source, stream=True, snowboy_configuration=(str(tmp_path), [])))
     assert [chunk.frame_data for chunk in chunks] == [b""]
+
+
+def test_stream_short_limit_with_zero_pre_roll_preserves_first_buffer():
+    raw = b"\x0a\x00" * CHUNK
+    listener = recognizer()
+    listener.non_speaking_duration = 0
+    with AudioFile(wav_audio(raw, 2)) as source:
+        source.CHUNK = CHUNK
+        chunks = list(listener.listen(source, stream=True, phrase_time_limit=0.0625))
+    assert b"".join(chunk.frame_data for chunk in chunks) == raw
