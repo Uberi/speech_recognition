@@ -482,6 +482,7 @@ class Recognizer(AudioSource):
         buffer = b""  # an empty buffer means that the stream has ended and there is no data left to read
         while True:
             frames = collections.deque()
+            buffer_yielded = False
 
             if snowboy_configuration is None:
                 # store audio input until the phrase starts
@@ -521,6 +522,7 @@ class Recognizer(AudioSource):
             if stream:
                 # yield the first buffer of the phrase
                 yield AudioData(b"".join(frames), source.SAMPLE_RATE, source.SAMPLE_WIDTH)
+                buffer_yielded = True
                 frames.clear()
 
             while True:
@@ -530,6 +532,7 @@ class Recognizer(AudioSource):
                     break
 
                 buffer = source.stream.read(source.CHUNK)
+                buffer_yielded = False
                 if len(buffer) == 0: break  # reached end of the stream
                 frames.append(buffer)
                 phrase_count += 1
@@ -552,14 +555,16 @@ class Recognizer(AudioSource):
                 if stream:
                     # yield the current chunk of audio data wrapped in AudioData
                     yield AudioData(buffer, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
+                    buffer_yielded = True
 
             # check how long the detected phrase is, and retry listening if the phrase is too short
             phrase_count -= pause_count  # exclude the buffers for the pause before the phrase
             if phrase_count >= phrase_buffer_count or len(buffer) == 0: break  # phrase is long enough or we've reached the end of the stream, so stop listening
 
         if stream:
-            # yield the last buffer of the phrase.
-            yield AudioData(buffer, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
+            # A time limit can stop the loop after this buffer was already yielded.
+            if not buffer_yielded:
+                yield AudioData(buffer, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
         else:
             # obtain frame data
             for i in range(
