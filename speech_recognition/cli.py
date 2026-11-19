@@ -6,10 +6,10 @@ import zipfile
 from pathlib import Path
 from urllib.request import urlopen
 
-from tqdm import tqdm
-
 
 def download_vosk_model(url: str, model_dir: str) -> None:
+    from tqdm import tqdm
+
     model_filename = os.path.basename(url)
     model_name = os.path.splitext(model_filename)[0]
 
