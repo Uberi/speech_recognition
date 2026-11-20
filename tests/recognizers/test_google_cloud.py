@@ -52,6 +52,37 @@ def test_transcribe_with_google_cloud_speech(SpeechClient):
     )
 
 
+@pytest.mark.parametrize(
+    "sample_rate, expected_sample_rate",
+    [(96_000, 48_000), (4_000, 8_000)],
+)
+@patch("google.cloud.speech.SpeechClient")
+def test_transcribe_with_clamped_sample_rate(
+    SpeechClient, sample_rate, expected_sample_rate
+):
+    client = SpeechClient.return_value
+    client.recognize.return_value = RecognizeResponse()
+
+    audio_data = MagicMock(spec=AudioData)
+    audio_data.sample_rate = sample_rate
+    audio_data.get_flac_data.return_value = b"flac_data"
+
+    _ = recognize(MagicMock(spec=Recognizer), audio_data, show_all=True)
+
+    audio_data.get_flac_data.assert_called_once_with(
+        convert_rate=expected_sample_rate, convert_width=2
+    )
+    client.recognize.assert_called_once_with(
+        config=RecognitionConfig(
+            encoding=RecognitionConfig.AudioEncoding.FLAC,
+            sample_rate_hertz=expected_sample_rate,
+            language_code="en-US",
+            enable_word_time_offsets=True,
+        ),
+        audio=RecognitionAudio(content=b"flac_data"),
+    )
+
+
 @patch("google.cloud.speech.SpeechClient")
 def test_transcribe_with_specified_credentials(SpeechClient):
     client = SpeechClient.from_service_account_json.return_value

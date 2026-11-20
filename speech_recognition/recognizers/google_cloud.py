@@ -65,7 +65,7 @@ def _build_config(
 
     parameters: GoogleCloudSpeechV1Parameters = {
         "encoding": cast(speech.RecognitionConfig.AudioEncoding, speech.RecognitionConfig.AudioEncoding.FLAC),
-        "sample_rate_hertz": audio_data.sample_rate,
+        "sample_rate_hertz": max(8000, min(audio_data.sample_rate, 48000)),
         "language_code": recognizer_params.pop("language_code", "en-US"),
     }
     if preferred_phrases := recognizer_params.pop("preferred_phrases", None):
