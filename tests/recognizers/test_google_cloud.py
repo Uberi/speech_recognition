@@ -4,8 +4,11 @@ import pytest
 
 from speech_recognition import Recognizer
 from speech_recognition.audio import AudioData
+from speech_recognition.exceptions import RequestError, UnknownValueError
 from speech_recognition.recognizers.google_cloud import recognize
 
+google_exceptions = pytest.importorskip("google.api_core.exceptions")
+google_auth_exceptions = pytest.importorskip("google.auth.exceptions")
 speech = pytest.importorskip("google.cloud.speech")
 
 RecognitionAudio = speech.RecognitionAudio
@@ -182,3 +185,46 @@ def test_transcribe_with_specified_api_parameters(SpeechClient):
         ),
         audio=RecognitionAudio(content=b"flac_data"),
     )
+
+
+@patch("google.cloud.speech.SpeechClient")
+def test_transcribe_wraps_google_api_call_error_in_request_error(SpeechClient):
+    client = SpeechClient.return_value
+    client.recognize.side_effect = google_exceptions.InternalServerError(
+        "Backend Error"
+    )
+
+    audio_data = MagicMock(spec=AudioData)
+    audio_data.sample_rate = 16_000
+    audio_data.get_flac_data.return_value = b"flac_data"
+
+    with pytest.raises(RequestError):
+        recognize(MagicMock(spec=Recognizer), audio_data)
+
+
+@patch("google.cloud.speech.SpeechClient")
+def test_transcribe_wraps_google_auth_error_in_request_error(SpeechClient):
+    SpeechClient.side_effect = google_auth_exceptions.DefaultCredentialsError(
+        "Could not automatically determine credentials"
+    )
+
+    audio_data = MagicMock(spec=AudioData)
+    audio_data.sample_rate = 16_000
+    audio_data.get_flac_data.return_value = b"flac_data"
+
+    with pytest.raises(RequestError):
+        recognize(MagicMock(spec=Recognizer), audio_data)
+
+
+@patch("google.cloud.speech.SpeechClient")
+def test_transcribe_raises_unknown_value_error_on_empty_results(SpeechClient):
+    client = SpeechClient.return_value
+    client.recognize.return_value = RecognizeResponse(results=[])
+
+    audio_data = MagicMock(spec=AudioData)
+    audio_data.sample_rate = 16_000
+    audio_data.get_flac_data.return_value = b"flac_data"
+
+    with pytest.raises(UnknownValueError):
+        recognize(MagicMock(spec=Recognizer), audio_data)
+
