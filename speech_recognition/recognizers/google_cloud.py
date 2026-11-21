@@ -96,17 +96,23 @@ def recognize(
     """
     try:
         from google.api_core.exceptions import GoogleAPICallError
+        from google.auth.exceptions import GoogleAuthError
         from google.cloud import speech
     except ImportError:
         raise RequestError(
             "missing google-cloud-speech module: ensure that google-cloud-speech is set up correctly."
         )
 
-    client = (
-        speech.SpeechClient.from_service_account_json(credentials_json_path)
-        if credentials_json_path
-        else speech.SpeechClient()
-    )
+    try:
+        client = (
+            speech.SpeechClient.from_service_account_json(
+                credentials_json_path
+            )
+            if credentials_json_path
+            else speech.SpeechClient()
+        )
+    except (GoogleAuthError, OSError, ValueError) as e:
+        raise RequestError(e)
 
     flac_data = audio_data.get_flac_data(
         # audio sample rate must be between 8 kHz and 48 kHz inclusive - clamp sample rate into this range
