@@ -14,7 +14,7 @@ from speech_recognition.exceptions import RequestError, UnknownValueError
 
 class Alternative(TypedDict):
     transcript: str
-    confidence: float
+    confidence: NotRequired[float]
 
 
 class Result(TypedDict):
@@ -187,7 +187,13 @@ class OutputParser:
         """
         >>> alternatives = [{"transcript": "one two three", "confidence": 0.42899391}, {"transcript": "1 2", "confidence": 0.49585345}]
         >>> OutputParser.find_best_hypothesis(alternatives)
-        {'transcript': 'one two three', 'confidence': 0.42899391}
+        {'transcript': '1 2', 'confidence': 0.49585345}
+
+        >>> OutputParser.find_best_hypothesis([{"transcript": "first"}, {"transcript": "second", "confidence": 0.0}])
+        {'transcript': 'second', 'confidence': 0.0}
+
+        >>> OutputParser.find_best_hypothesis([{"transcript": "first"}, {"transcript": "second"}])
+        {'transcript': 'first'}
 
         >>> alternatives = [{"confidence": 0.49585345}]
         >>> OutputParser.find_best_hypothesis(alternatives)
@@ -195,17 +201,10 @@ class OutputParser:
           ...
         speech_recognition.exceptions.UnknownValueError
         """
-        best_hypothesis: Alternative
-        if "confidence" in alternatives:
-            # BUG: actual_result["alternative"] (=alternatives) is list, not dict
-            # return alternative with highest confidence score
-            best_hypothesis = max(
-                alternatives,
-                key=lambda alternative: alternative["confidence"],
-            )
-        else:
-            # when there is no confidence available, we arbitrarily choose the first hypothesis.
-            best_hypothesis = alternatives[0]
+        # max keeps the first alternative when confidence scores are tied or absent.
+        best_hypothesis = max(
+            alternatives, key=lambda alternative: alternative.get("confidence", -1.0)
+        )
         if "transcript" not in best_hypothesis:
             raise UnknownValueError()
         return best_hypothesis
