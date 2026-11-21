@@ -160,6 +160,8 @@ Records up to ``duration`` seconds of audio from ``source`` (an ``AudioSource`` 
 
 If ``duration`` is not specified, then it will record until there is no more audio input.
 
+``offset`` and ``duration`` are rounded down to whole samples. A zero ``duration`` returns empty audio.
+
 ``recognizer_instance.adjust_for_ambient_noise(source: AudioSource, duration: float = 1) -> None``
 --------------------------------------------------------------------------------------------------
 
