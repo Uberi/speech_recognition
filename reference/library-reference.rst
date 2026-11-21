@@ -1,8 +1,8 @@
 Speech Recognition Library Reference
 ====================================
 
-``Microphone(device_index: Union[int, None] = None, sample_rate: int = 16000, chunk_size: int = 1024) -> Microphone``
----------------------------------------------------------------------------------------------------------------------
+``Microphone(device_index: Union[int, None] = None, sample_rate: Union[int, None] = None, chunk_size: int = 1024) -> Microphone``
+---------------------------------------------------------------------------------------------------------------------------------
 
 Creates a new ``Microphone`` instance, which represents a physical microphone on the computer. Subclass of ``AudioSource``.
 
@@ -12,7 +12,7 @@ If ``device_index`` is unspecified or ``None``, the default microphone is used a
 
 A device index is an integer between 0 and ``pyaudio.get_device_count() - 1`` (assume we have used ``import pyaudio`` beforehand) inclusive. It represents an audio device such as a microphone or speaker. See the `PyAudio documentation <http://people.csail.mit.edu/hubert/pyaudio/docs/>`__ for more details.
 
-The microphone audio is recorded in chunks of ``chunk_size`` samples, at a rate of ``sample_rate`` samples per second (Hertz).
+The microphone audio is recorded in chunks of ``chunk_size`` samples, at a rate of ``sample_rate`` samples per second (Hertz). When ``sample_rate`` is omitted or ``None``, the selected input device's default sample rate is used.
 
 Higher ``sample_rate`` values result in better audio quality, but also more bandwidth (and therefore, slower recognition). Additionally, some machines, such as some Raspberry Pi models, can't keep up if this value is too high.
 
