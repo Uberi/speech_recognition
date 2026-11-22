@@ -79,6 +79,7 @@ cohere-api = [
 ]
 assemblyai = ["requests"]
 vosk = ["vosk"]
+transcribe-cpp = ["transcribe-cpp>=0.4.2,<0.5"]
 audio-split = [
   "librosa>=0.10.2,<1.0",
   "numpy>=1.26.0",

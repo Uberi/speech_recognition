@@ -256,6 +256,11 @@ Raises a ``speech_recognition.UnknownValueError`` exception if the speech is uni
 
 .. autofunction:: speech_recognition.recognizers.vosk.recognize
 
+``recognizer_instance.recognize_transcribe_cpp(audio_data: AudioData, *, model, language=None) -> str``
+-------------------------------------------------------------------------------------------------------
+
+.. autofunction:: speech_recognition.recognizers.transcribe_cpp.recognize
+
 ``recognizer_instance.recognize_whisper(audio_data: AudioData, model: str="base", show_dict: bool=False, load_options=None, **transcribe_options)``
 ---------------------------------------------------------------------------------------------------------------------------------------------------
 

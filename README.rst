@@ -61,6 +61,7 @@ Speech recognition engine/API support:
 * `Tensorflow <https://www.tensorflow.org/>`__
 * `Vosk API <https://github.com/alphacep/vosk-api/>`__ (works offline)
 * `OpenAI whisper <https://github.com/openai/whisper>`__ (works offline)
+* `transcribe.cpp <https://github.com/handy-computer/transcribe.cpp>`__ (local GGUF models)
 * `OpenAI Transcription API <https://platform.openai.com/docs/guides/speech-to-text>`__
     * OpenAI compatible self-hosted endpoints (e.g. vLLM, Ollama)
 * `Groq Whisper API <https://console.groq.com/docs/speech-to-text>`__
@@ -207,6 +208,23 @@ Faster Whisper (for Faster Whisper users)
 The library `faster-whisper <https://pypi.org/project/faster-whisper/>`__ is **required if and only if you want to use Faster Whisper** (``recognizer_instance.recognize_faster_whisper``).
 
 You can install it with ``python3 -m pip install SpeechRecognition[faster-whisper]``.
+
+transcribe.cpp (local GGUF models)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Install ``SpeechRecognition[transcribe-cpp]`` and download a compatible ASR GGUF
+from its publisher. For example, the
+`Fourier 2B Q8 model <https://huggingface.co/oruk/oruk-fourier-2b/blob/8bcce21695e4ba13569c48de6cedffcb8a7576f5/Fourier-2B-Q8_0.gguf>`__
+supports local, noncommercial English transcription. Load your model once and
+reuse it with recordings or microphone phrases::
+
+    import speech_recognition as sr
+    from transcribe_cpp import Model
+
+    recognizer = sr.Recognizer()
+    with Model("model.gguf", backend="cpu") as model:
+        audio = sr.AudioData.from_file("recording.wav")
+        print(recognizer.recognize_transcribe_cpp(audio, model=model))
 
 OpenAI Transcription API (for OpenAI Transcription API users)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
