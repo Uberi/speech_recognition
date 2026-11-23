@@ -266,6 +266,11 @@ Raises a ``speech_recognition.UnknownValueError`` exception if the speech is uni
 
 .. autofunction:: speech_recognition.recognizers.whisper_local.faster_whisper.recognize
 
+``recognizer_instance.recognize_funasr(audio_data: AudioData, model: str = "iic/SenseVoiceSmall", device: str = "cpu", language: str = "auto", use_itn: bool = True)``
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+.. autofunction:: speech_recognition.recognizers.funasr.recognize
+
 ``recognizer_instance.recognize_openai(audio_data: AudioData, model = "whisper-1", **kwargs)``
 ----------------------------------------------------------------------------------------------
 
