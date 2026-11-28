@@ -211,7 +211,7 @@ The library `faster-whisper <https://pypi.org/project/faster-whisper/>`__ is **r
 You can install it with ``python3 -m pip install SpeechRecognition[faster-whisper]``.
 
 NVIDIA NeMo (for NeMo users)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Install the optional dependencies with ``python3 -m pip install "SpeechRecognition[nemo]"``.
 Download a 16 kHz NeMo ASR checkpoint separately. For example,
