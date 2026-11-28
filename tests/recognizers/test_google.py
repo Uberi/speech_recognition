@@ -1,11 +1,12 @@
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
+from urllib.error import HTTPError
 from urllib.request import Request
 
 from speech_recognition import Recognizer
 from speech_recognition.audio import AudioData
+from speech_recognition.exceptions import RateLimitError
 from speech_recognition.recognizers import google
-
 MODULE_UNDER_TEST = "speech_recognition.recognizers.google"
 
 
@@ -113,6 +114,21 @@ class ObtainTranscriptionTestCase(TestCase):
         urlopen.assert_called_once_with(request, timeout=0)
         response.read.assert_called_once_with()
         response.read.return_value.decode.assert_called_once_with("utf-8")
+
+    @patch(f"{MODULE_UNDER_TEST}.urlopen")
+    def test_obtain_rate_limited(self, urlopen):
+        request = MagicMock(spec=Request)
+        error = HTTPError(
+            url="http://example.com",
+            code=429,
+            msg="Too Many Requests",
+            hdrs={},
+            fp=None,
+        )
+        urlopen.side_effect = error
+
+        with self.assertRaises(RateLimitError):
+            google.obtain_transcription(request, 0)
 
 
 @patch(f"{MODULE_UNDER_TEST}.OutputParser")
