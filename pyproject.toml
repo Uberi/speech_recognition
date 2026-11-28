@@ -79,6 +79,7 @@ cohere-api = [
 ]
 assemblyai = ["requests"]
 vosk = ["vosk"]
+nemo = ["nemo-toolkit[asr]>=3.0", "numpy"]
 audio-split = [
   "librosa>=0.10.2,<1.0",
   "numpy>=1.26.0",

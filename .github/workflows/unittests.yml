@@ -108,6 +108,11 @@ jobs:
           - extra: faster-whisper
             install-spec: .[dev,faster-whisper]
             verify-command: pytest -s -v tests/recognizers/whisper_local/test_faster_whisper.py
+          - extra: nemo
+            install-spec: .[dev,nemo]
+            verify-command: |
+              python -c "import torch; from nemo.collections.asr.models import ASRModel; assert torch.version.cuda is None"
+              pytest -s -v tests/recognizers/test_nemo.py
           - extra: openai
             install-spec: .[dev,openai]
             verify-command: pytest -s -v tests/recognizers/whisper_api/test_openai.py tests/recognizers/whisper_api/test_openai_compatible.py
@@ -142,6 +147,11 @@ jobs:
           sudo apt-get install --no-install-recommends -y portaudio19-dev
       - name: Create virtual environment
         run: python -m venv .venv
+      - name: Install CPU PyTorch (for NeMo)
+        if: matrix.extra == 'nemo'
+        run: |
+          . .venv/bin/activate
+          python -m pip install --index-url https://download.pytorch.org/whl/cpu torch
       - name: Install extra dependencies
         run: |
           . .venv/bin/activate
