@@ -236,6 +236,9 @@ can run on an Apple Silicon Mac without a GPU:
 Reuse the loaded model for subsequent recordings. This transcribes complete
 recordings; it does not apply voice activity detection or stream partial results.
 
+See the `Japanese FLEURS benchmark example <examples/benchmark_fleurs.md>`__
+to compare the original and dialogue-tuned Parakeet checkpoints on CPU.
+
 OpenAI Transcription API (for OpenAI Transcription API users)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
