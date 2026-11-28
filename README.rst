@@ -61,6 +61,7 @@ Speech recognition engine/API support:
 * `Tensorflow <https://www.tensorflow.org/>`__
 * `Vosk API <https://github.com/alphacep/vosk-api/>`__ (works offline)
 * `OpenAI whisper <https://github.com/openai/whisper>`__ (works offline)
+* `NVIDIA NeMo <https://github.com/NVIDIA-NeMo/NeMo>`__ (works offline)
 * `OpenAI Transcription API <https://platform.openai.com/docs/guides/speech-to-text>`__
     * OpenAI compatible self-hosted endpoints (e.g. vLLM, Ollama)
 * `Groq Whisper API <https://console.groq.com/docs/speech-to-text>`__
@@ -120,6 +121,7 @@ To use all of the functionality of the library, you should have:
 * **Vosk** (required only if you need to use Vosk API speech recognition ``recognizer_instance.recognize_vosk``)
 * **Whisper** (required only if you need to use Whisper ``recognizer_instance.recognize_whisper``)
 * **Faster Whisper** (required only if you need to use Faster Whisper ``recognizer_instance.recognize_faster_whisper``)
+* **NVIDIA NeMo** (required only if you need to use ``recognizer_instance.recognize_nemo``)
 * **openai** (required only if you need to use OpenAI Transcription API speech recognition ``recognizer_instance.recognize_openai``)
     * includes OpenAI compatible self-hosted endpoints (e.g. vLLM, Ollama)
 * **groq** (required only if you need to use Groq Whisper API speech recognition ``recognizer_instance.recognize_groq``)
@@ -207,6 +209,32 @@ Faster Whisper (for Faster Whisper users)
 The library `faster-whisper <https://pypi.org/project/faster-whisper/>`__ is **required if and only if you want to use Faster Whisper** (``recognizer_instance.recognize_faster_whisper``).
 
 You can install it with ``python3 -m pip install SpeechRecognition[faster-whisper]``.
+
+NVIDIA NeMo (for NeMo users)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Install the optional dependencies with ``python3 -m pip install "SpeechRecognition[nemo]"``.
+Download a 16 kHz NeMo ASR checkpoint separately. For example,
+`DeNA's Japanese Parakeet model <https://huggingface.co/dena-ai/parakeet-tdt_ctc-0.6b-ja-dialogue>`__
+can run on an Apple Silicon Mac without a GPU:
+
+.. code-block:: bash
+
+    hf download dena-ai/parakeet-tdt_ctc-0.6b-ja-dialogue parakeet-tdt_ctc-0.6b-ja-dialogue.nemo --local-dir .
+
+.. code-block:: python
+
+    import speech_recognition as sr
+    from nemo.collections.asr.models import ASRModel
+
+    model = ASRModel.restore_from("parakeet-tdt_ctc-0.6b-ja-dialogue.nemo", map_location="cpu")
+    recognizer = sr.Recognizer()
+    with sr.AudioFile("speech.wav") as source:
+        audio = recognizer.record(source)
+    print(recognizer.recognize_nemo(audio, model=model))
+
+Reuse the loaded model for subsequent recordings. This transcribes complete
+recordings; it does not apply voice activity detection or stream partial results.
 
 OpenAI Transcription API (for OpenAI Transcription API users)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

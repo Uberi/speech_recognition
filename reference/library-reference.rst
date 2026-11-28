@@ -266,6 +266,11 @@ Raises a ``speech_recognition.UnknownValueError`` exception if the speech is uni
 
 .. autofunction:: speech_recognition.recognizers.whisper_local.faster_whisper.recognize
 
+``recognizer_instance.recognize_nemo(audio_data: AudioData, *, model: ASRModel) -> str``
+------------------------------------------------------------------------------------------------
+
+.. autofunction:: speech_recognition.recognizers.nemo.recognize
+
 ``recognizer_instance.recognize_openai(audio_data: AudioData, model = "whisper-1", **kwargs)``
 ----------------------------------------------------------------------------------------------
 
