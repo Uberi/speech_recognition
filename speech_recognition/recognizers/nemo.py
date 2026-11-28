@@ -22,4 +22,7 @@ def recognize(recognizer, audio_data: AudioData, *, model: ASRModel) -> str:
 
     pcm = audio_data.get_raw_data(convert_rate=16000, convert_width=2)
     waveform = np.frombuffer(pcm, dtype="<i2").astype(np.float32) / 32768.0
-    return model.transcribe([waveform], verbose=False)[0].text
+    hypothesis = model.transcribe([waveform], verbose=False)[0]
+    if isinstance(hypothesis, list):
+        hypothesis = hypothesis[0]
+    return hypothesis.text

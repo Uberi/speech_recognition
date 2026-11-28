@@ -24,6 +24,16 @@ def test_recognize_nemo(text):
     np.testing.assert_array_equal(waveforms[0], [-1.0, 0.0, 127 / 128])
 
 
+def test_recognize_nemo_returns_top_ctc_hypothesis():
+    model = Mock()
+    model.transcribe.return_value = [
+        [SimpleNamespace(text="第一候補"), SimpleNamespace(text="第二候補")]
+    ]
+    audio = AudioData(b"\x00\x00", 16000, 2)
+
+    assert Recognizer().recognize_nemo(audio, model=model) == "第一候補"
+
+
 def test_recognize_nemo_requires_audio_data():
     model = Mock()
     with pytest.raises(ValueError, match="must be an ``AudioData`` instance"):
